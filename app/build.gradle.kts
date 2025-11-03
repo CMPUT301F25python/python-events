@@ -42,6 +42,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(platform(libs.firebase.bom))
+    implementation("com.google.firebase:firebase-firestore")
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
 }

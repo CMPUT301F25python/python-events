@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import androidx.navigation.Navigation;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -68,8 +71,12 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle("Your Events");
-
         setupMenu();
+
+        FloatingActionButton fab = view.findViewById(R.id.fab_add_event);
+        fab.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_createEventFragment);
+        });
     }
 
     /**
