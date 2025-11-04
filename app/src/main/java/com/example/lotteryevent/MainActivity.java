@@ -19,6 +19,12 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * The main and only activity for the application, following a Single Activity Architecture.
@@ -105,9 +111,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI(FirebaseUser user) {
-        if(user != null){
+        if (user != null) {
             String deviceId = user.getUid();
             Log.d("DeviceID", deviceId);
+
+            // create entry in firestore collection (if it doesn't already exist)
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Map<String, Object> userInfo = new HashMap<>();
+            db.collection("users").document(deviceId)
+                    .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "User document ready"))
+                    .addOnFailureListener(e -> Log.w(TAG, "Error creating user document", e));
         }
     }
 
