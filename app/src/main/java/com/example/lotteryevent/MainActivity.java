@@ -1,9 +1,7 @@
 package com.example.lotteryevent;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -48,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "AnonymousAuth";
 
     /**
-     * Initializes the activity, sets up the main layout, and configures navigation.
+     * Initializes the activity, sets up the main layout, identifies user by device, and configures navigation.
      * <p>
      * This method inflates the activity's UI, finds the NavController, and uses {@link NavigationUI}
      * to connect the Toolbar and NavigationView to the navigation graph. This enables automatic
@@ -83,6 +81,9 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navView, navController);
     }
 
+    /**
+     * When a user launches the app, this method checks to see if the user has an associated ID
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -91,6 +92,9 @@ public class MainActivity extends AppCompatActivity {
         updateUI(currentUser);
     }
 
+    /**
+     * This method signs in the user anonymously by assigning them a unique UID
+     */
     private void signInAnonymously() {
         mAuth.signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -112,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * This method updates the users collection in the database with the deviceID if it does not already exist.
+     * @param user (this is the person who's currently using the app on their device)
+     */
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             String deviceId = user.getUid();
