@@ -7,7 +7,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,8 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
-import androidx.navigation.NavDirections;
-import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.Navigation;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -56,11 +56,11 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
-     * but before any saved state has been restored in to the view.
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,* but before any saved state has been restored in to the view.
      * <p>
-     * This method is used to perform initial setup of the view and its components. Specifically, it sets
-     * the title on the activity's action bar and initializes the fragment-specific options menu.
+     * This method performs initial setup of the view and its components. It sets the title on the
+     * activity's action bar, initializes the fragment-specific options menu, and sets up the
+     * OnClickListener for the FloatingActionButton to navigate to the event creation screen.
      *
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state
@@ -73,26 +73,10 @@ public class HomeFragment extends Fragment {
         ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle("Your Events");
         setupMenu();
 
-        // --- START OF TEST CODE ---
-
-        // 1. Find the button from the layout
-        Button testButton = view.findViewById(R.id.test_event_page_button);
-
-        // 2. Set an OnClickListener
-        testButton.setOnClickListener(v -> {
-            // 3. Define the hardcoded Event ID from your image
-            String testEventId = "QNkfN6CA8qj8IUbzSMIY";
-
-            // 4. Use the generated Directions class to create the navigation action
-            // This class is created automatically by the Safe Args plugin
-            NavDirections action =
-                    HomeFragmentDirections.actionHomeFragmentToOrganizerEventPageFragment(testEventId);
-
-            // 5. Get the NavController and navigate
-            NavHostFragment.findNavController(HomeFragment.this).navigate(action);
+        FloatingActionButton fab = view.findViewById(R.id.fab_add_event);
+        fab.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_createEventFragment);
         });
-
-        // --- END OF TEST CODE ---
     }
 
     /**

@@ -2,8 +2,20 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.LotteryEvent" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/primary_green</item>
+        <!-- Color of text and icons that appear on top of the primary green -->
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="Theme.LotteryEvent" parent="Base.Theme.LotteryEvent" />
+
+    <!-- Style for rounded input boxes -->
+    <style name="Widget.App.TextInputLayout.OutlinedBox.Rounded" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.TextInputLayout.Rounded</item>
+    </style>
+
+    <style name="ShapeAppearance.App.TextInputLayout.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
 </resources>

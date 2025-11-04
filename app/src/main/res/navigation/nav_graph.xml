@@ -12,6 +12,9 @@
         <action
             android:id="@+id/action_homeFragment_to_organizerEventPageFragment"
             app:destination="@id/organizerEventPageFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_createEventFragment"
+            app:destination="@id/createEventFragment" />
     </fragment>
 
     <fragment
@@ -23,6 +26,12 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
+
+    <fragment
+        android:id="@+id/createEventFragment"
+        android:name="com.example.lotteryevent.CreateEventFragment"
+        android:label="@string/create_new_event"
+        tools:layout="@layout/fragment_create_event" />
 
 
 </navigation>

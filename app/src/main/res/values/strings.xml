@@ -3,4 +3,19 @@
     <string name="event_lotto">Event Lotto</string>
     <string name="add_new_event">Add new event</string>
     <string name="profile">Profile</string>
+    <string name="create_new_event">Create New Event</string>
+    <string name="description">Description</string>
+    <string name="location">Location</string>
+    <string name="require_geolocation_for_check_in">Require Geolocation for Check-in?</string>
+    <string name="save_event">Save Event</string>
+    <string name="max_attendees">Max Attendees</string>
+    <string name="event_start_time">Event Start Time</string>
+    <string name="event_start_date">Event Start Date</string>
+    <string name="event_end_time">Event End Time</string>
+    <string name="event_end_date">Event End Date</string>
+    <string name="event_name">Event Name</string>
+    <string name="price">Price ($)</string>
+    <string name="registration_information">Registration Information</string>
+    <string name="waiting_list_information">Waiting List Information</string>
+    <string name="event_information">Event Information</string>
 </resources>
