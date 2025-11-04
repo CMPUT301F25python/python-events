@@ -1,6 +1,5 @@
 package com.example.lotteryevent;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -23,6 +22,19 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class manages the entrant's profile screen,
+ * allowing users to view and update their personal information such as name,
+ * email, and phone number. It integrates with Firebase Authentication and
+ * Firestore to store and retrieve user data.
+ *
+ * <p>This activity also provides a back button for navigation and includes
+ * input validation before saving user details to Firestore.</p>
+ *
+ * @author Sanaa Bhaidani
+ * @version 1.0
+ */
+
 public class EntrantProfileActivity extends AppCompatActivity {
 
     private EditText nameField;
@@ -34,6 +46,15 @@ public class EntrantProfileActivity extends AppCompatActivity {
     private String deviceId;
     private ImageButton backArrow;
 
+    /**
+     * Called when the activity is first created. Initializes Firebase Authentication
+     * and Firestore instances, retrieves the current user, and sets up the UI components
+     * including input fields, update button, and back arrow. Loads the user's profile
+     * information from Firestore and sets up listeners for user actions.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after previously being
+     *                           shut down, this Bundle contains the data it most recently supplied.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +88,13 @@ public class EntrantProfileActivity extends AppCompatActivity {
         backArrow.setOnClickListener(v->finish());
     }
 
+    /**
+     * Retrieves the entrant's profile information from Firestore based on their unique
+     * device ID (Firebase user UID). If the document exists, it populates the input
+     * fields with the stored name, email, and phone values. Logs errors if retrieval
+     * fails or if the document does not exist.
+     */
+
     private void loadProfileInfo(){
         DocumentReference docRef = db.collection("users").document(deviceId);
         docRef.get().addOnCompleteListener((new OnCompleteListener<DocumentSnapshot>() {
@@ -89,6 +117,12 @@ public class EntrantProfileActivity extends AppCompatActivity {
         }));
     }
 
+    /**
+     * Validates user input fields (name, email, and phone number) and updates the
+     * entrant's profile information in Firestore. Displays appropriate error messages
+     * for invalid input or missing mandatory fields. On successful update, a toast
+     * notification confirms the update; otherwise, an error message is displayed.
+     */
     private void setProfileInfo(){
         String name = nameField.getText().toString().trim();
         String email = emailField.getText().toString().trim();

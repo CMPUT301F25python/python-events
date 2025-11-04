@@ -70,10 +70,11 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle("Your Events");
+        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(" ");
 
-        setupMenu();
+        // setupMenu();
 
+        // ---------- SHOULD BE INTEGRATED IN setupMenu() BY WHOEVER IS IN CHARGE OF THIS FRAGMENT ------------
         // going to profile page
         profileIcon = view.findViewById(R.id.profile_icon);
         profileIcon.setOnClickListener(v->{
