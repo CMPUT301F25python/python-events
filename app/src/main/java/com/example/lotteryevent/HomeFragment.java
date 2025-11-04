@@ -16,6 +16,7 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -119,6 +120,7 @@ public class HomeFragment extends Fragment {
                 // Handle clicks on the profile icon
                 if (menuItem.getItemId() == R.id.profile_icon) {
                     Toast.makeText(getContext(), "Profile clicked!", Toast.LENGTH_SHORT).show();
+                    NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
                     return true;
                 }
                 return false;

@@ -102,7 +102,7 @@ public class UserProfileFragment extends Fragment {
         updateInfo.setOnClickListener(v -> setProfileInfo());
 
         // Navigate back using the Navigation component
-        Navigation.findNavController(view).popBackStack();
+        // Navigation.findNavController(view).popBackStack();
     }
 
     /**
