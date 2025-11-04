@@ -7,7 +7,7 @@
     android:background="#FFFFFF">
 
     <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/profileToolbar"
+        android:id="@+id/profileHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/primary_green"
@@ -37,7 +37,7 @@
                 android:paddingTop="8dp" />
 
             <EditText
-                android:id="@+id/name_field"
+                android:id="@+id/nameField"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -56,7 +56,7 @@
                 android:paddingTop="16dp" />
 
             <EditText
-                android:id="@+id/email_field"
+                android:id="@+id/emailField"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -76,7 +76,7 @@
                 android:paddingTop="16dp" />
 
             <EditText
-                android:id="@+id/phone_field"
+                android:id="@+id/phoneField"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -105,7 +105,7 @@
                 android:textColor="@color/grey" />
 
             <Button
-                android:id="@+id/update_button"
+                android:id="@+id/updateButton"
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
                 android:text="Update"
@@ -119,7 +119,7 @@
                 android:radius="30dp" />
 
             <Button
-                android:id="@+id/history_button"
+                android:id="@+id/historyButton"
                 android:layout_width="270dp"
                 android:layout_height="44dp"
                 android:layout_gravity="center_horizontal"
@@ -132,7 +132,7 @@
                 android:textSize="18sp" />
 
             <Button
-                android:id="@+id/delete_button"
+                android:id="@+id/deleteButton"
                 android:layout_width="207dp"
                 android:layout_height="44dp"
                 android:layout_gravity="center_horizontal"
