@@ -1,5 +1,8 @@
 package com.example.lotteryevent;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -9,12 +12,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+
+import java.util.Objects;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -26,6 +34,8 @@ import androidx.lifecycle.Lifecycle;
  * @see MainActivity
  */
 public class HomeFragment extends Fragment {
+
+    private NotificationCustomManager notificationCustomManager;
 
     /**
      * Required empty public constructor for fragment instantiation by the system.
@@ -68,6 +78,8 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle("Your Events");
+
+        notificationCustomManager = new NotificationCustomManager(getContext());
 
         setupMenu();
     }
@@ -112,10 +124,30 @@ public class HomeFragment extends Fragment {
                 // Handle clicks on the profile icon
                 if (menuItem.getItemId() == R.id.profile_icon) {
                     Toast.makeText(getContext(), "Profile clicked!", Toast.LENGTH_SHORT).show();
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                            return true;
+                        }
+                    }
+                    notificationCustomManager.sendNotification();
                     return true;
                 }
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
+
+    private final ActivityResultLauncher<String> requestNotificationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // Permission granted — send notification
+                    notificationCustomManager.sendNotification();
+                } else {
+                    Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
+                }
+            });
+
 }
