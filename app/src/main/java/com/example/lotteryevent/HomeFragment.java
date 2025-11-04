@@ -1,5 +1,6 @@
 package com.example.lotteryevent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -7,6 +8,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -26,6 +28,7 @@ import androidx.lifecycle.Lifecycle;
  * @see MainActivity
  */
 public class HomeFragment extends Fragment {
+    private ImageButton profileIcon;
 
     /**
      * Required empty public constructor for fragment instantiation by the system.
@@ -70,6 +73,13 @@ public class HomeFragment extends Fragment {
         ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle("Your Events");
 
         setupMenu();
+
+        // going to profile page
+        profileIcon = view.findViewById(R.id.profile_icon);
+        profileIcon.setOnClickListener(v->{
+            Intent intent = new Intent(requireContext(), EntrantProfileActivity.class);
+            startActivity(intent);
+        });
     }
 
     /**

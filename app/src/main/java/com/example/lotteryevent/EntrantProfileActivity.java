@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
-import com.google.android.material.appbar.MaterialToolbar;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -32,7 +32,7 @@ public class EntrantProfileActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String deviceId;
-    private MaterialToolbar profileHeader;
+    private ImageButton backArrow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,14 +54,15 @@ public class EntrantProfileActivity extends AppCompatActivity {
 
         deviceId = currentUser.getUid(); // get the device ID
 
-        nameField = findViewById(R.id.nameField);
-        emailField = findViewById(R.id.emailField);
-        phoneField = findViewById(R.id.phoneField);
-        updateInfo = findViewById(R.id.updateButton);
+        nameField = findViewById(R.id.name_field);
+        emailField = findViewById(R.id.email_field);
+        phoneField = findViewById(R.id.phone_field);
+        updateInfo = findViewById(R.id.update_button);
 
         // going back to main page
-        profileHeader.setNavigationOnClickListener(v->{
-            Intent intent = new Intent(EntrantProfileActivity.this, MainActivity.class);
+        backArrow = findViewById(R.id.back_arrow);
+        backArrow.setOnClickListener(v->{
+            Intent intent = new Intent(EntrantProfileActivity.this, HomeFragment.class);
             startActivity(intent);
             finish();
         });
