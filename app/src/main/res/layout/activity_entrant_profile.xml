@@ -9,14 +9,13 @@
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/profileToolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        android:layout_height="wrap_content"
+        android:background="@color/primary_green"
         app:navigationIcon="@drawable/baseline_arrow_back_24"
         app:navigationIconTint="@android:color/white"
         app:title="Profile"
         app:titleCentered="true"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="@android:color/white"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -38,7 +37,7 @@
                 android:paddingTop="8dp" />
 
             <EditText
-                android:id="@+id/nameField"
+                android:id="@+id/name_field"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -57,7 +56,7 @@
                 android:paddingTop="16dp" />
 
             <EditText
-                android:id="@+id/emailField"
+                android:id="@+id/email_field"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -77,7 +76,7 @@
                 android:paddingTop="16dp" />
 
             <EditText
-                android:id="@+id/phoneField"
+                android:id="@+id/phone_field"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
@@ -97,7 +96,7 @@
                 android:paddingTop="20dp" />
 
             <CheckBox
-                android:id="@+id/notificationsCheckbox"
+                android:id="@+id/notifications_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"
@@ -106,36 +105,41 @@
                 android:textColor="@color/grey" />
 
             <Button
-                android:id="@+id/updateButton"
+                android:id="@+id/update_button"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="44dp"
                 android:text="Update"
                 android:backgroundTint="@color/primary_pink"
                 android:textColor="@color/white"
+                android:textSize="16sp"
                 android:layout_gravity="start"
                 android:layout_marginTop="24dp"
                 android:paddingHorizontal="24dp"
                 android:paddingVertical="8dp"
-                android:radius="20dp" />
+                android:radius="30dp" />
 
             <Button
-                android:id="@+id/historyButton"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="24dp"
+                android:id="@+id/history_button"
+                android:layout_width="270dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="30dp"
                 android:backgroundTint="@color/primary_green"
                 android:radius="30dp"
                 android:strokeWidth="2"
                 android:text="Registration History"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:textSize="18sp" />
 
             <Button
-                android:id="@+id/deleteButton"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="24dp"
+                android:id="@+id/delete_button"
+                android:layout_width="207dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="15dp"
                 android:backgroundTint="@color/primary_pink"
                 android:radius="30dp"
+                android:textSize="18sp"
                 android:text="Delete Profile"
                 android:textColor="@color/white" />
 
