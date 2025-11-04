@@ -20,13 +20,13 @@ public class Event {
     private String organizerId;
     private String organizerName;
     private String location;
-    private double price;
+    private Double price;
     private String posterImageUrl;
     private Timestamp eventStartDateTime;
     private Timestamp eventEndDateTime;
     private Timestamp registrationStartDateTime;
     private Timestamp registrationEndDateTime;
-    private int capacity;
+    private Integer capacity;
     private Integer waitinglistlimit;
     private boolean isgeolocationRequired;
     private String status;
@@ -53,7 +53,7 @@ public class Event {
      * @param organizerName The name of the user who organized the event.
      * @param capacity The maximum number of attendees for the event.
      */
-    public Event(String name, String description, String organizerId, String organizerName, int capacity) {
+    public Event(String name, String description, String organizerId, String organizerName, Integer capacity) {
         this.name = name;
         this.description = description;
         this.organizerId = organizerId;
@@ -134,12 +134,12 @@ public class Event {
      * Gets the price of the event.
      * @return The event price.
      */
-    public double getPrice() { return price; }
+    public Double getPrice() { return price; }
     /**
      * Sets the price of the event.
      * @param price The event price.
      */
-    public void setPrice(double price) { this.price = price; }
+    public void setPrice(Double price) { this.price = price; }
 
     /**
      * Gets the URL for the event poster image.
@@ -194,12 +194,12 @@ public class Event {
      * Gets the maximum capacity of the event.
      * @return The event capacity.
      */
-    public int getCapacity() { return capacity; }
+    public Integer getCapacity() { return capacity; }
     /**
      * Sets the maximum capacity of the event.
      * @param capacity The event capacity.
      */
-    public void setCapacity(int capacity) { this.capacity = capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
 
     /**
      * Gets the waiting list limit for the event.
