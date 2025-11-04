@@ -61,11 +61,7 @@ public class EntrantProfileActivity extends AppCompatActivity {
 
         // going back to main page
         backArrow = findViewById(R.id.back_arrow);
-        backArrow.setOnClickListener(v->{
-            Intent intent = new Intent(EntrantProfileActivity.this, HomeFragment.class);
-            startActivity(intent);
-            finish();
-        });
+        backArrow.setOnClickListener(v->finish());
 
         loadProfileInfo(); // loading existing profile data, if any
         updateInfo.setOnClickListener(v -> setProfileInfo()); // save user data
@@ -101,6 +97,18 @@ public class EntrantProfileActivity extends AppCompatActivity {
         // name and email mandatory (check)
         if(name.isEmpty() || email.isEmpty()){
             Toast.makeText(this, "Name and email required.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // validating email input
+        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            Toast.makeText(this, "Invalid email.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // validating phone input (if provided
+        if(!phone.isEmpty() && phone.length() != 10){
+            Toast.makeText(this, "Invalid phone number.", Toast.LENGTH_LONG).show();
             return;
         }
 
