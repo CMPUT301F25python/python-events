@@ -1,6 +1,10 @@
 package com.example.lotteryevent;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -8,7 +12,19 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * The main and only activity for the application, following a Single Activity Architecture.
@@ -25,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private AppBarConfiguration appBarConfiguration;
 
+    // device authentication
+    private FirebaseAuth mAuth;
+    private static final String TAG = "AnonymousAuth";
+
     /**
      * Initializes the activity, sets up the main layout, and configures navigation.
      * <p>
@@ -39,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // user identification by device
+        mAuth = FirebaseAuth.getInstance();
+        signInAnonymously();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -55,6 +79,50 @@ public class MainActivity extends AppCompatActivity {
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        updateUI(currentUser);
+    }
+
+    private void signInAnonymously() {
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            Log.d(TAG, "signInAnonymously:success");
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            updateUI(user);
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Log.w(TAG, "signInAnonymously:failure", task.getException());
+                            Toast.makeText(MainActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                            updateUI(null);
+                        }
+                    }
+                });
+    }
+
+    private void updateUI(FirebaseUser user) {
+        if (user != null) {
+            String deviceId = user.getUid();
+            Log.d("DeviceID", deviceId);
+
+            // create entry in firestore collection (if it doesn't already exist)
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Map<String, Object> userInfo = new HashMap<>();
+            db.collection("users").document(deviceId)
+                    .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "User document ready"))
+                    .addOnFailureListener(e -> Log.w(TAG, "Error creating user document", e));
+        }
     }
 
     /**
