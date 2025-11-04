@@ -59,12 +59,12 @@ public class EntrantProfileActivity extends AppCompatActivity {
         phoneField = findViewById(R.id.phone_field);
         updateInfo = findViewById(R.id.update_button);
 
+        loadProfileInfo(); // loading existing profile data, if any
+        updateInfo.setOnClickListener(v -> setProfileInfo()); // save user data
+
         // going back to main page
         backArrow = findViewById(R.id.back_arrow);
         backArrow.setOnClickListener(v->finish());
-
-        loadProfileInfo(); // loading existing profile data, if any
-        updateInfo.setOnClickListener(v -> setProfileInfo()); // save user data
     }
 
     private void loadProfileInfo(){
@@ -96,19 +96,19 @@ public class EntrantProfileActivity extends AppCompatActivity {
 
         // name and email mandatory (check)
         if(name.isEmpty() || email.isEmpty()){
-            Toast.makeText(this, "Name and email required.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Name and email required.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // validating email input
+        // checking if valid email address
         if(!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            Toast.makeText(this, "Invalid email.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Enter a valid email.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // validating phone input (if provided
+        // checking if valid phone number (if one has been provided)
         if(!phone.isEmpty() && phone.length() != 10){
-            Toast.makeText(this, "Invalid phone number.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
             return;
         }
 
