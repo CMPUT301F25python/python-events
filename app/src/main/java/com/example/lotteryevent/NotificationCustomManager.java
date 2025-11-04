@@ -11,11 +11,17 @@ import android.os.Build;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class NotificationCustomManager {
     Context myContext;
     private String channelID = "lottery_win_notifications";
-    private int notificationID = 1;
     private String channelDescription = "Notifications on winning the lottery.";
+    private final static AtomicInteger c = new AtomicInteger(0);
+
+    public static int getID() {
+        return c.incrementAndGet();
+    }
 
     public NotificationCustomManager(Context context) {
         myContext = context;
@@ -48,10 +54,10 @@ public class NotificationCustomManager {
                 .setContentText("You won the lottery for ____! Confirm your registration now!")
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_MAX);
 
         // Display the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.myContext);
-        notificationManager.notify(notificationID, builder.build());
+        notificationManager.notify(getID(), builder.build());
     }
 }

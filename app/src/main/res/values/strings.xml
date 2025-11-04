@@ -3,4 +3,5 @@
     <string name="event_lotto">Event Lotto</string>
     <string name="add_new_event">Add new event</string>
     <string name="profile">Profile</string>
+    <string name="confirm_and_notify_button_text">Confirm and Notify</string>
 </resources>
