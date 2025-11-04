@@ -112,17 +112,37 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Initializes the RecyclerView by finding it in the view, creating a new
-     * {@link EventAdapter}, and attaching the adapter to the RecyclerView.
-     * The layout manager (GridLayoutManager) is defined in the XML layout.
+     * Initializes the RecyclerView and its associated components.
+     * <p>
+     * This method performs the following setup steps:
+     * <ul>
+     *     <li>Finds the {@link RecyclerView} by its ID in the fragment's view.</li>
+     *     <li>Creates a new instance of the {@link EventAdapter}.</li>
+     *     <li>Attaches the adapter to the RecyclerView. The layout manager (GridLayoutManager)
+     *         is defined in the corresponding XML layout file ({@code fragment_home.xml}).</li>
+     *     <li>Sets an item click listener on the adapter. When an event item is clicked, it navigates
+     *         to the {@code OrganizerEventPageFragment}, passing the event's ID as a safe argument.
+     *         It includes a check to prevent navigation if the event ID is null.</li>
+     * </ul>
      *
-     * @param view The parent view containing the RecyclerView.
+     * @param view The parent view of the fragment, which contains the RecyclerView.
      */
     private void setupRecyclerView(View view) {
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
         eventAdapter = new EventAdapter();
         recyclerView.setAdapter(eventAdapter);
-        // The GridLayoutManager is already set in the fragment_home.xml, so no code is needed here.
+
+        eventAdapter.setOnItemClickListener(event -> {
+            // Make sure the event ID is not null before navigating
+            if (event.getEventId() != null) {
+                // Use the generated NavDirections class for type-safe navigation
+                HomeFragmentDirections.ActionHomeFragmentToOrganizerEventPageFragment action =
+                        HomeFragmentDirections.actionHomeFragmentToOrganizerEventPageFragment(event.getEventId());
+                Navigation.findNavController(view).navigate(action);
+            } else {
+                Toast.makeText(getContext(), "Error: Event ID is missing.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
