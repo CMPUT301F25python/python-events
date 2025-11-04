@@ -25,6 +25,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * A {@link Fragment} subclass that provides a user interface for creating a new event.
+ * Users can input event details such as name, location, date, time, and other settings.
+ * The created event is then saved to a Firestore database.
+ */
 public class CreateEventFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -38,15 +43,31 @@ public class CreateEventFragment extends Fragment {
     private final Calendar eventStartCalendar = Calendar.getInstance();
     private final Calendar eventEndCalendar = Calendar.getInstance();
 
+    /**
+     * Required empty public constructor for fragment instantiation.
+     */
     public CreateEventFragment() {
-        // Required empty public constructor
     }
 
+
+    /**
+     * Inflates the layout for this fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
+     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     * @return The View for the fragment's UI, or null.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_create_event, container, false);
     }
 
+    /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view. This is where UI initialization and setup occurs.
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -75,6 +96,10 @@ public class CreateEventFragment extends Fragment {
         setupClickListeners();
     }
 
+    /**
+     * Sets up OnClickListeners for all interactive UI elements in the fragment,
+     * such as date/time fields and the save button.
+     */
     private void setupClickListeners() {
         // Set up the picker dialogs
         editTextEventStartDate.setOnClickListener(v -> showDatePickerDialog(eventStartCalendar, editTextEventStartDate));
@@ -87,6 +112,13 @@ public class CreateEventFragment extends Fragment {
         buttonSave.setOnClickListener(this::saveEventToFirestore);
     }
 
+
+    /**
+     * Displays a {@link DatePickerDialog} to allow the user to select a date.
+     * The selected date is then stored in the provided Calendar object and displayed in the EditText.
+     * @param calendar The Calendar instance to update with the selected date.
+     * @param editText The TextInputEditText field to update with the formatted date string.
+     */
     private void showDatePickerDialog(Calendar calendar, TextInputEditText editText) {
         DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
             calendar.set(Calendar.YEAR, year);
@@ -99,6 +131,13 @@ public class CreateEventFragment extends Fragment {
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
+
+    /**
+     * Displays a {@link TimePickerDialog} to allow the user to select a time.
+     * The selected time is then stored in the provided Calendar object and displayed in the EditText.
+     * @param calendar The Calendar instance to update with the selected time.
+     * @param editText The TextInputEditText field to update with the formatted time string.
+     */
     private void showTimePickerDialog(Calendar calendar, TextInputEditText editText) {
         TimePickerDialog.OnTimeSetListener timeSetListener = (view, hourOfDay, minute) -> {
             calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
@@ -110,6 +149,12 @@ public class CreateEventFragment extends Fragment {
                 calendar.get(Calendar.MINUTE), true).show(); // true for 24-hour view
     }
 
+    /**
+     * Updates the text of a {@link TextInputEditText} with a formatted date or time string from a Calendar object.
+     * @param editText The view to update.
+     * @param calendar The calendar containing the date/time to format.
+     * @param format The desired date/time format (e.g., "yyyy-MM-dd" or "HH:mm").
+     */
     private void updateLabel(TextInputEditText editText, Calendar calendar, String format) {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
         editText.setText(sdf.format(calendar.getTime()));
@@ -117,7 +162,9 @@ public class CreateEventFragment extends Fragment {
 
 
     /**
-     * Reads data from all input fields, validates it, and saves it to Firestore.
+     * Reads all data from the input fields, performs validation, and saves the new event to Firestore.
+     * Displays a toast message indicating success or failure and navigates back on success.
+     * @param view The view that triggered the method call, used for navigation.
      */
     private void saveEventToFirestore(View view) {
         // Get text from basic input fields
@@ -178,6 +225,14 @@ public class CreateEventFragment extends Fragment {
                 });
     }
 
+    /**
+     * Creates a Firestore {@link com.google.firebase.Timestamp} from a Calendar object.
+     * Returns null if the date or time fields have not been filled out by the user.
+     * @param calendar The Calendar instance holding the selected date and time.
+     * @param dateText The EditText for the date.
+     * @param timeText The EditText for the time.
+     * @return A Firestore Timestamp object, or null if the date/time is incomplete.
+     */
     private com.google.firebase.Timestamp getTimestampFromCalendars(Calendar calendar, TextInputEditText dateText, TextInputEditText timeText) {
         if (dateText.getText().toString().isEmpty() || timeText.getText().toString().isEmpty()) {
             return null; // Return null if either date or time hasn't been picked

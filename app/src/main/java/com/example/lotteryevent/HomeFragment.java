@@ -56,11 +56,11 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
-     * but before any saved state has been restored in to the view.
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,* but before any saved state has been restored in to the view.
      * <p>
-     * This method is used to perform initial setup of the view and its components. Specifically, it sets
-     * the title on the activity's action bar and initializes the fragment-specific options menu.
+     * This method performs initial setup of the view and its components. It sets the title on the
+     * activity's action bar, initializes the fragment-specific options menu, and sets up the
+     * OnClickListener for the FloatingActionButton to navigate to the event creation screen.
      *
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state
