@@ -1,4 +1,4 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.organizer;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
-import com.example.lotteryevent.OrganizerEventPageFragmentArgs;
+import com.example.lotteryevent.organizer.OrganizerEventPageFragmentArgs;
 import com.example.lotteryevent.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
