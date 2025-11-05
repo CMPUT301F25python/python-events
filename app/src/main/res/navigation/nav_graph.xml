@@ -10,12 +10,26 @@
         android:name="com.example.lotteryevent.HomeFragment"
         android:label="Home">
         <action
+            android:id="@+id/action_homeFragment_to_organizerEventPageFragment"
+            app:destination="@id/organizerEventPageFragment" />
+        <action
             android:id="@+id/action_homeFragment_to_createEventFragment"
             app:destination="@id/createEventFragment" />
         <action
             android:id="@+id/action_homeFragment_to_userProfileFragment"
             app:destination="@id/userProfileFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/organizerEventPageFragment"
+        android:name="com.example.lotteryevent.organizer.OrganizerEventPageFragment"
+        android:label="Event Details"
+        tools:layout="@layout/fragment_organizer_event_page">
+        <argument
+            android:name="eventId"
+            app:argType="string" />
+    </fragment>
+
     <fragment
         android:id="@+id/createEventFragment"
         android:name="com.example.lotteryevent.CreateEventFragment"

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
+    id("androidx.navigation.safeargs")
 }
 
 android {
@@ -47,4 +48,5 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }
