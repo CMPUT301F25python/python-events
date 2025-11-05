@@ -36,30 +36,39 @@ public class LotteryManager {
         DocumentReference eventRef = this.db.collection("events").document(eventId);
         eventRef.get().addOnSuccessListener((doc -> {
 
-            //If our entrant list exists, then get the list of entrants
+            // If our entrant list exists, then get the list of entrants
             if (doc.exists()) {
-                List<String> entrants = (List<String>) doc.get("entrants");
-                //If the list of entrants is empty then notify the organizer
-                if (entrants == null || entrants.isEmpty()) {
-                    System.out.println("There are currently no entrants for this event: " + eventId);
+
+                List<String> waitlist = (List<String>) doc.get("waitlist");
+                List<String> selected = (List<String>) doc.get("selected");
+
+                if (waitlist == null) waitlist = new ArrayList<>();
+                if (selected == null) selected = new ArrayList<>();
+
+                // Check if waitlist is empty and stop process
+                if (waitlist.isEmpty()) {
+                    System.out.println("Waitlist is empty for this event: " + eventId);
+                    return;
                 }
 
-                //Randomize selection of entrants if not empty
-                Collections.shuffle(entrants);
-
-                //Get winners from start of waiting list to end
-                List<String> winners = entrants.subList(0, Math.min(numSelectedEntrants, entrants.size()));
-                List<String> waitingList = new ArrayList<>();
-
-                //Ensure that our list is split up into selected entrants and remainder is put into waiting list
-                if (entrants.size() > numSelectedEntrants) {
-                    waitingList.addAll(entrants.subList(numSelectedEntrants, entrants.size()));
+                int requested = numSelectedEntrants;
+                // Ensure selected number of entrants is within waiting list size
+                if (requested > waitlist.size()) {
+                    System.out.println("Requesting more entrants than available in waitlist");
+                    requested = waitlist.size();
                 }
 
-                //Update Firestore
+                // Shuffle and pick winners
+                Collections.shuffle(waitlist);
+                List<String> winners = waitlist.subList(0, requested);
+
+                selected.addAll(winners);
+                waitlist = new ArrayList<>(waitlist.subList(requested, waitlist.size()));
+
+                // Update Firestore
                 Map<String, Object> updates = new HashMap<>();
-                updates.put("SelectedWinners", winners);
-                updates.put("waitingList", waitingList);
+                updates.put("elected", selected);
+                updates.put("waitlist", waitlist);
 
                 eventRef.update(updates)
                         .addOnSuccessListener(v -> System.out.println("Selected winners for " + eventId))

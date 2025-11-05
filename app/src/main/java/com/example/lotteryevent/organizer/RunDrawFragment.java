@@ -8,6 +8,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.annotation.Nullable;
@@ -15,7 +19,11 @@ import androidx.annotation.Nullable;
 import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.collect.Lists;
+
 public class RunDrawFragment extends Fragment {
+    private FirebaseFirestore db;
     private LotteryManager lotteryManager;
     private EditText numSelectedEntrants;
     private String eventId = "temporary filler for event ID";
@@ -38,8 +46,9 @@ public class RunDrawFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        lotteryManager = new LotteryManager();
-        numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
+        this.db = FirebaseFirestore.getInstance();
+        this.lotteryManager = new LotteryManager();
+        this.numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
 
         Button runDrawButton = view.findViewById(R.id.runDrawButton);
         Button cancelButton = view.findViewById(R.id.cancelButton);
@@ -53,10 +62,53 @@ public class RunDrawFragment extends Fragment {
             }
 
             int numToSelect = Integer.parseInt(inputText);
-            lotteryManager.selectWinners(eventId, numToSelect);
 
-            Toast.makeText(getContext(), "Draw initialized!", Toast.LENGTH_SHORT).show();
-        });
+            // Temp Debug block to confirm correct EventId
+            android.util.Log.d("RunDraw", "calling LotteryManager for event: " + eventId);
+            //lotteryManager.selectWinners(eventId, numToSelect);
+
+            this.db.collection("events").document(this.eventId).get()
+                    .addOnSuccessListener(document -> {
+                        if (!document.exists()) {
+                            Toast.makeText(this.getContext(), "Event not found", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        List<String> waitlist = (List<String>) document.get("waitlist");
+                        List<String> selected = (List<String>) document.get("selected");
+
+                        if (waitlist == null) waitlist = new ArrayList<>();
+                        if (selected == null) selected = new ArrayList<>();
+
+                        if (waitlist.isEmpty()) {
+                            Toast.makeText(this.getContext(), "waitlist is empty", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        if (numToSelect > waitlist.size()) {
+                            Toast.makeText(this.getContext(), "Waitlist does not contain enough entrants", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Randomly pick entrants
+                        Collections.shuffle(waitlist);
+                        List<String> chosen = waitlist.subList(0, numToSelect);
+
+                        selected.addAll(chosen);
+                        waitlist.removeAll(chosen);
+
+                        this.db.collection("events").document(this.eventId)
+                                .update("selected", selected, "waitlist", waitlist)
+                                .addOnSuccessListener(aVoid ->
+                                        Toast.makeText(this.getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show()
+                                )
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this.getContext(), "Error saving results", Toast.LENGTH_SHORT).show()
+                                );
+                        })
+                        .addOnFailureListener(e ->
+                            Toast.makeText(this.getContext(), "Error loading event", Toast.LENGTH_SHORT).show());
+            });
 
         cancelButton.setOnClickListener(v -> requireActivity().onBackPressed());
     }
