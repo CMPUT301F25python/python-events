@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -101,8 +100,6 @@ public class UserProfileFragment extends Fragment {
         // Save updated user data
         updateInfo.setOnClickListener(v -> setProfileInfo());
 
-        // Navigate back using the Navigation component
-        // Navigation.findNavController(view).popBackStack();
     }
 
     /**

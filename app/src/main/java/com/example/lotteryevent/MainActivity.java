@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "AnonymousAuth";
 
     /**
-     * Initializes the activity, sets up the main layout, and configures navigation.
+     * Initializes the activity, sets up the main layout, logs user in based on device id, and configures navigation.
      * <p>
      * This method inflates the activity's UI, finds the NavController, and uses {@link NavigationUI}
      * to connect the Toolbar and NavigationView to the navigation graph. This enables automatic
@@ -81,6 +81,14 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navView, navController);
     }
 
+    /**
+     * Called when the activity becomes visible to the user.
+     * <p>
+     * This method checks if there is an authenticated Firebase user
+     * when the app is launched. If a user is already signed in, it calls
+     * updateUI(FirebaseUser) to ensure the Firestore entry exists.
+     * </p>
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -89,6 +97,15 @@ public class MainActivity extends AppCompatActivity {
         updateUI(currentUser);
     }
 
+    /**
+     * Signs the user in anonymously using Firebase Authentication.
+     * <p>
+     * This method assigns a unique UID to the user, allowing them to interact
+     * with the Firestore database without creating an account. If the sign-in
+     * is successful, updateUI(FirebaseUser) is called with the authenticated user.
+     * If it fails, an error message is logged and displayed to the user.
+     * </p>
+     */
     private void signInAnonymously() {
         mAuth.signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -109,7 +126,17 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
-
+    /**
+     * Updates or creates a Firestore document for the authenticated user.
+     * <p>
+     * This method ensures that the current user's unique device ID (Firebase UID)
+     * is present in the {@code users} collection in Firestore. If the document
+     * does not already exist, it is created. If any pre-existing data, they are merged.
+     * </p>
+     *
+     * @param user The currently authenticated Firebase user whose profile entry
+     *             should be verified or created in the Firestore database.
+     */
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             String deviceId = user.getUid();

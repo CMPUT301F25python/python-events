@@ -21,7 +21,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Name"
+                android:text="@string/name_field"
                 android:textColor="@color/primary_green"
                 android:textSize="16sp"
                 android:paddingTop="8dp" />
@@ -31,7 +31,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
-                android:hint="John Doe"
+                android:hint="@string/mock_name"
                 android:padding="12dp"
                 android:textColor="@color/grey"
                 android:textSize="14sp" />
@@ -40,7 +40,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Email"
+                android:text="@string/email_field"
                 android:textColor="@color/primary_green"
                 android:textSize="16sp"
                 android:paddingTop="16dp" />
@@ -50,7 +50,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
-                android:hint="jdoe@gmail.com"
+                android:hint="@string/mock_email"
                 android:padding="12dp"
                 android:inputType="textEmailAddress"
                 android:textColor="@color/grey"
@@ -60,7 +60,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Phone Number (optional)"
+                android:text="@string/number_field"
                 android:textColor="@color/primary_green"
                 android:textSize="16sp"
                 android:paddingTop="16dp" />
@@ -70,7 +70,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:background="@drawable/input_field_background"
-                android:hint="XXX-XXX-XXXX"
+                android:hint="@string/mock_number"
                 android:inputType="phone"
                 android:padding="12dp"
                 android:textColor="@color/grey"
@@ -80,7 +80,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notification Preferences"
+                android:text="@string/notification_field"
                 android:textColor="@color/primary_green"
                 android:textSize="16sp"
                 android:paddingTop="20dp" />
@@ -91,14 +91,14 @@
                 android:layout_height="wrap_content"
                 android:checked="true"
                 android:paddingTop="8dp"
-                android:text="I want to receive notifications from administrators and organizers"
+                android:text="@string/notification_statement"
                 android:textColor="@color/grey" />
 
             <Button
                 android:id="@+id/update_button"
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
-                android:text="Update"
+                android:text="@string/update_button"
                 android:backgroundTint="@color/primary_pink"
                 android:textColor="@color/white"
                 android:textSize="16sp"
@@ -117,7 +117,7 @@
                 android:backgroundTint="@color/primary_green"
                 android:radius="30dp"
                 android:strokeWidth="2"
-                android:text="Registration History"
+                android:text="@string/reg_history_button"
                 android:textColor="@color/white"
                 android:textSize="18sp" />
 
@@ -130,7 +130,7 @@
                 android:backgroundTint="@color/primary_pink"
                 android:radius="30dp"
                 android:textSize="18sp"
-                android:text="Delete Profile"
+                android:text="@string/delete_button"
                 android:textColor="@color/white" />
 
         </LinearLayout>
