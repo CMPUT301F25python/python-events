@@ -22,6 +22,10 @@
         android:name="com.example.lotteryevent.organizer.OrganizerEventPageFragment"
         android:label="Event Details"
         tools:layout="@layout/fragment_organizer_event_page">
+        <action
+            android:id="@+id/action_organizerEventPageFragment_to_runDrawFragment"
+            app:destination="@id/runDrawFragment"/>
+
         <argument
             android:name="eventId"
             app:argType="string" />

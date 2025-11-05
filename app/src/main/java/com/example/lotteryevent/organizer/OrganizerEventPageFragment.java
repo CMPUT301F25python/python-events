@@ -5,12 +5,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.organizer.OrganizerEventPageFragmentArgs;
 import com.example.lotteryevent.R;
@@ -58,6 +60,14 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
+        Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
+        runLotteryButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
+        });
     }
 
     private void fetchEventDetails() {
