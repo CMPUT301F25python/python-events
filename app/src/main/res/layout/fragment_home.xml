@@ -36,4 +36,14 @@
         app:tint="@android:color/white"
         />
 
+<!--    Temporary Test Run Draw button. This button takes us to new screen-->
+    <Button
+        android:id="@+id/testRunDrawButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test Run Draw"
+        android:layout_margin="16dp"
+        android:layout_gravity="center"/>
+
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

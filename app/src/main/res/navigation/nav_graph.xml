@@ -33,5 +33,11 @@
         android:label="@string/create_new_event"
         tools:layout="@layout/fragment_create_event" />
 
+    <fragment
+        android:id="@+id/runDrawFragment"
+        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
+        android:label="Run Draw"
+        tools:layout="@layout/fragment_run_draw"/>
+
 
 </navigation>
