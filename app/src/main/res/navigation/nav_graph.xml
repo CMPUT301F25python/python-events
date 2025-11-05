@@ -15,6 +15,9 @@
         <action
             android:id="@+id/action_homeFragment_to_createEventFragment"
             app:destination="@id/createEventFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_userProfileFragment"
+            app:destination="@id/userProfileFragment" />
     </fragment>
 
     <fragment
@@ -32,6 +35,11 @@
         android:name="com.example.lotteryevent.CreateEventFragment"
         android:label="@string/create_new_event"
         tools:layout="@layout/fragment_create_event" />
+    <fragment
+        android:id="@+id/userProfileFragment"
+        android:name="com.example.lotteryevent.UserProfileFragment"
+        android:label="@string/user_profile_page"
+        tools:layout="@layout/fragment_user_profile" />
 
 
 </navigation>
