@@ -18,6 +18,9 @@ import androidx.navigation.Navigation;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -33,6 +36,7 @@ import java.util.Map;
 public class CreateEventFragment extends Fragment {
 
     private FirebaseFirestore db;
+    private FirebaseAuth auth;
     private TextInputEditText editTextEventName, editTextEventDescription, editTextEventLocation;
     private TextInputEditText editTextEventStartDate, editTextEventStartTime;
     private TextInputEditText editTextEventEndDate, editTextEventEndTime;
@@ -74,6 +78,8 @@ public class CreateEventFragment extends Fragment {
 
         // Initialize Firestore
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+
 
         // Find all UI elements by their ID
         editTextEventName = view.findViewById(R.id.edit_text_event_name);
@@ -167,6 +173,13 @@ public class CreateEventFragment extends Fragment {
      * @param view The view that triggered the method call, used for navigation.
      */
     private void saveEventToFirestore(View view) {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String userId = currentUser.getUid();
+
         // Get text from basic input fields
         String eventName = editTextEventName.getText().toString().trim();
         String description = editTextEventDescription.getText().toString().trim();
@@ -194,7 +207,7 @@ public class CreateEventFragment extends Fragment {
         Map<String, Object> event = new HashMap<>();
         event.put("name", eventName);
         event.put("description", description);
-        event.put("organizerId", "some_user_id"); // TODO: Add logic to get user ID
+        event.put("organizerId", userId);
         event.put("organizerName", "Organizer Name"); // TODO: Add logic to get organizer's name
         event.put("location", location);
         event.put("price", price);
