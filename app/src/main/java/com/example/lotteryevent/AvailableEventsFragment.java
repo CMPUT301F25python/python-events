@@ -31,11 +31,29 @@ public class AvailableEventsFragment extends Fragment {
     private EventAdapter adapter;
     private ListenerRegistration registration;
 
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_available_events, container, false);
     }
 
+    /**
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -79,16 +97,20 @@ public class AvailableEventsFragment extends Fragment {
                         e.setName(doc.getString("name"));
                         e.setLocation(doc.getString("location"));
                         e.setDescription(doc.getString("description"));
-                        String status = doc.getString("status");
-                        e.setStatus(status);
-                        if ("upcoming".equalsIgnoreCase(status)) {
-                            list.add(e);
-                        }
+//                        String status = doc.getString("status");
+//                        e.setStatus(status);
+//                        if ("upcoming".equalsIgnoreCase(status)) {
+//                            list.add(e);
+//                        }
+                        list.add(e);
                     }
                     adapter.setEvents(list);
                 });
     }
 
+    /**
+     *
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
