@@ -65,6 +65,9 @@ public class RunDrawFragment extends Fragment {
     }
 
     /**
+     * This block handles the logic for the removal and adding of users to waitlist and selected list
+     * after draw has been initialized. Also ensures that number of participants selected doesn't exceed
+     * number of people on the waitlist
      *
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
@@ -100,9 +103,18 @@ public class RunDrawFragment extends Fragment {
                     .collection("waitlist").get()
                     .addOnSuccessListener(query -> {
 
+
                         List<String> waitlist = new ArrayList<>();
                         for (DocumentSnapshot d : query.getDocuments()) {
                             waitlist.add(d.getId());
+                        }
+                        int waitlistCount = query.size();
+
+                        // Prevent organizer from selecting more people than available
+                        if (numToSelect > waitlistCount) {
+                            Toast.makeText(getContext(), "You cannot select more participants than are on the wait list(" +waitlistCount + ").",
+                                    Toast.LENGTH_LONG).show();
+                            return;
                         }
 
                         if (waitlist.isEmpty()) {
