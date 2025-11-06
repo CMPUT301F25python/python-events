@@ -277,4 +277,7 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public void setId(String id) {
+    }
 }

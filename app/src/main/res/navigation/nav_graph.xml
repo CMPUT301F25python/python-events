@@ -46,6 +46,11 @@
         tools:layout="@layout/fragment_user_profile" />
 
     <fragment
+        android:id="@+id/availableEventsFragment"
+        android:name="com.example.lotteryevent.AvailableEventsFragment"
+        android:label="Events" />
+  
+    <fragment
         android:id="@+id/runDrawFragment"
         android:name="com.example.lotteryevent.organizer.RunDrawFragment"
         android:label="Run Draw"
