@@ -15,7 +15,10 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,6 +81,9 @@ public class NotificationCustomManager {
         notification.put("eventName", eventName);
         notification.put("organizerId", organizerId);
         notification.put("organizerName", organizerName);
+        notification.put("seen", false);
+        String time = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.CANADA).format(new Date());
+        notification.put("timestamp", time);
 
         db.collection("users").document(uid).collection("notifications").add(notification)
                 .addOnSuccessListener(v -> Log.d(TAG, "Notification added for user ID " + uid + " with notification ID " + v.getId()))

@@ -49,6 +49,7 @@ public class HomeFragment extends Fragment {
     private HomeViewModel homeViewModel;
     private EventAdapter eventAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private NotificationCustomManager notificationCustomManager;
 
 
     /**
@@ -103,6 +104,8 @@ public class HomeFragment extends Fragment {
             ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Your Events");
         }
         setupMenu();
+
+        notificationCustomManager = new NotificationCustomManager(getContext());
 
         // Setup main UI components
         setupRecyclerView(view);
@@ -217,6 +220,14 @@ public class HomeFragment extends Fragment {
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 // Handle clicks on the profile icon
                 if (menuItem.getItemId() == R.id.profile_icon) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                            return true;
+                        }
+                    }
+                    notificationCustomManager.generateNotification();
                     NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
                     return true;
                 }
@@ -224,4 +235,14 @@ public class HomeFragment extends Fragment {
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
+
+    private final ActivityResultLauncher<String> requestNotificationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // Permission granted — send notification
+                    notificationCustomManager.generateNotification();
+                } else {
+                    Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
+                }
+            });
 }
