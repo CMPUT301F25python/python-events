@@ -101,13 +101,13 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      */
     private void fillEntrantMetrics() {
         // used to find the total number of entrants, adds from the waiting list and the selected list
-        AtomicInteger totalEntrantNum = new AtomicInteger();
         AtomicInteger chosenEntrants = new AtomicInteger();
 
         db.collection("events").document(eventId)
             .collection("waitlist").get()
-            .addOnSuccessListener(query -> {
-                totalEntrantNum.addAndGet(query.getDocuments().size());
+            .addOnSuccessListener(queryWaitlist -> {
+                // displays the number of entrants in the waiting list
+                waitingListCountText.setText(String.valueOf(queryWaitlist.getDocuments().size()));
             })
             .addOnFailureListener(e ->
                     Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
@@ -115,45 +115,43 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
 
         db.collection("events").document(eventId)
             .collection("selected").get()
-            .addOnSuccessListener(query -> {
-                totalEntrantNum.addAndGet(query.getDocuments().size());
-                chosenEntrants.set(query.getDocuments().size());
+            .addOnSuccessListener(querySelected -> {
+                chosenEntrants.set(querySelected.getDocuments().size());
                 // displays number of drawn entrants
-                selectedUsersCountText.setText(String.valueOf(query.getDocuments().size()));
+                selectedUsersCountText.setText(String.valueOf(querySelected.getDocuments().size()));
+
+                db.collection("events").document(eventId).get()
+                        .addOnSuccessListener(document -> {
+                            if (document != null && document.exists()) {
+                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                Long capacityLong = document.getLong("capacity");
+
+                                if (capacityLong != null) {
+                                    int capacity = capacityLong.intValue();
+                                    // calculates and displays the capacity of the event left after the draw
+                                    int spacesLeft = capacity - chosenEntrants.get();
+                                    if (spacesLeft > 0) {
+                                        availableSpaceCountText.setText(String.valueOf(spacesLeft));
+                                    } else {
+                                        availableSpaceCountText.setText("0");
+                                    }
+                                } else {
+                                    availableSpaceCountText.setText("No Limit");
+                                }
+                            } else {
+                                Log.d(TAG, "No such document");
+                                Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.w(TAG, "get failed with ", e);
+                            Toast.makeText(getContext(), "Error loading event's number of spots available", Toast.LENGTH_SHORT).show();
+                        });
+
             })
             .addOnFailureListener(e ->
                     Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
             );
-
-        // displays the number of entrants in the waiting list
-        waitingListCountText.setText(String.valueOf(totalEntrantNum.get()));
-
-        db.collection("events").document(eventId).get()
-            .addOnSuccessListener(document -> {
-                if (document != null && document.exists()) {
-                    Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                    String capacity = document.getString("capacity");
-
-                    if (capacity != null) {
-                        // calculates and displays the capacity of the event left after the draw
-                        int spacesLeft = Integer.parseInt(capacity) - chosenEntrants.get();
-                        if (spacesLeft > 0) {
-                            availableSpaceCountText.setText(String.valueOf(spacesLeft));
-                        } else {
-                            availableSpaceCountText.setText("0");
-                        }
-                    } else {
-                        availableSpaceCountText.setText("No Limit");
-                    }
-                } else {
-                    Log.d(TAG, "No such document");
-                    Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.w(TAG, "get failed with ", e);
-                Toast.makeText(getContext(), "Error loading event's number of spots available", Toast.LENGTH_SHORT).show();
-            });
     }
 
     /**
