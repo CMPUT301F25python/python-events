@@ -13,9 +13,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LotteryEvent">
         <activity
-            android:name=".AfterNotification"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

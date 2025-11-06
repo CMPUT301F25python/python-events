@@ -19,18 +19,15 @@ import com.example.lotteryevent.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This fragment allows the organizer to run the draw for an event.
+ * This fragment allows the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
  * <p>
- *     Organizer enters how many participants should be selected, and then starts draw
- *     When the draw begins, this fragment calls LotteryManager to perform selection
- *     and update firestore
+ *     Organizer can view the number of entrants in waiting list, how many spots available for the event, and how many entrants were drawn.
+ *     Organizer can click the "Confirm and Notify" button which confirms the users drawn and notifies the chosen entrants by creating
+ *     notification documents for the user in Firebase. Organizer can also press "Cancel" which moves all entrants back to the waiting list.
  * </p>
  */
 public class ConfirmDrawAndNotifyFragment extends Fragment {
@@ -42,22 +39,19 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     private TextView waitingListCountText;
     private TextView availableSpaceCountText;
     private TextView selectedUsersCountText;
-
-//    private ArrayList<String> chosenEntrantsId;
-
     private String eventId = "temporary filler for event ID";
 
 
     /**
-     *
+     * Inflates the layout for this fragment and gets event ID from bundle.
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
-     * UI should be attached to.  The fragment should not add the view itself,
+     * UI should be attached to. The fragment should not add the view itself,
      * but this can be used to generate the LayoutParams of the view.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
-     *
+     * @return The view for the fragment's UI
      *
      */
     @Nullable
@@ -74,7 +68,8 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     }
 
     /**
-     *
+     * UI initialization and set up including displaying user metrics to the screen
+     * and setting up button click listeners.
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
@@ -92,7 +87,6 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         availableSpaceCountText = view.findViewById(R.id.available_space_count);
         selectedUsersCountText = view.findViewById(R.id.selected_users_count);
 
-//        chosenEntrantsId = new ArrayList<>();
         notifManager = new NotificationCustomManager(getContext());
 
         fillEntrantMetrics();
@@ -100,8 +94,15 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
 
     }
 
+
+    /**
+     * Fills TextViews on the screen with entrant metrics including number of entrants in the waiting list,
+     * number of spaces available in the event, and number of entrants chosen by the lottery.
+     */
     private void fillEntrantMetrics() {
+        // used to find the total number of entrants, adds from the waiting list and the selected list
         AtomicInteger totalEntrantNum = new AtomicInteger();
+        AtomicInteger chosenEntrants = new AtomicInteger();
 
         db.collection("events").document(eventId)
             .collection("waitlist").get()
@@ -116,12 +117,15 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
             .collection("selected").get()
             .addOnSuccessListener(query -> {
                 totalEntrantNum.addAndGet(query.getDocuments().size());
+                chosenEntrants.set(query.getDocuments().size());
+                // displays number of drawn entrants
                 selectedUsersCountText.setText(String.valueOf(query.getDocuments().size()));
             })
             .addOnFailureListener(e ->
                     Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
             );
 
+        // displays the number of entrants in the waiting list
         waitingListCountText.setText(String.valueOf(totalEntrantNum.get()));
 
         db.collection("events").document(eventId).get()
@@ -129,8 +133,15 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 if (document != null && document.exists()) {
                     Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                     String capacity = document.getString("capacity");
+
                     if (capacity != null) {
-                        availableSpaceCountText.setText(String.valueOf(capacity));
+                        // calculates and displays the capacity of the event left after the draw
+                        int spacesLeft = Integer.parseInt(capacity) - chosenEntrants.get();
+                        if (spacesLeft > 0) {
+                            availableSpaceCountText.setText(String.valueOf(spacesLeft));
+                        } else {
+                            availableSpaceCountText.setText("0");
+                        }
                     } else {
                         availableSpaceCountText.setText("No Limit");
                     }
@@ -145,32 +156,41 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
             });
     }
 
+    /**
+     * Sets up click listeners for the buttons.
+     * @param view The View from onViewCreated().
+     */
     private void setupClickListeners(@NonNull View view) {
         confirmAndNotifyButton.setOnClickListener(v -> confirmSelectedUsersAndNotify(view));
-
         cancelButton.setOnClickListener(v -> cancelLottery(view));
     }
 
+    /**
+     * Confirms that chosen users from the lottery indeed exist and notifies them of their selection.
+     * @param view The View from onViewCreated(). Used to navigate to another fragment
+     */
     private void confirmSelectedUsersAndNotify(@NonNull View view) {
         db.collection("events").document(eventId)
                 .collection("selected").get()
                 .addOnSuccessListener(query -> {
+                    // no users selected from lottery
                     if (query.isEmpty()) {
                         Toast.makeText(getContext(), "No chosen entrants to confirm and notify.", Toast.LENGTH_SHORT).show();
                     } else {
+                        // used to check all users' notify queries sent before changing fragments
                         AtomicInteger completed = new AtomicInteger(0);
                         int total = query.size();
                         for (DocumentSnapshot d : query.getDocuments()) {
                             String uid = d.getId();
                             db.collection("users").document(uid).get()
-                                            .addOnSuccessListener(user -> {
+                                            .addOnSuccessListener(user -> { // user of that id found, can successfully notify them
                                                 notifyEntrant(uid);
                                                 int current = completed.incrementAndGet();
                                                 if (current == total) {
                                                     Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
                                                 }
                                             })
-                                            .addOnFailureListener(user -> {
+                                            .addOnFailureListener(user -> { // user with that id not found, cannot notify. move on to the next user
                                                 Toast.makeText(getContext(), "User with id " + uid + " not found and could not be notified.", Toast.LENGTH_SHORT).show();
                                                 int current = completed.incrementAndGet();
                                                 if (current == total) {
@@ -183,6 +203,12 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                     Toast.makeText(getContext(), "Error loading selected entrants", Toast.LENGTH_SHORT).show();
                 });
     }
+
+    /**
+     * Gets event's name, organizer id, organizer name, and creates message to send to notification manager's
+     * sendNotification() method to send the notification
+     * @param uid User ID, used in sending notification.
+     */
     private void notifyEntrant(String uid) {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(document -> {
@@ -204,21 +230,24 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 });
     }
 
+    /**
+     * Cancels the lottery by bringing entrants back to the waiting collection and switches fragment to the home fragment
+     * @param view Used to navigate to another fragment
+     */
     private void cancelLottery(@NonNull View view) {
         db.collection("events").document(eventId)
             .collection("selected").get()
             .addOnSuccessListener(query -> {
                 if (!query.isEmpty()) {
                     for (DocumentSnapshot d : query.getDocuments()) {
-//                        Map<String,Object> data = d.getData();
-//                        System.out.println("Data: " + data);
                         String id = d.getId();
 
+                        // for each selected entrant, adds them back to the waiting collection
                         db.collection("events").document(eventId)
                             .collection("waitlist").document(id).set(new HashMap<String, Object>())
                             .addOnSuccessListener(queryWaitList -> {
                                 Log.d(TAG, "Document ID " + id + " successfully written!");
-                                // remove document from selected collection
+                                // remove entrant from the selected collection
                                 db.collection("events").document(eventId)
                                         .collection("selected").document(id).delete()
                                         .addOnSuccessListener(v -> {Log.d(TAG, "Document ID " + id + " deleted successfully");})
