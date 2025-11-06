@@ -103,17 +103,19 @@ public class OrganizerEventPageFragment extends Fragment {
                     .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
         });
 
-        this.manageSelectedBtn = view.findViewById(R.id.btnManageSelected);
-        this.manageSelectedBtn.setVisibility(View.GONE); // hide until we confirm data
-        this.manageSelectedBtn.setOnClickListener(v -> {
-            OrganizerEventPageFragmentDirections
-                    .ActionOrganizerEventPageFragmentToManageSelectedFragment action =
-                    OrganizerEventPageFragmentDirections
-                            .actionOrganizerEventPageFragmentToManageSelectedFragment(eventId);
-            Navigation.findNavController(v).navigate(action);
-        });
+        //Temporarily Commented out for troubleshooting
 
-        refreshManageSelectedVisibility();
+//        this.manageSelectedBtn = view.findViewById(R.id.btnManageSelected);
+//        this.manageSelectedBtn.setVisibility(View.GONE); // hide until we confirm data
+//        this.manageSelectedBtn.setOnClickListener(v -> {
+//            OrganizerEventPageFragmentDirections
+//                    .ActionOrganizerEventPageFragmentToManageSelectedFragment action =
+//                    OrganizerEventPageFragmentDirections
+//                            .actionOrganizerEventPageFragmentToManageSelectedFragment(eventId);
+//            Navigation.findNavController(v).navigate(action);
+//        });
+//
+//        refreshManageSelectedVisibility();
     }
 
     @Override
@@ -122,6 +124,7 @@ public class OrganizerEventPageFragment extends Fragment {
         refreshManageSelectedVisibility();
     }
 
+    // Temporarily commented out for troubleshooting
     private void refreshManageSelectedVisibility() {
         if (eventId == null) return;
         db.collection("events").document(eventId)
