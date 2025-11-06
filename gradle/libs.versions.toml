@@ -30,4 +30,3 @@ firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "fireb
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
