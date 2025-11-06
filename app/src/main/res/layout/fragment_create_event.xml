@@ -18,190 +18,282 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/event_information"
+            android:textColor="@color/primary_green"
+            android:textSize="18sp"
             android:textAppearance="?attr/textAppearanceTitleMedium"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
         <!-- 1. Event Name -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_name"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/edit_text_event_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/event_name"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/event_name"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="8dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/header_event_info">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapWords" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/header_event_info"/>
+
+        <EditText
+            android:id="@+id/edit_text_event_name"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/event_name"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            android:inputType="textCapWords"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_label"/>
 
         <!-- 2. Event Description -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_description"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/event_description_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/description"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/description"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="8dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_name">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                android:minLines="3" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_name"/>
+
+        <EditText
+            android:id="@+id/edit_text_event_description"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/description"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            android:inputType="textLongMessage"
+            app:layout_constraintTop_toBottomOf="@id/event_description_label"/>
 
         <!-- 3. Event Location -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_location"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/event_location_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/location"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="@string/location"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="8dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_description">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_location"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textCapWords" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_description"/>
+
+        <EditText
+            android:id="@+id/edit_text_event_location"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/location"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            android:inputType="text"
+            app:layout_constraintTop_toBottomOf="@id/event_location_label"/>
 
         <!-- 4. Event Start Date & Time -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_start_date"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <!--4a. Event Start Date -->
+        <TextView
+            android:id="@+id/event_start_date_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="8dp"
-            android:hint="@string/event_start_date"
-            app:endIconDrawable="@drawable/ic_calendar_month_24"
-            app:endIconMode="custom"
-            app:layout_constraintEnd_toStartOf="@id/text_input_layout_event_start_time"
+            android:text="@string/event_start_date"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_location">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_start_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_start_time"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:hint="@string/event_start_time"
-            app:endIconDrawable="@drawable/baseline_access_time_24"
-            app:endIconMode="custom"
-            app:layout_constraintBottom_toBottomOf="@id/text_input_layout_event_start_date"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/text_input_layout_event_start_date"
-            app:layout_constraintTop_toTopOf="@id/text_input_layout_event_start_date">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_start_time"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_location" />
 
-        <!-- 5. Event End Date & Time -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_end_date"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
+        <EditText
+            android:id="@+id/edit_text_event_start_date"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_height="50dp"
             android:layout_marginEnd="8dp"
-            android:hint="@string/event_end_date"
-            app:endIconDrawable="@drawable/ic_calendar_month_24"
-            app:endIconMode="custom"
-            app:layout_constraintEnd_toStartOf="@id/text_input_layout_event_end_time"
+            android:background="@drawable/input_field_background"
+            android:drawableEnd="@drawable/ic_calendar_month_24"
+            android:drawablePadding="8dp"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:hint="@string/event_start_date"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@id/edit_text_event_start_time"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_start_date">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_end_date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_end_time"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+            app:layout_constraintTop_toBottomOf="@id/event_start_date_label"/>
+
+        <!-- 4b. Event Start Time -->
+        <TextView
+            android:id="@+id/event_start_time_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/event_start_time"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="@id/edit_text_event_start_time"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_location" />
+
+        <EditText
+            android:id="@+id/edit_text_event_start_time"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
             android:layout_marginStart="8dp"
-            android:hint="@string/event_end_time"
-            app:endIconDrawable="@drawable/baseline_access_time_24"
-            app:endIconMode="custom"
-            app:layout_constraintBottom_toBottomOf="@id/text_input_layout_event_end_date"
+            android:background="@drawable/input_field_background"
+            android:drawableEnd="@drawable/baseline_access_time_24"
+            android:drawablePadding="8dp"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:hint="@string/event_start_time"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/text_input_layout_event_end_date"
-            app:layout_constraintTop_toTopOf="@id/text_input_layout_event_end_date">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_end_time"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false"
-                android:cursorVisible="false"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintStart_toEndOf="@id/edit_text_event_start_date"
+            app:layout_constraintTop_toBottomOf="@id/event_start_time_label"/>
+
+        <!-- 5a. Event End Date -->
+        <TextView
+            android:id="@+id/event_end_date_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/event_end_date"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_start_date" />
+
+        <EditText
+            android:id="@+id/edit_text_event_end_date"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/input_field_background"
+            android:drawableEnd="@drawable/ic_calendar_month_24"
+            android:drawablePadding="8dp"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:hint="@string/event_end_date"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@id/edit_text_event_end_time"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/event_end_date_label"/>
+
+        <!-- 5b. Event End Time -->
+        <TextView
+            android:id="@+id/event_end_time_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/event_end_time"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="@id/edit_text_event_end_time"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_start_date" />
+
+        <EditText
+            android:id="@+id/edit_text_event_end_time"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/input_field_background"
+            android:drawableEnd="@drawable/baseline_access_time_24"
+            android:drawablePadding="8dp"
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:hint="@string/event_end_time"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/edit_text_event_end_date"
+            app:layout_constraintTop_toBottomOf="@id/event_end_time_label"/>
 
         <!-- 6. Event Price -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_event_price"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/event_price_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:text="@string/price"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_end_date" />
+
+        <EditText
+            android:id="@+id/edit_text_event_price"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
             android:hint="@string/price"
+            android:padding="12dp"
+            android:inputType="numberDecimal"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_end_date">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_event_price"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/event_price_label"/>
 
         <!-- Max Attendees -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/text_input_layout_max_attendees"
-            style="@style/Widget.App.TextInputLayout.OutlinedBox.Rounded"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/max_attendees_label"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:text="@string/max_attendees"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_event_price" />
+
+        <EditText
+            android:id="@+id/edit_text_max_attendees"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
             android:hint="@string/max_attendees"
+            android:inputType="number"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_event_price">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/edit_text_max_attendees"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toBottomOf="@id/max_attendees_label"/>
 
+        <!-- Lottery Guidelines -->
+        <TextView
+            android:id="@+id/lottery_guidelines_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/lottery_guidelines"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/edit_text_max_attendees" />
+
+        <EditText
+            android:id="@+id/edit_text_lottery_guidelines"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/lottery_guidelines"
+            android:inputType="textLongMessage"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/lottery_guidelines_label"/>
 
         <!-- ==== WAITING LIST INFORMATION SECTION ==== -->
         <TextView
@@ -210,30 +302,23 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/waiting_list_information"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="@color/primary_green"
+            android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_input_layout_max_attendees" />
+            app:layout_constraintTop_toBottomOf="@id/edit_text_lottery_guidelines" />
 
         <!-- Geolocation Requirement -->
-        <TextView
-            android:id="@+id/label_geolocation"
+        <CheckBox
+            android:id="@+id/checkbox_geolocation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginTop="16dp"
             android:text="@string/require_geolocation_for_check_in"
-            android:textSize="16sp"
-            app:layout_constraintEnd_toStartOf="@id/switch_geolocation"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/header_waiting_list_info" />
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switch_geolocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintBaseline_toBaselineOf="@id/label_geolocation"
-            app:layout_constraintEnd_toEndOf="parent" />
-
 
         <!-- ==== SAVE BUTTON ==== -->
         <Button
@@ -248,7 +333,7 @@
             app:cornerRadius="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/label_geolocation"
+            app:layout_constraintTop_toBottomOf="@id/checkbox_geolocation"
             app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

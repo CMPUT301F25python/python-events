@@ -5,6 +5,8 @@
         <item name="colorPrimary">@color/primary_green</item>
         <!-- Color of text and icons that appear on top of the primary green -->
         <item name="colorOnPrimary">@color/white</item>
+        <!-- Default white background -->
+        <item name="android:windowBackground">@color/white</item>
     </style>
 
     <style name="Theme.LotteryEvent" parent="Base.Theme.LotteryEvent" />
@@ -17,5 +19,13 @@
     <style name="ShapeAppearance.App.TextInputLayout.Rounded" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">10dp</item>
+    </style>
+
+    <style name="PinkButton" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/primary_pink</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="cornerRadius">30dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
     </style>
 </resources>
