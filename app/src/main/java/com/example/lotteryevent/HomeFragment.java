@@ -158,7 +158,7 @@ public class HomeFragment extends Fragment {
      */
     private void setupRecyclerView(View view) {
         RecyclerView recyclerView = view.findViewById(R.id.events_recycler_view);
-        eventAdapter = new EventAdapter();
+        eventAdapter = new EventAdapter(R.layout.tile_event);
         recyclerView.setAdapter(eventAdapter);
 
         eventAdapter.setOnItemClickListener(event -> {
