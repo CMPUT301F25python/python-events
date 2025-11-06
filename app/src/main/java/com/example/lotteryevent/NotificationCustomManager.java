@@ -1,5 +1,7 @@
 package com.example.lotteryevent;
 
+import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,17 +12,26 @@ import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -123,5 +134,43 @@ public class NotificationCustomManager {
                 Log.w(TAG, "Failed to get notifications for user " + uid, e);
                 Toast.makeText(myContext, "Failed to get notification for user", Toast.LENGTH_SHORT).show();
             });
+    }
+
+    public void listenForNotifications(String uid) {
+        AtomicBoolean isFirstListener = new AtomicBoolean(true);
+        db.collection("users").document(uid).collection("notifications").whereEqualTo("seen", false)
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot value,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (isFirstListener.get()) {
+                            isFirstListener.set(false);
+                            return;
+                        }
+                        if (e != null) {
+                            Log.w(TAG, "Listen failed with an error", e);
+                            return;
+                        }
+                        if (value == null) {
+                            Log.w(TAG, "No change to notifications found");
+                            return;
+                        }
+
+                        for (DocumentChange dc : value.getDocumentChanges()) {
+                            if (dc.getType() == ADDED) {
+                                DocumentSnapshot d = dc.getDocument();
+                                String title = d.getString("title");
+                                String message = d.getString("message");
+                                String eventName = d.getString("eventName");
+                                String organizerName = d.getString("organizerName");
+                                String timestamp = d.getString("timestamp");
+
+                                String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
+
+                                generateNotification(title, fullMessage);
+                            }
+                        }
+                    }
+                });
     }
 }

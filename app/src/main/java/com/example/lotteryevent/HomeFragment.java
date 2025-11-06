@@ -136,6 +136,7 @@ public class HomeFragment extends Fragment {
             }
 
             notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
+            notificationCustomManager.listenForNotifications(uid);
         }
     }
 
