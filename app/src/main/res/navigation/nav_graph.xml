@@ -41,5 +41,10 @@
         android:label="@string/user_profile_page"
         tools:layout="@layout/fragment_user_profile" />
 
+    <fragment
+        android:id="@+id/availableEventsFragment"
+        android:name="com.example.lotteryevent.AvailableEventsFragment"
+        android:label="Events"
+        tools:layout="@layout/fragment_home" />
 
 </navigation>

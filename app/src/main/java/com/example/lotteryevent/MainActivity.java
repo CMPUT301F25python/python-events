@@ -1,7 +1,9 @@
 package com.example.lotteryevent;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -79,6 +81,15 @@ public class MainActivity extends AppCompatActivity {
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+
+        Activity view = null;
+        view.findViewById(R.id.nav_events).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavHostFragment.findNavController(HomeFragment.this)
+                        .navigate(R.id.action_HomeFragment_to_AvailableEventsFragment);
+            }
+        });
     }
 
     /**

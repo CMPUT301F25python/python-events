@@ -6,8 +6,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.lotteryevent.AvailableEventsFragment;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
+
+import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +24,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     private final List<Event> eventList = new ArrayList<>();
     private OnItemClickListener listener;
+
+    public void setData(List<AvailableEventsFragment.Event> list) {
+    }
 
     /**
      * A listener interface for receiving callbacks when an item in the RecyclerView is clicked.
@@ -108,6 +115,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     class EventViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleTextView;
         private final ImageView posterImageView;
+        private AbstractCollection<Object> data;
 
         /**
          * Constructs a new {@link EventViewHolder}.
@@ -136,8 +144,14 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
          * @param event The {@link Event} object containing the data to display.
          */
         public void bind(Event event) {
-            titleTextView.setText(event.getName());
-            // TODO: Future logic to load an image into posterImageView can be added here.
+
         }
+
+        public void setData(@NonNull List<AvailableEventsFragment.Event> items) {
+            data.clear();
+            data.addAll(items);
+            notifyDataSetChanged(); // simple refresh (use DiffUtil later for nicer animations)
+        }
+
     }
 }
