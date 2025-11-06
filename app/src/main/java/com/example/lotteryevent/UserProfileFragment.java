@@ -1,6 +1,7 @@
 package com.example.lotteryevent;
 
 import android.os.Bundle;
+import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,7 @@ public class UserProfileFragment extends Fragment {
     private EditText emailField;
     private EditText phoneField;
     private Button updateInfo;
+    private Button deleteProfile;
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String deviceId;
@@ -93,12 +95,18 @@ public class UserProfileFragment extends Fragment {
         emailField = view.findViewById(R.id.email_field);
         phoneField = view.findViewById(R.id.phone_field);
         updateInfo = view.findViewById(R.id.update_button);
+        deleteProfile = view.findViewById(R.id.delete_button);
+
+        phoneField.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
         // Load user data
         loadProfileInfo();
 
         // Save updated user data
         updateInfo.setOnClickListener(v -> setProfileInfo());
+
+        // delete user data
+        deleteProfile.setOnClickListener(c -> confirmProfileDeletion(view));
 
     }
 
@@ -150,9 +158,12 @@ public class UserProfileFragment extends Fragment {
         }
 
         // check if valid phone number (if one has been provided)
-        if (!phone.isEmpty() && phone.length() != 10) {
-            Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
-            return;
+        if (!phone.isEmpty()) {
+            String phoneDigitsOnly = phone.replaceAll("\\D", "");
+            if(phoneDigitsOnly.length() != 10) {
+                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
         // prepare Firestore update
@@ -168,4 +179,92 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e ->
                         Toast.makeText(getContext(), "Error updating profile.", Toast.LENGTH_SHORT).show());
     }
+
+    /**
+     * Clears the profile information for a specified user in Firestore.
+     * <p>
+     * This method sets the "name", "email", and "phone" fields in the user's
+     * document to null, effectively removing all personal data fields.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose profile information is to be cleared
+     */
+    private void clearProfileInfo(String uid) {
+        Map<String, Object> clearFields = new HashMap<>();
+        clearFields.put("name", null);
+        clearFields.put("email", null);
+        clearFields.put("phone", null);
+
+        db.collection("users").document(uid)
+                .update(clearFields)
+                .addOnSuccessListener(aVoid -> Log.d("UserProfile", "User profile cleared"))
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to clear profile: " + e.getMessage()));
+    }
+
+    /**
+     * Deletes all specified subcollections for a given user in Firestore.
+     * <p>
+     * Each document in the specified subcollections will be deleted.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose subcollections are to be deleted
+     */
+    private void deleteSubcollections(String uid) {
+
+        // ---------- NOTE: MANUALLY update for every addition collection a user has ------
+        String[] subcollections = {"notifications"};
+
+        for (String collection : subcollections) {
+            db.collection("users").document(uid).collection(collection)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                            doc.getReference().delete();
+                        }
+                    })
+                    .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection " + collection + ": " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Deletes all user data including profile information and subcollections.
+     * <p>
+     * This method first clears the user's main document fields and then deletes
+     * all related subcollections. A confirmation Toast message is displayed, and
+     * go back to home.
+     * </p>
+     *
+     * @param uid  the unique identifier (UID) of the user whose data will be deleted
+     * @param view the current view, used for navigation and context access
+     */
+    private void deleteUserData(String uid, View view) {
+        clearProfileInfo(uid); // clears main document fields
+        deleteSubcollections(uid); // deletes all subcollections
+        Toast.makeText(getContext(), "User data wiped successfully.", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(view).popBackStack();
+    }
+
+    /**
+     * Displays a confirmation dialog before deleting a user's profile and associated data.
+     * <p>
+     * If the user confirms, the method retrieves the currently authenticated user
+     * and proceeds to delete their data from Firestore. If the user cancels, no action is taken.
+     * </p>
+     *
+     * @param view the current view, used for dialog context and navigation
+     */
+    private void confirmProfileDeletion(View view){
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Data")
+                .setMessage("This will clear your profile information and delete all associated data. Are you sure you want to delete your profile?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    FirebaseUser currentUser = auth.getCurrentUser();
+                    if (currentUser != null) {
+                        deleteUserData(currentUser.getUid(), view);
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
+
 }
