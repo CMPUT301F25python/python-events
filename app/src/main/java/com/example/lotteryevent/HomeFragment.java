@@ -18,6 +18,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
+
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.lotteryevent.adapters.EventAdapter;
@@ -209,7 +211,7 @@ public class HomeFragment extends Fragment {
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 // Handle clicks on the profile icon
                 if (menuItem.getItemId() == R.id.profile_icon) {
-                    Toast.makeText(getContext(), "Profile clicked!", Toast.LENGTH_SHORT).show();
+                    NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
                     return true;
                 }
                 return false;
