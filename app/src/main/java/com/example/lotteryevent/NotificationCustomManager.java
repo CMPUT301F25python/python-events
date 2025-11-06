@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -52,7 +53,7 @@ public class NotificationCustomManager {
     }
 
     @SuppressLint("MissingPermission")
-    public void generateNotification() {
+    public void generateNotification(String title, String message) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, AfterNotification.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -63,8 +64,9 @@ public class NotificationCustomManager {
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this.myContext, channelID)
                 .setSmallIcon(R.drawable.ic_notifications_24)
-                .setContentTitle("Congratulations!")
-                .setContentText("You won the lottery for ____! Confirm your registration now!")
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX);
@@ -96,5 +98,30 @@ public class NotificationCustomManager {
 
     public void checkAndDisplayUnreadNotifications(String uid) {
         db.collection("users").document(uid).collection("notifications")
+            .whereEqualTo("seen", false).get()
+            .addOnSuccessListener(notifs -> {
+                int size = notifs.size();
+                if (size == 1) {
+                    DocumentSnapshot d = notifs.getDocuments().get(0);
+                    String title = d.getString("title");
+                    String message = d.getString("message");
+                    String eventName = d.getString("eventName");
+                    String organizerName = d.getString("organizerName");
+                    String timestamp = d.getString("timestamp");
+
+                    String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
+
+                    generateNotification(title, fullMessage);
+                } else if (size > 1) {
+                    String title = "You have " + String.valueOf(size) + "unread notifications";
+                    String message = "Click here or go to the notifications section to see all messages you missed!";
+
+                    generateNotification(title, message);
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.w(TAG, "Failed to get notifications for user " + uid, e);
+                Toast.makeText(myContext, "Failed to get notification for user", Toast.LENGTH_SHORT).show();
+            });
     }
 }

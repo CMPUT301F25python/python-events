@@ -250,7 +250,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onActivityResult(Boolean isGranted) {
                 if (isGranted) {
-                    notificationCustomManager.generateNotification();
+                    Toast.makeText(requireContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
                 }

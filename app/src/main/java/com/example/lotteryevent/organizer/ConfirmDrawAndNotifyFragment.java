@@ -128,7 +128,8 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
             .addOnSuccessListener(document -> {
                 if (document != null && document.exists()) {
                     Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                    String capacity = document.getString("capacity");
+                    Long capacityLong = document.getLong("capacity");
+                    Integer capacity = capacityLong.intValue();
                     if (capacity != null) {
                         availableSpaceCountText.setText(String.valueOf(capacity));
                     } else {
