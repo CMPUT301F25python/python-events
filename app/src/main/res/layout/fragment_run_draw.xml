@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/EventName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Event Name"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/waitingList"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Waiting List:"
+        android:textColor="#4CAF50"
+        android:textSize="16sp"
+        android:layout_marginBottom="4dp"
+        tools:ignore="HardcodedText"/>
+
+    <TextView
+        android:id="@+id/waitingListCount"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="# of people on waiting list"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        android:layout_marginBottom="12dp"
+        tools:ignore="HardcodedText"/>
+
+    <TextView
+        android:id="@+id/availableSpace"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Spots Available:"
+        android:textColor="#4CAF50"
+        android:textSize="16sp"
+        android:layout_marginBottom="4dp"
+        tools:ignore="HardcodedText" />
+
+    <TextView
+        android:id="@+id/availableSpaceCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="# of spots available for registration"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="14sp"
+        android:layout_marginBottom="24dp"
+        tools:ignore="HardcodedText" />
+
+    <EditText
+        android:id="@+id/numSelectPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Number of Participants to select"
+        android:textColor="#4CAF50"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp"
+        tools:ignore="HardcodedText"/>
+
+    <EditText
+        android:id="@+id/numSelectedEntrants"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Enter # of participants you wish to select"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp"
+        tools:ignore="HardcodedText"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:text="Cancel"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="#F48FB1"
+            android:textColor="@android:color/white"
+            tools:ignore="ButtonStyle,HardcodedText"/>
+
+        <Button
+            android:id="@+id/runDrawButton"
+            android:text="Run Draw"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#F48FB1"
+            android:textColor="@android:color/white"
+            tools:ignore="ButtonStyle,HardcodedText"/>
+    </LinearLayout>
+
+</LinearLayout>
