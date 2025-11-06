@@ -29,12 +29,13 @@ import java.util.Map;
 /**
  * A {@link Fragment} subclass that allows users to view and update their profile information.
  * This includes name, email, and phone number, all stored in Firestore.
+ * The user can later delete their profile information and all associate documents in collections.
  * The fragment uses Firebase Authentication to identify the user.
  *
  * <p>Includes validation for user input and provides a back button that navigates to the previous
  * fragment using Jetpack Navigation.</p>
  *
- * @author
+ * @author Sanaa Bhaidani
  * @version 1.0
  */
 public class UserProfileFragment extends Fragment {
