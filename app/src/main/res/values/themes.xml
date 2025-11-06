@@ -5,6 +5,8 @@
         <item name="colorPrimary">@color/primary_green</item>
         <!-- Color of text and icons that appear on top of the primary green -->
         <item name="colorOnPrimary">@color/white</item>
+        <!-- Default white background -->
+        <item name="android:windowBackground">@color/white</item>
     </style>
 
     <style name="Theme.LotteryEvent" parent="Base.Theme.LotteryEvent" />
