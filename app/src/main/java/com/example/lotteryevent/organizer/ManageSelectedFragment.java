@@ -19,6 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ManageSelectedFragment extends Fragment {
@@ -59,10 +60,10 @@ public class ManageSelectedFragment extends Fragment {
                     this.selectedUsers.clear();
 
                     for (QueryDocumentSnapshot doc : query) {
-                        String uid = doc.getString("uid");
-                        if(uid != null) {
-                            this.selectedUsers.add(uid);
-                        }
+                        String uid = doc.getId();
+
+                        this.selectedUsers.add(uid);
+
                     }
                     this.selectedAdapter.notifyDataSetChanged();
                 })
@@ -82,7 +83,9 @@ public class ManageSelectedFragment extends Fragment {
                     // Add user back to waitlist
                     this.db.collection("events")
                             .document(this.eventId)
-                            .update("waitlist", FieldValue.arrayUnion(userId))
+                            .collection("waitlist")
+                            .document(userId)
+                            .set(new HashMap<>())
                             .addOnSuccessListener(unused -> {
                                 this.selectedUsers.remove(userId);
                                 this.selectedAdapter.notifyDataSetChanged();
