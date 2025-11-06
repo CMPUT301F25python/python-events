@@ -104,13 +104,6 @@ public class HomeFragment extends Fragment {
         FloatingActionButton fab = view.findViewById(R.id.fab_add_event);
         fab.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_createEventFragment));
 
-        // Temporary button to test Run Draw Screen
-        View testRunDrawButton = view.findViewById(R.id.testRunDrawButton);
-        if (testRunDrawButton != null) {
-            testRunDrawButton.setOnClickListener(v ->
-                    Navigation.findNavController(v).navigate(R.id.runDrawFragment)
-            );
-        }
         // Setup observers to connect data from ViewModel to the UI
         setupObservers();
 

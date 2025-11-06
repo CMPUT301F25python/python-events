@@ -11,72 +11,77 @@ import java.util.Map;
 
 
 /**
- * This class handles the lottery logic
- * and allows the organizer to specify how many entrants should be randomly selected from waitlist
- * It then begins the lottery draw and updates the firestore with information about selected entrants
+ *
+ * This class handles the lottery logic and allows the organizer to specify how many entrants should be randomly selected from waitlist.
+ * It then begins the lottery draw and updates the firestore with information about selected entrants, and removes the specified number of entrants from waiting list
+ * putting them into the selected list. It ensures that the number of selected participants does not exceed the waitlist size.
  *
  *
  */
 public class LotteryManager {
     private final FirebaseFirestore db;
     public LotteryManager() {
+
         this.db = FirebaseFirestore.getInstance();
     }
 
     /**
-     * This class randomly selects a specified number of entrants to choose from waitlist for an event
+     * This class randomly selects a specified number of entrants to choose from waitlist for an event and begins the lottery draw process
      *
      * @param eventId
-     * This is the Document ID from firestore for the event
+     * This is the Document ID from firestore for the event that contains the waitlist
      *
      * @param numSelectedEntrants
-     * This is the number of entrants to select
+     * This is the number of entrants to select from waitlist
+     *
+     * <p>
+     *     -Reads current waitlist and selected lists
+     *     -Randomly shuffles to pick winners
+     *     -Updates firestore with selected winners as well as those remaining in waitlist
+     * </p>
      */
     public void selectWinners(String eventId, int numSelectedEntrants) {
         DocumentReference eventRef = this.db.collection("events").document(eventId);
-        eventRef.get().addOnSuccessListener((doc -> {
+        // Read waitlist from subcollection
+        eventRef.collection("Waitlist")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<String> waitlist = new ArrayList<>();
 
-            // If our entrant list exists, then get the list of entrants
-            if (doc.exists()) {
+                    for (var doc : querySnapshot.getDocuments()) {
+                        String uid = doc.getString("UID");
+                        if (uid != null) {
+                            waitlist.add(uid);
+                        }
+                    }
 
-                List<String> waitlist = (List<String>) doc.get("waitlist");
-                List<String> selected = (List<String>) doc.get("selected");
+                    if (waitlist.isEmpty()) {
+                        System.out.println("Waitlist is empty for " + eventId);
+                        return;
+                    }
 
-                if (waitlist == null) waitlist = new ArrayList<>();
-                if (selected == null) selected = new ArrayList<>();
+                    // Select winners
+                    Collections.shuffle(waitlist);
+                    int requested = Math.min(numSelectedEntrants, waitlist.size());
+                    List<String> winners = waitlist.subList(0, requested);
 
-                // Check if waitlist is empty and stop process
-                if (waitlist.isEmpty()) {
-                    System.out.println("Waitlist is empty for this event: " + eventId);
-                    return;
-                }
+                    // Write winners to /Selected
+                    for (String uid : winners) {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("UID", uid);
+                        eventRef.collection("Selected").add(data);
+                    }
 
-                int requested = numSelectedEntrants;
-                // Ensure selected number of entrants is within waiting list size
-                if (requested > waitlist.size()) {
-                    System.out.println("Requesting more entrants than available in waitlist");
-                    requested = waitlist.size();
-                }
+                    // Remove winners from waitlist
+                    for (var doc : querySnapshot) {
+                        if (winners.contains(doc.getString("UID"))) {
+                            doc.getReference().delete();
+                        }
+                    }
 
-                // Shuffle and pick winners
-                Collections.shuffle(waitlist);
-                List<String> winners = waitlist.subList(0, requested);
-
-                selected.addAll(winners);
-                waitlist = new ArrayList<>(waitlist.subList(requested, waitlist.size()));
-
-                // Update Firestore
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("elected", selected);
-                updates.put("waitlist", waitlist);
-
-                eventRef.update(updates)
-                        .addOnSuccessListener(v -> System.out.println("Selected winners for " + eventId))
-                        .addOnFailureListener(e -> System.out.println("Unable to update event: " + e.getMessage()));
-            }
-            else {
-                System.out.println("Event not found: " + eventId);
-            }
-        }));
+                    System.out.println("Winners selected for event " + eventId);
+                })
+                .addOnFailureListener(e ->
+                        System.out.println("Error reading waitlist: " + e.getMessage()));
     }
 }

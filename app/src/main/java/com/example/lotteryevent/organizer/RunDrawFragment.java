@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,14 +21,35 @@ import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
 
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.collect.Lists;
+import com.google.firebase.firestore.DocumentSnapshot;
 
+/**
+ * This fragment allows the organizer to run the draw for an event.
+ * <p>
+ *     Organizer enters how many participants should be selected, and then starts draw
+ *     When the draw begins, this fragment calls LotteryManager to perform selection
+ *     and update firestore
+ * </p>
+ */
 public class RunDrawFragment extends Fragment {
     private FirebaseFirestore db;
     private LotteryManager lotteryManager;
     private EditText numSelectedEntrants;
     private String eventId = "temporary filler for event ID";
 
+
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     *
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -41,6 +63,12 @@ public class RunDrawFragment extends Fragment {
         return view;
     }
 
+    /**
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -64,53 +92,49 @@ public class RunDrawFragment extends Fragment {
             int numToSelect = Integer.parseInt(inputText);
 
             // Temp Debug block to confirm correct EventId
-            android.util.Log.d("RunDraw", "calling LotteryManager for event: " + eventId);
-            //lotteryManager.selectWinners(eventId, numToSelect);
+            android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
-            this.db.collection("events").document(this.eventId).get()
-                    .addOnSuccessListener(document -> {
-                        if (!document.exists()) {
-                            Toast.makeText(this.getContext(), "Event not found", Toast.LENGTH_SHORT).show();
-                            return;
+            // Read waitlist subcollection
+            db.collection("events").document(eventId)
+                    .collection("waitlist").get()
+                    .addOnSuccessListener(query -> {
+
+                        List<String> waitlist = new ArrayList<>();
+                        for (DocumentSnapshot d : query.getDocuments()) {
+                            waitlist.add(d.getId());
                         }
-
-                        List<String> waitlist = (List<String>) document.get("waitlist");
-                        List<String> selected = (List<String>) document.get("selected");
-
-                        if (waitlist == null) waitlist = new ArrayList<>();
-                        if (selected == null) selected = new ArrayList<>();
 
                         if (waitlist.isEmpty()) {
-                            Toast.makeText(this.getContext(), "waitlist is empty", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "Waitlist is empty", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
-                        if (numToSelect > waitlist.size()) {
-                            Toast.makeText(this.getContext(), "Waitlist does not contain enough entrants", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        // Randomly pick entrants
+                        int requested = Math.min(numToSelect, waitlist.size());
                         Collections.shuffle(waitlist);
-                        List<String> chosen = waitlist.subList(0, numToSelect);
+                        List<String> chosen = waitlist.subList(0, requested);
 
-                        selected.addAll(chosen);
-                        waitlist.removeAll(chosen);
+                        // Remove chosen users from waitlist
+                        for (String uid : chosen) {
+                            db.collection("events").document(eventId)
+                                    .collection("waitlist")
+                                    .document(uid)
+                                    .delete();
+                        }
 
-                        this.db.collection("events").document(this.eventId)
-                                .update("selected", selected, "waitlist", waitlist)
-                                .addOnSuccessListener(aVoid ->
-                                        Toast.makeText(this.getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show()
-                                )
-                                .addOnFailureListener(e ->
-                                        Toast.makeText(this.getContext(), "Error saving results", Toast.LENGTH_SHORT).show()
-                                );
-                        })
-                        .addOnFailureListener(e ->
-                            Toast.makeText(this.getContext(), "Error loading event", Toast.LENGTH_SHORT).show());
-            });
+                        // Add selected users to "selected" subcollection
+                        for (String uid : chosen) {
+                            db.collection("events").document(eventId)
+                                    .collection("selected")
+                                    .document(uid)
+                                    .set(new HashMap<String, Object>());
+                        }
 
-        cancelButton.setOnClickListener(v -> requireActivity().onBackPressed());
+                        Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
+                    );
+        });
     }
 
 }
