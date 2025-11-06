@@ -5,18 +5,28 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.organizer.OrganizerEventPageFragmentArgs;
 import com.example.lotteryevent.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+
+/**
+ * Displays info about a single event for the organizer to view.
+ * <p>
+ *     This fragment allows the organizer to view event information
+ *     and run the participant draw
+ * </p>
+ */
 public class OrganizerEventPageFragment extends Fragment {
 
     private static final String TAG = "OrganizerEventPage";
@@ -26,6 +36,11 @@ public class OrganizerEventPageFragment extends Fragment {
 
     public OrganizerEventPageFragment() { }
 
+    /**
+     *
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +54,17 @@ public class OrganizerEventPageFragment extends Fragment {
         }
     }
 
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -46,6 +72,12 @@ public class OrganizerEventPageFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_organizer_event_page, container, false);
     }
 
+    /**
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -58,6 +90,14 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
+        Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
+        runLotteryButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
+        });
     }
 
     private void fetchEventDetails() {
