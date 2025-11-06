@@ -7,4 +7,9 @@
         android:title="@string/profile"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/availableEventsFragment"
+        android:title="Events"
+        android:icon="@drawable/ic_calendar_month_24" />
+
 </menu>
