@@ -35,6 +35,16 @@
     </fragment>
 
     <fragment
+        android:id="@+id/runDrawFragment"
+        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
+        android:label="Run Draw"
+        tools:layout="@layout/fragment_run_draw">
+        <action
+            android:id="@+id/action_runDrawFragment_to_confirmDrawAndNotifyFragment"
+            app:destination="@id/confirmDrawAndNotifyFragment"/>
+    </fragment>
+
+    <fragment
         android:id="@+id/createEventFragment"
         android:name="com.example.lotteryevent.CreateEventFragment"
         android:label="@string/create_new_event"
@@ -46,10 +56,15 @@
         tools:layout="@layout/fragment_user_profile" />
 
     <fragment
-        android:id="@+id/runDrawFragment"
-        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
+        android:id="@+id/confirmDrawAndNotifyFragment"
+        android:name="com.example.lotteryevent.organizer.ConfirmDrawAndNotifyFragment"
         android:label="Run Draw"
-        tools:layout="@layout/fragment_run_draw"/>
+        tools:layout="@layout/fragment_confirm_draw_and_notify"
+        >
+        <action
+            android:id="@+id/action_confirmDrawAndNotifyFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 
 
 </navigation>

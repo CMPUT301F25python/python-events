@@ -32,8 +32,6 @@ import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.Objects;
-
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
  * <p>
