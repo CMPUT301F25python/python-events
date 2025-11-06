@@ -280,4 +280,7 @@ public class Event {
     public void setLotteryGuidelines(String lotteryGuidelines) {
         this.lotteryGuidelines = lotteryGuidelines;
     }
+
+    public void setId(String id) {
+    }
 }

@@ -202,31 +202,23 @@ public class CreateEventFragment extends Fragment {
         String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
         boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
 
-        // Date and Time Validation
-        boolean isStartDateSet = !editTextEventStartDate.getText().toString().isEmpty();
-        boolean isStartTimeSet = !editTextEventStartTime.getText().toString().isEmpty();
-        boolean isEndDateSet = !editTextEventEndDate.getText().toString().isEmpty();
-        boolean isEndTimeSet = !editTextEventEndTime.getText().toString().isEmpty();
-
-        // Check for incomplete start date/time
-        if (isStartDateSet && !isStartTimeSet) {
-            Toast.makeText(getContext(), "Please select a start time for the selected start date.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Check for incomplete end date/time
-        if (isEndDateSet && !isEndTimeSet) {
-            Toast.makeText(getContext(), "Please select an end time for the selected end date.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         // Combine Date and Time Calendars into Firestore Timestamps
         com.google.firebase.Timestamp eventStartDateTime = getTimestampFromCalendars(eventStartCalendar, editTextEventStartDate, editTextEventStartTime);
         com.google.firebase.Timestamp eventEndDateTime = getTimestampFromCalendars(eventEndCalendar, editTextEventEndDate, editTextEventEndTime);
 
-        if (eventStartDateTime != null && eventEndDateTime != null && eventStartDateTime.compareTo(eventEndDateTime) >= 0) {
-            Toast.makeText(getContext(), "Event start time must be before event end time", Toast.LENGTH_SHORT).show();
-            return;
+        String validationError = validateEventInput(
+                eventName,
+                editTextEventStartDate.getText().toString(),
+                editTextEventStartTime.getText().toString(),
+                editTextEventEndDate.getText().toString(),
+                editTextEventEndTime.getText().toString(),
+                eventStartDateTime,
+                eventEndDateTime
+        );
+
+        if (validationError != null) {
+            Toast.makeText(getContext(), validationError, Toast.LENGTH_SHORT).show();
+            return; // Stop if validation fails
         }
 
         // Convert price and capacity to Double and Integer, respectively
@@ -283,6 +275,50 @@ public class CreateEventFragment extends Fragment {
                 Toast.makeText(getContext(), "Could not retrieve user info. Please try again.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Validates the user input for the event form.
+     *
+     * @param eventName The name of the event.
+     * @param startDateText The text from the start date field.
+     * @param startTimeText The text from the start time field.
+     * @param endDateText The text from the end date field.
+     * @param endTimeText The text from the end time field.
+     * @param eventStartTimestamp The generated start timestamp.
+     * @param eventEndTimestamp The generated end timestamp.
+     * @return A String containing an error message if validation fails, otherwise null.
+     */
+    public String validateEventInput(String eventName, String startDateText, String startTimeText,
+                                     String endDateText, String endTimeText,
+                                     com.google.firebase.Timestamp eventStartTimestamp,
+                                     com.google.firebase.Timestamp eventEndTimestamp) {
+
+        if (eventName.isEmpty()) {
+            return "Event name is required.";
+        }
+
+        boolean isStartDateSet = !startDateText.isEmpty();
+        boolean isStartTimeSet = !startTimeText.isEmpty();
+        boolean isEndDateSet = !endDateText.isEmpty();
+        boolean isEndTimeSet = !endTimeText.isEmpty();
+
+        // Check for incomplete start date/time
+        if (isStartDateSet && !isStartTimeSet) {
+            return "Please select a start time for the selected start date.";
+        }
+
+        // Check for incomplete end date/time
+        if (isEndDateSet && !isEndTimeSet) {
+            return "Please select an end time for the selected end date.";
+        }
+
+        // Check if start time is before end time
+        if (eventStartTimestamp != null && eventEndTimestamp != null && eventStartTimestamp.compareTo(eventEndTimestamp) >= 0) {
+            return "Event start time must be before event end time.";
+        }
+
+        return null; // Validation successful
     }
 
     /**

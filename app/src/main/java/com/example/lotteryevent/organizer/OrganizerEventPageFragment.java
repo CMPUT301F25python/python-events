@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -20,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.os.Environment;
 import com.example.lotteryevent.R;
@@ -29,12 +31,14 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
-
 import java.io.OutputStream;
 
 /**
- * Fragment that displays the details of a specific event for an organizer.
- * It allows the organizer to generate and manage a QR code for the event.
+ * Displays info about a single event for the organizer to view.
+ * <p>
+ *     This fragment allows the organizer to view event information
+ *     and run the participant draw
+ * </p>
  */
 public class OrganizerEventPageFragment extends Fragment {
 
@@ -49,11 +53,10 @@ public class OrganizerEventPageFragment extends Fragment {
      */
     public OrganizerEventPageFragment() { }
 
-
     /**
-     * Called when the fragment is first created.
-     * Initializes Firestore and retrieves the event ID from navigation arguments.
-     * @param savedInstanceState If the fragment is being re-created from a previous saved state, this is the state.
+     *
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
      */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,11 +72,15 @@ public class OrganizerEventPageFragment extends Fragment {
     }
 
     /**
-     * Creates and returns the view hierarchy associated with the fragment.
-     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
-     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
-     * @return Returns the View for the fragment's UI, or null.
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
      */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -83,11 +90,10 @@ public class OrganizerEventPageFragment extends Fragment {
     }
 
     /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}
-     * has returned, but before any saved state has been restored in to the view.
-     * Fetches event details and sets up UI listeners.
-     * @param view The View returned by {@link #onCreateView}.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state.
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
      */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -100,6 +106,14 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
+        Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
+        runLotteryButton.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
+        });
 
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         setupClickListeners();
