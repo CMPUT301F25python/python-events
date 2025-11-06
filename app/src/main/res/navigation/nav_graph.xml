@@ -44,7 +44,6 @@
     <fragment
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.AvailableEventsFragment"
-        android:label="Events"
-        tools:layout="@layout/fragment_home" />
+        android:label="Events" />
 
 </navigation>

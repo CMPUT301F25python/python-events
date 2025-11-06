@@ -5,6 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lotteryevent.AvailableEventsFragment;
@@ -25,7 +27,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private final List<Event> eventList = new ArrayList<>();
     private OnItemClickListener listener;
 
-    public void setData(List<AvailableEventsFragment.Event> list) {
+    private final int rowLayoutResId;
+
+    public EventAdapter(@LayoutRes int rowLayoutResId) {
+        this.rowLayoutResId = rowLayoutResId;
     }
 
     /**
@@ -65,7 +70,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.tile_event, parent, false);
+
+        View view = LayoutInflater.from(parent.getContext()).inflate(rowLayoutResId, parent, false);
         return new EventViewHolder(view);
     }
 
@@ -143,15 +149,17 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
          *
          * @param event The {@link Event} object containing the data to display.
          */
-        public void bind(Event event) {
-
+        // in EventAdapter.EventViewHolder
+        void bind(@NonNull Event event) {
+            titleTextView.setText(event.getName() != null ? event.getName() : "(Unnamed)");
         }
 
-        public void setData(@NonNull List<AvailableEventsFragment.Event> items) {
-            data.clear();
-            data.addAll(items);
-            notifyDataSetChanged(); // simple refresh (use DiffUtil later for nicer animations)
-        }
+
+//        public void setData(@NonNull List<AvailableEventsFragment.Event> items) {
+//            data.clear();
+//            data.addAll(items);
+//            notifyDataSetChanged(); // simple refresh (use DiffUtil later for nicer animations)
+//        }
 
     }
 }
