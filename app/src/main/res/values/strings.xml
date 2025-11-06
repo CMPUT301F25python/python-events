@@ -32,4 +32,10 @@
     <string name="update_button">Update</string>
     <string name="reg_history_button">Registration History</string>
     <string name="delete_button">Delete Profile</string>
+    <string name="qr_code">QR Code</string>
+    <string name="qr_code_for_event_info_page">Scan for event details</string>
+    <string name="save">Save</string>
+    <string name="share">Share</string>
+    <string name="close">Close</string>
+    <string name="lottery_guidelines">Lottery Guidelines</string>
 </resources>
