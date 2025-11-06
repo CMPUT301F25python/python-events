@@ -1,4 +1,5 @@
 package com.example.lotteryevent;
+import com.example.lotteryevent.data.Event;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -8,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -15,8 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
-import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,12 +39,13 @@ public class CreateEventFragment extends Fragment {
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
-    private TextInputEditText editTextEventName, editTextEventDescription, editTextEventLocation;
-    private TextInputEditText editTextEventStartDate, editTextEventStartTime;
-    private TextInputEditText editTextEventEndDate, editTextEventEndTime;
-    private TextInputEditText editTextEventPrice;
-    private TextInputEditText editTextMaxAttendees;
-    private SwitchMaterial switchGeolocation;
+    private EditText editTextEventName, editTextEventDescription, editTextEventLocation;
+    private EditText editTextEventStartDate, editTextEventStartTime;
+    private EditText editTextEventEndDate, editTextEventEndTime;
+    private EditText editTextEventPrice;
+    private EditText editTextMaxAttendees;
+    private EditText editTextLotteryGuidelines;
+    private CheckBox checkboxGeolocation;
     private Button buttonSave;
     private final Calendar eventStartCalendar = Calendar.getInstance();
     private final Calendar eventEndCalendar = Calendar.getInstance();
@@ -52,7 +55,6 @@ public class CreateEventFragment extends Fragment {
      */
     public CreateEventFragment() {
     }
-
 
     /**
      * Inflates the layout for this fragment.
@@ -95,7 +97,9 @@ public class CreateEventFragment extends Fragment {
 
         editTextMaxAttendees = view.findViewById(R.id.edit_text_max_attendees);
 
-        switchGeolocation = view.findViewById(R.id.switch_geolocation);
+        editTextLotteryGuidelines = view.findViewById(R.id.edit_text_lottery_guidelines);
+
+        checkboxGeolocation = view.findViewById(R.id.checkbox_geolocation);
         buttonSave = view.findViewById(R.id.button_save);
 
         // Set up click listeners for date/time pickers and the save button
@@ -118,14 +122,13 @@ public class CreateEventFragment extends Fragment {
         buttonSave.setOnClickListener(this::saveEventToFirestore);
     }
 
-
     /**
      * Displays a {@link DatePickerDialog} to allow the user to select a date.
      * The selected date is then stored in the provided Calendar object and displayed in the EditText.
      * @param calendar The Calendar instance to update with the selected date.
-     * @param editText The TextInputEditText field to update with the formatted date string.
+     * @param editText The EditText field to update with the formatted date string.
      */
-    private void showDatePickerDialog(Calendar calendar, TextInputEditText editText) {
+    private void showDatePickerDialog(Calendar calendar, EditText editText) {
         DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
@@ -137,14 +140,13 @@ public class CreateEventFragment extends Fragment {
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-
     /**
      * Displays a {@link TimePickerDialog} to allow the user to select a time.
      * The selected time is then stored in the provided Calendar object and displayed in the EditText.
      * @param calendar The Calendar instance to update with the selected time.
-     * @param editText The TextInputEditText field to update with the formatted time string.
+     * @param editText The EditText field to update with the formatted time string.
      */
-    private void showTimePickerDialog(Calendar calendar, TextInputEditText editText) {
+    private void showTimePickerDialog(Calendar calendar, EditText editText) {
         TimePickerDialog.OnTimeSetListener timeSetListener = (view, hourOfDay, minute) -> {
             calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
             calendar.set(Calendar.MINUTE, minute);
@@ -152,25 +154,36 @@ public class CreateEventFragment extends Fragment {
         };
 
         new TimePickerDialog(getContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE), true).show(); // true for 24-hour view
+                calendar.get(Calendar.MINUTE), false).show(); // false for 12-hour view
     }
 
     /**
-     * Updates the text of a {@link TextInputEditText} with a formatted date or time string from a Calendar object.
+     * Updates the text of a {@link EditText} with a formatted date or time string from a Calendar object.
      * @param editText The view to update.
      * @param calendar The calendar containing the date/time to format.
      * @param format The desired date/time format (e.g., "yyyy-MM-dd" or "HH:mm").
      */
-    private void updateLabel(TextInputEditText editText, Calendar calendar, String format) {
+    private void updateLabel(EditText editText, Calendar calendar, String format) {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
         editText.setText(sdf.format(calendar.getTime()));
     }
 
-
     /**
-     * Reads all data from the input fields, performs validation, and saves the new event to Firestore.
-     * Displays a toast message indicating success or failure and navigates back on success.
-     * @param view The view that triggered the method call, used for navigation.
+     * Gathers and validates all user input from the form fields. If validation passes,
+     * it asynchronously fetches the organizer's name from the 'users' collection using the
+     * current user's ID. On success, it constructs an {@link Event} object and saves it
+     * as a new document in the 'events' collection in Firestore.
+     * <p>
+     * Validation checks include:
+     * <ul>
+     *     <li>Ensuring a user is logged in.</li>
+     *     <li>Verifying that if a date is selected, the corresponding time is also selected.</li>
+     *     <li>Confirming that the event start time is before the event end time.</li>
+     * </ul>
+     * Displays toast messages for validation errors or network failures. Navigates back
+     * to the previous screen on successful event creation.
+     *
+     * @param view The view that triggered the method call, used for navigation purposes.
      */
     private void saveEventToFirestore(View view) {
         FirebaseUser currentUser = auth.getCurrentUser();
@@ -186,56 +199,90 @@ public class CreateEventFragment extends Fragment {
         String location = editTextEventLocation.getText().toString().trim();
         String priceStr = editTextEventPrice.getText().toString().trim();
         String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
-        boolean isGeoLocationRequired = switchGeolocation.isChecked();
+        String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
+        boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
 
-        // Simple validation
-        if (eventName.isEmpty() || location.isEmpty()) {
-            Toast.makeText(getContext(), "Please fill out Event Name and Location", Toast.LENGTH_SHORT).show();
+        // Date and Time Validation
+        boolean isStartDateSet = !editTextEventStartDate.getText().toString().isEmpty();
+        boolean isStartTimeSet = !editTextEventStartTime.getText().toString().isEmpty();
+        boolean isEndDateSet = !editTextEventEndDate.getText().toString().isEmpty();
+        boolean isEndTimeSet = !editTextEventEndTime.getText().toString().isEmpty();
+
+        // Check for incomplete start date/time
+        if (isStartDateSet && !isStartTimeSet) {
+            Toast.makeText(getContext(), "Please select a start time for the selected start date.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // --- Data Conversion with Error Handling ---
-        Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
-        Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
+        // Check for incomplete end date/time
+        if (isEndDateSet && !isEndTimeSet) {
+            Toast.makeText(getContext(), "Please select an end time for the selected end date.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         // Combine Date and Time Calendars into Firestore Timestamps
-        // If date or time is not set, the timestamp will be null
         com.google.firebase.Timestamp eventStartDateTime = getTimestampFromCalendars(eventStartCalendar, editTextEventStartDate, editTextEventStartTime);
         com.google.firebase.Timestamp eventEndDateTime = getTimestampFromCalendars(eventEndCalendar, editTextEventEndDate, editTextEventEndTime);
 
-        // Create a Map to hold the event data
-        Map<String, Object> event = new HashMap<>();
-        event.put("name", eventName);
-        event.put("description", description);
-        event.put("organizerId", userId);
-        event.put("organizerName", "Organizer Name"); // TODO: Add logic to get organizer's name
-        event.put("location", location);
-        event.put("price", price);
+        if (eventStartDateTime != null && eventEndDateTime != null && eventStartDateTime.compareTo(eventEndDateTime) >= 0) {
+            Toast.makeText(getContext(), "Event start time must be before event end time", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        event.put("eventStartDateTime", eventStartDateTime);
-        event.put("eventEndDateTime", eventEndDateTime);
-        event.put("capacity", capacity);
-        event.put("isGeoLocationRequired", isGeoLocationRequired);
+        // Convert price and capacity to Double and Integer, respectively
+        Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
+        Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
 
-        // Default values for new events
-        event.put("status", "upcoming");
-        event.put("qrCodeData", null);
-        event.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
-        event.put("waitingListCount", 0);
-        event.put("attendeeCount", 0);
+        // Obtain the organizer name
+        db.collection("users").document(userId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                String organizerName = "Default Organizer"; // Fallback name
+                if (document != null && document.exists()) {
+                    // Extract organizer name if the document exists
+                    organizerName = document.getString("name");
+                } else {
+                    Log.d("CreateEventFragment", "User document does not exist, using fallback name.");
+                }
 
-        // Add the new event to the "events" collection
-        db.collection("events")
-                .add(event)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("FIRESTORE_SUCCESS", "Event saved with ID: " + documentReference.getId());
-                    Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
-                    Navigation.findNavController(view).popBackStack(); // Go back to home
-                })
-                .addOnFailureListener(e -> {
-                    Log.w("FIRESTORE_ERROR", "Error adding document", e);
-                    Toast.makeText(getContext(), "Error creating event. Please try again.", Toast.LENGTH_LONG).show();
-                });
+                Event event = new Event();
+                event.setName(eventName);
+                event.setDescription(description);
+                event.setOrganizerId(userId);
+                event.setOrganizerName(organizerName);
+                event.setLocation(location);
+                event.setPrice(price);
+//                event.setRegistrationStartDateTime(null); // to be populated during US 02.01.04
+//                event.setRegistrationEndDateTime(null);
+                event.setEventStartDateTime(eventStartDateTime);
+                event.setEventEndDateTime(eventEndDateTime);
+                event.setCapacity(capacity);
+                event.setLotteryGuidelines(lotteryGuidelinesStr);
+                event.setIsgeolocationRequired(isGeoLocationRequired);
+
+                // Default values for new events
+                event.setStatus("upcoming");
+                event.setWaitinglistCount(0);
+                event.setAttendeeCount(0);
+
+                // Add the new event to the "events" collection
+                db.collection("events")
+                        .add(event)
+                        .addOnSuccessListener(documentReference -> {
+                            Log.d("FIRESTORE_SUCCESS", "Event saved with ID: " + documentReference.getId());
+                            Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
+                            Navigation.findNavController(view).popBackStack(); // Go back to home
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.w("FIRESTORE_ERROR", "Error adding document", e);
+                            Toast.makeText(getContext(), "Error creating event. Please try again.", Toast.LENGTH_LONG).show();
+                        });
+            }
+            else {
+                Log.w("CreateEventFragment", "Failed to fetch user data.", task.getException());
+                Toast.makeText(getContext(), "Could not retrieve user info. Please try again.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -246,7 +293,7 @@ public class CreateEventFragment extends Fragment {
      * @param timeText The EditText for the time.
      * @return A Firestore Timestamp object, or null if the date/time is incomplete.
      */
-    private com.google.firebase.Timestamp getTimestampFromCalendars(Calendar calendar, TextInputEditText dateText, TextInputEditText timeText) {
+    private com.google.firebase.Timestamp getTimestampFromCalendars(Calendar calendar, EditText dateText, EditText timeText) {
         if (dateText.getText().toString().isEmpty() || timeText.getText().toString().isEmpty()) {
             return null; // Return null if either date or time hasn't been picked
         }

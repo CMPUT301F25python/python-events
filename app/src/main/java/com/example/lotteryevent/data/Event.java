@@ -27,10 +27,10 @@ public class Event {
     private Timestamp registrationStartDateTime;
     private Timestamp registrationEndDateTime;
     private Integer capacity;
+    private String lotteryGuidelines;
     private Integer waitinglistlimit;
     private boolean isgeolocationRequired;
     private String status;
-    private String qrcodeData;
     private int waitinglistCount;
     private int attendeeCount;
 
@@ -233,18 +233,6 @@ public class Event {
      * @param status The event status.
      */
     public void setStatus(String status) { this.status = status; }
-
-    /**
-     * Gets the QR code data for the event.
-     * @return The QR code data.
-     */
-    public String getQrcodeData() { return qrcodeData; }
-    /**
-     * Sets the QR code data for the event.
-     * @param qrcodeData The QR code data.
-     */
-    public void setQrcodeData(String qrcodeData) { this.qrcodeData = qrcodeData; }
-
     /**
      * Gets the number of people on the waiting list.
      * @return The waiting list count.
@@ -277,4 +265,19 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    /**
+     * Gets the organizer-defined guidelines for the lottery selection process.
+     * @return The lottery guidelines.
+     */
+    public String getLotteryGuidelines() {
+        return lotteryGuidelines;
+    }
+
+    /**
+     * Sets the organizer-defined guidelines for the lottery selection process.
+     * @param lotteryGuidelines The lottery guidelines.
+     */
+    public void setLotteryGuidelines(String lotteryGuidelines) {
+        this.lotteryGuidelines = lotteryGuidelines;
+    }
 }
