@@ -62,6 +62,15 @@
         android:label="Confirm Draw and Notify"
         tools:layout="@layout/fragment_confirm_draw_and_notify">
 
+        <action
+            android:id="@+id/action_confirmDrawAndNotifyFragment_to_manageSelectedFragment"
+            app:destination="@id/manageSelectedFragment">
+
+            <argument
+                android:name="eventId"
+                app:argType="string" />
+        </action>
+
         <argument
             android:name="eventId"
             app:argType="string" />

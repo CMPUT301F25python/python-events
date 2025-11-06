@@ -185,15 +185,16 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                                                 notifyEntrant(uid);
                                                 int current = completed.incrementAndGet();
                                                 if (current == total) {
-                                                    Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
+                                                    var action = ConfirmDrawAndNotifyFragmentDirections.actionConfirmDrawAndNotifyFragmentToManageSelectedFragment(eventId);
+                                                    Navigation.findNavController(view).navigate(action);
                                                 }
                                             })
                                             .addOnFailureListener(user -> { // user with that id not found, cannot notify. move on to the next user
                                                 Toast.makeText(getContext(), "User with id " + uid + " not found and could not be notified.", Toast.LENGTH_SHORT).show();
                                                 int current = completed.incrementAndGet();
                                                 if (current == total) {
-                                                    Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
-                                                }
+                                                    var action = ConfirmDrawAndNotifyFragmentDirections.actionConfirmDrawAndNotifyFragmentToManageSelectedFragment(eventId);
+                                                    Navigation.findNavController(view).navigate(action);}
                                             });
                         }
                     }
