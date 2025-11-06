@@ -32,8 +32,6 @@ import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.Objects;
-
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
  * <p>
@@ -229,7 +227,7 @@ public class HomeFragment extends Fragment {
                             return true;
                         }
                     }
-                    notificationCustomManager.sendNotification();
+                    notificationCustomManager.generateNotification();
                     
                     NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
                     return true;
@@ -243,7 +241,7 @@ public class HomeFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
                     // Permission granted — send notification
-                    notificationCustomManager.sendNotification();
+                    notificationCustomManager.generateNotification();
                 } else {
                     Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
                 }
