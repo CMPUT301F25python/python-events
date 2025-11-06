@@ -217,8 +217,9 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                         String eventName = document.getString("name");
                         String organizerId = document.getString("organizerId");
                         String organizerName = document.getString("organizerName");
+                        String title = "Congratulations!";
                         String message = "You have been chosen from to sign up for the event " + eventName + "! Please click here to confirm your registration.";
-                        notifManager.sendNotification(uid, message, eventId, eventName, organizerId, organizerName);
+                        notifManager.sendNotification(uid, title, message, eventId, eventName, organizerId, organizerName);
                     } else {
                         Log.d(TAG, "No such document");
                         Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();

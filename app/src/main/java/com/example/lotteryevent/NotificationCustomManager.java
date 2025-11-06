@@ -70,14 +70,16 @@ public class NotificationCustomManager {
     /**
      * Sends notification to the specified user by creating a notification document under the user's notification collection.
      * @param uid User ID of the user the notif is directed to
+     * @param title Title of the notification
      * @param message Message content
      * @param eventId Event ID that the notif relates to
      * @param eventName Event name that the notif relates to
      * @param organizerId Organizer ID who sent the notif
      * @param organizerName Organizer Name who sent the notif
      */
-    public void sendNotification(String uid, String message, String eventId, String eventName, String organizerId, String organizerName) {
+    public void sendNotification(String uid, String title, String message, String eventId, String eventName, String organizerId, String organizerName) {
         Map<String, Object> notification = new HashMap<>();
+        notification.put("title", title);
         notification.put("message", message);
         notification.put("eventId", eventId);
         notification.put("eventName", eventName);
