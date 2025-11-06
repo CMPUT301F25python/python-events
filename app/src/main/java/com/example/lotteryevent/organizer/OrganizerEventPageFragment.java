@@ -12,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDeepLink;
+import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.organizer.OrganizerEventPageFragmentArgs;
@@ -33,6 +35,7 @@ public class OrganizerEventPageFragment extends Fragment {
 
     private FirebaseFirestore db;
     private String eventId;
+    private Button manageSelectedBtn;
 
     public OrganizerEventPageFragment() { }
 
@@ -90,6 +93,7 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
+
         Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
         runLotteryButton.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
@@ -98,7 +102,38 @@ public class OrganizerEventPageFragment extends Fragment {
             Navigation.findNavController(view)
                     .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
         });
+
+        this.manageSelectedBtn = view.findViewById(R.id.btnManageSelected);
+        this.manageSelectedBtn.setVisibility(View.GONE); // hide until we confirm data
+        this.manageSelectedBtn.setOnClickListener(v -> {
+            OrganizerEventPageFragmentDirections
+                    .ActionOrganizerEventPageFragmentToManageSelectedFragment action =
+                    OrganizerEventPageFragmentDirections
+                            .actionOrganizerEventPageFragmentToManageSelectedFragment(eventId);
+            Navigation.findNavController(v).navigate(action);
+        });
+
+        refreshManageSelectedVisibility();
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshManageSelectedVisibility();
+    }
+
+    private void refreshManageSelectedVisibility() {
+        if (eventId == null) return;
+        db.collection("events").document(eventId)
+                .collection("selected").limit(1).get()
+                .addOnSuccessListener(q -> {
+                    boolean hasSelected = !q.isEmpty();
+                    if (manageSelectedBtn != null) {
+                        manageSelectedBtn.setVisibility(hasSelected ? View.VISIBLE : View.GONE);
+                    }
+                });
+    }
+
 
     private void fetchEventDetails() {
         db.collection("events").document(eventId)

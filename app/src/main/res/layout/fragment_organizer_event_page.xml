@@ -30,6 +30,16 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:ignore="HardcodedText" />
 
+        <Button
+            android:id="@+id/btnManageSelected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manage Selected Entrants"
+            android:layout_marginTop="16dp"
+            android:background="@color/primary_green"
+            android:textColor="@android:color/white"
+            tools:ignore="HardcodedText" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
