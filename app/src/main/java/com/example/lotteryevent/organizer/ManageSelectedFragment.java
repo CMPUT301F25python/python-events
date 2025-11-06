@@ -22,12 +22,34 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * This Fragment allows the organizer to view and manage entrants who were selected
+ * through the lottery for a specific event
+ *
+ * <p>
+ *     The organizer may cancel a selected entrant from the waitlist. Cancelling removes the user from the selected list
+ *     and into the the waitlist in the FireStore subcollection under the same event ID.
+ *     This allows organizers to revoke selection from chosen participants
+ * </p>
+ *
+ */
 public class ManageSelectedFragment extends Fragment {
     private FirebaseFirestore db;
     private SelectedAdapter selectedAdapter;
     private String eventId;
     private List<String> selectedUsers = new ArrayList<>();
 
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -51,6 +73,15 @@ public class ManageSelectedFragment extends Fragment {
         return view;
     }
 
+    /**
+     *
+     * Loads all selected entrants for the event from firestore and displays them
+     *
+     * <p>
+     *     Entrants are stored as document IDs under "selected" subcollection
+     * </p>
+     *
+     */
     private void loadSelectedEntrants() {
         this.db.collection("events")
                 .document(this.eventId)
@@ -71,6 +102,12 @@ public class ManageSelectedFragment extends Fragment {
                         Toast.makeText(this.getContext(), "Failed to load selected entrants", Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Cancels a selected entrant by removing them from selected list and returning them
+     * to event waitlist
+     *
+     * @param userId
+     */
     private void cancelSelectedUser(String userId) {
         // Remove entrant from selected list
         this.db.collection("events")
