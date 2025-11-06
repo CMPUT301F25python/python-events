@@ -1,19 +1,27 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--
-        This is where the grid of events would go.
-        IDK whose job it is to actually implement this, just leaving it like this for now
-    -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Home Fragment Content Area"
-        android:textSize="20sp"
-        android:layout_gravity="center"/>
+    <!-- SwipeRefreshLayout allows "pull to refresh" functionality for the grid -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- RecyclerView is the modern, efficient way to display a scrollable grid -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/events_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="2"
+            tools:listitem="@layout/tile_event" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -27,5 +35,6 @@
         app:srcCompat="@drawable/ic_add_24"
         app:tint="@android:color/white"
         />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

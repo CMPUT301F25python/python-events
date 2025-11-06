@@ -3,5 +3,34 @@
     <string name="event_lotto">Event Lotto</string>
     <string name="add_new_event">Add new event</string>
     <string name="profile">Profile</string>
+    <string name="create_new_event">Create New Event</string>
+    <string name="description">Description</string>
+    <string name="location">Location</string>
+    <string name="require_geolocation_for_check_in">Require Geolocation for Check-in?</string>
+    <string name="save_event">Save Event</string>
+    <string name="max_attendees">Max Attendees</string>
+    <string name="event_start_time">Event Start Time</string>
+    <string name="event_start_date">Event Start Date</string>
+    <string name="event_end_time">Event End Time</string>
+    <string name="event_end_date">Event End Date</string>
+    <string name="event_name">Event Name</string>
+    <string name="price">Price ($)</string>
+    <string name="registration_information">Registration Information</string>
+    <string name="waiting_list_information">Waiting List Information</string>
+    <string name="event_information">Event Information</string>
     <string name="confirm_and_notify_button_text">Confirm and Notify</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="user_profile_page">Profile</string>
+    <string name="name_field">Name</string>
+    <string name="mock_name">John Doe</string>
+    <string name="email_field">Email</string>
+    <string name="mock_email">jdoe@gmail.com</string>
+    <string name="number_field">Phone Number (optional)</string>
+    <string name="mock_number">XXX-XXX-XXXX</string>
+    <string name="notification_field">Notification Preferences</string>
+    <string name="notification_statement">I want to receive notifications from administrators and organizers</string>
+    <string name="update_button">Update</string>
+    <string name="reg_history_button">Registration History</string>
+    <string name="delete_button">Delete Profile</string>
 </resources>
