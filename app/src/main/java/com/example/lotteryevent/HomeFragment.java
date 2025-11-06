@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -31,6 +32,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -105,8 +108,6 @@ public class HomeFragment extends Fragment {
         }
         setupMenu();
 
-        notificationCustomManager = new NotificationCustomManager(getContext());
-
         // Setup main UI components
         setupRecyclerView(view);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
@@ -120,6 +121,22 @@ public class HomeFragment extends Fragment {
 
         // Trigger the initial data fetch from the ViewModel
         homeViewModel.fetchUserEvents();
+
+        notificationCustomManager = new NotificationCustomManager(getContext());
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            String uid = user.getUid();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                }
+            }
+
+            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
+        }
     }
 
     /**
@@ -220,14 +237,6 @@ public class HomeFragment extends Fragment {
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 // Handle clicks on the profile icon
                 if (menuItem.getItemId() == R.id.profile_icon) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
-                                != PackageManager.PERMISSION_GRANTED) {
-                            requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
-                            return true;
-                        }
-                    }
-                    notificationCustomManager.generateNotification();
                     NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
                     return true;
                 }
@@ -236,13 +245,15 @@ public class HomeFragment extends Fragment {
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
-    private final ActivityResultLauncher<String> requestNotificationPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+    private final ActivityResultLauncher<String> getPermission =
+        registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+            @Override
+            public void onActivityResult(Boolean isGranted) {
                 if (isGranted) {
-                    // Permission granted — send notification
                     notificationCustomManager.generateNotification();
                 } else {
                     Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
                 }
-            });
+            }
+        });
 }

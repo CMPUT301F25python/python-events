@@ -74,8 +74,9 @@ public class NotificationCustomManager {
         notificationManager.notify(getID(), builder.build());
     }
 
-    public void sendNotification(String uid, String message, String eventId, String eventName, String organizerId, String organizerName) {
+    public void sendNotification(String uid, String title, String message, String eventId, String eventName, String organizerId, String organizerName) {
         Map<String, Object> notification = new HashMap<>();
+        notification.put("title", title);
         notification.put("message", message);
         notification.put("eventId", eventId);
         notification.put("eventName", eventName);
@@ -91,5 +92,9 @@ public class NotificationCustomManager {
                     Log.w(TAG, "Failed to add notification for user " + uid, e);
                     Toast.makeText(myContext, "Failed to send notification to user " + uid, Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    public void checkAndDisplayUnreadNotifications(String uid) {
+        db.collection("users").document(uid).collection("notifications")
     }
 }
