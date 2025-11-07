@@ -65,7 +65,40 @@ public class WaitlistManager {
                             });
                     })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error checking the current waitlist collection", e);
+                    Log.e(TAG, "Error checking the waitlist collection", e);
+                });
+    }
+
+    /**
+     * Remove the user to the waitlist for a specific event given they are on the waitlist
+     * @param eventId The firestore ID of the event
+     */
+    public void leaveWaitlist(String eventId){
+        String currentUser = auth.getCurrentUser().getUid(); //getting the users ID
+
+        DocumentReference eventReference = db.collection("events").document(eventId);
+
+        // removing user from firebase
+        eventReference.collection("waitlist").whereEqualTo("userId", currentUser).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // not on waitlist
+                    if (querySnapshot.isEmpty()) {
+                        return;
+                    }
+
+                    // remove all instances of the user (in case there are duplicates)
+                    querySnapshot.getDocuments().forEach(doc -> {
+                        doc.getReference().delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "User removed from waitlist for event " + eventId);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Failed to remove from waitlist", e);
+                                });
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error checking the waitlist collection", e);
                 });
     }
 
