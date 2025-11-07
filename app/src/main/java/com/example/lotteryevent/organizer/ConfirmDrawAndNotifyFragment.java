@@ -269,8 +269,10 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         }
 
     /**
-     * This is a helper function that
+     * This is a helper function that navigates back to the organizer's event page after confirming the draw
+     * This uses the navigation component with Safe Args to pass event ID back to event page
      * @param view
+     * View that triggers the navigation action
      */
     private void navigateBack(View view) {
         ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
