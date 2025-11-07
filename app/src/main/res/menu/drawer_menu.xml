@@ -4,11 +4,15 @@
         <item
             android:id="@+id/availableEventsFragment"
             android:icon="@drawable/ic_calendar_month_24"
-            android:title="Events" />
+            android:title="@string/events" />
         <item
             android:id="@+id/nav_notifications"
             android:icon="@drawable/ic_notifications_24"
-            android:title="Notifications" />
+            android:title="@string/notifications" />
+        <item
+            android:id="@+id/qrScannerFragment"
+            android:icon="@drawable/qr_code_scanner_24px"
+            android:title="@string/scan_a_qr_code" />
 
     </group>
 </menu>
