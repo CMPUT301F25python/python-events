@@ -74,10 +74,13 @@
     </fragment>
 
     <fragment
-        android:id="@+id/runDrawFragment"
-        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
-        android:label="Run Draw"
-        tools:layout="@layout/fragment_run_draw"/>
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.lotteryevent.NotificationsFragment"
+        android:label="Notifications" >
+        <action
+            android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"/>
+    </fragment>
 
     <fragment
         android:id="@+id/eventDetailsFragment"
@@ -87,15 +90,6 @@
         <argument
             android:name="eventId"
             app:argType="string" />
-    </fragment>
-        android:label="Events" />
-    <fragment
-        android:id="@+id/notificationsFragment"
-        android:name="com.example.lotteryevent.NotificationsFragment"
-        android:label="Notifications">
-<!--        <action-->
-<!--            android:id="@+id/action_notificationsFragment_to_confirmDrawAndNotifyFragment"-->
-<!--            app:destination="@id/confirmDrawAndNotifyFragment"/>-->
     </fragment>
 
 </navigation>

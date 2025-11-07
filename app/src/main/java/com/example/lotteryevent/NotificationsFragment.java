@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -103,15 +104,31 @@ public class NotificationsFragment extends Fragment {
                             list.add(notification);
                         }
                         adapter.setNotifications(list);
-                        adapter.setOnItemClickListener(n -> redirectOnNotificationClick(n));
+                        adapter.setOnItemClickListener(n -> redirectOnNotificationClick(n, view));
                     }
                 });
         }
     }
 
-    private void redirectOnNotificationClick(Notification notification) {
+    private void redirectOnNotificationClick(Notification notification, View view) {
+        if (notification.getSeen() != true) {
+            notification.setSeen(true);
+            db.collection("notifications")
+                    .document(notification.getNotificationId())
+                    .update("seen", true)
+                    .addOnSuccessListener(documentReference -> {
+                        Log.d("FIRESTORE_SUCCESS", "Notification updated with ID: " + notification.getNotificationId());
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w("FIRESTORE_ERROR", "Error updating document", e);
+                        Toast.makeText(getContext(), "Error updating notification", Toast.LENGTH_LONG).show();
+                    });
+        }
         if (Objects.equals(notification.getType(), "lottery_win")) {
-            System.out.println("not implemented yet");
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", notification.getEventId());
+            Navigation.findNavController(view)
+                    .navigate(R.id.action_notificationsFragment_to_eventDetailsFragment, bundle);
         }
     }
 }

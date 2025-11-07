@@ -1,5 +1,6 @@
 package com.example.lotteryevent.adapters;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.data.Notification;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
@@ -118,6 +120,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     class NotificationViewHolder extends RecyclerView.ViewHolder {
         private final TextView message;
         private final TextView timestamp;
+        private final MaterialCardView notifications_material_card;
 
         /**
          * Constructs a new {@link EventAdapter.EventViewHolder}.
@@ -128,10 +131,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             super(itemView);
             message = itemView.findViewById(R.id.notification_message);
             timestamp = itemView.findViewById(R.id.notification_timestamp);
+            notifications_material_card = itemView.findViewById(R.id.notifications_material_card);
 
             // Set a click listener on the entire tile view.
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
+                v.setBackgroundColor(Color.rgb(230, 232, 230));
                 // Ensure the position is valid and a listener is registered before triggering the callback.
                 if (listener != null && position != RecyclerView.NO_POSITION) {
                     listener.onItemClick(notificationsList.get(position));
@@ -155,6 +160,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             Timestamp timestampRaw = notification.getTimestamp();
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
             String timestamp = dateFormat.format(timestampRaw.toDate());
+
+            if (notification.getSeen() == true) {
+                notifications_material_card.setBackgroundColor(Color.rgb(230, 232, 230));
+            }
 
             this.message.setText(message);
             this.timestamp.setText(timestamp);
