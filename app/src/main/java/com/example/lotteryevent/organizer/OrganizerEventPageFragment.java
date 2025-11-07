@@ -115,6 +115,13 @@ public class OrganizerEventPageFragment extends Fragment {
         setupClickListeners();
     }
 
+    /**
+     * Initializes the UI components by finding them in the view hierarchy.
+     * This method should be called in {@code onViewCreated} to ensure the view
+     * is fully inflated before attempting to find any child views.
+     *
+     * @param view The root view of the fragment's layout from which to find the UI components.
+     */
     private void initializeViews(View view) {
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         buttonContainer = view.findViewById(R.id.organizer_button_container);
@@ -206,7 +213,12 @@ public class OrganizerEventPageFragment extends Fragment {
                 buttonContainer.setVisibility(View.VISIBLE);
                 setButtonStates(true, true, true, true, true, true, true);
                 break;
-            case "finished":
+            case "finalized":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, true, true, true, false, false);
+                btnFinalize.setVisibility(View.GONE);
+                btnRunDraw.setVisibility(View.GONE);
+                break;
             case "upcoming":
             default:
                 buttonContainer.setVisibility(View.GONE);
@@ -214,6 +226,19 @@ public class OrganizerEventPageFragment extends Fragment {
         }
     }
 
+    /**
+     * Sets the enabled/disabled state of the various action buttons on the page.
+     * This is used to control which actions are available to the organizer based on the
+     * current status of the event (e.g., open, drawing_complete).
+     *
+     * @param waitingList True to enable the "View Waiting List" button, false to disable.
+     * @param map         True to enable the "View Entrant Map" button, false to disable.
+     * @param accepted    True to enable the "View Accepted Participants" button, false to disable.
+     * @param invited     True to enable the "View Invited Participants" button, false to disable.
+     * @param cancelled   True to enable the "View Cancelled Participants" button, false to disable.
+     * @param runDraw     True to enable the "Run Draw" button, false to disable.
+     * @param finalize    True to enable the "Finalize" button, false to disable.
+     */
     private void setButtonStates(boolean waitingList, boolean map, boolean accepted,
                                  boolean invited, boolean cancelled, boolean runDraw, boolean finalize) {
         btnViewWaitingList.setEnabled(waitingList);
