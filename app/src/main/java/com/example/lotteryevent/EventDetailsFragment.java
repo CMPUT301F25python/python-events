@@ -83,13 +83,14 @@ public class EventDetailsFragment extends Fragment {
         }
         dataList.clear();
 
-        String capacity = "N/A";
-
-        if (doc.getLong("waitingListCount") != null && doc.getLong("waitingListLimit") != null) {
-            Long count = doc.getLong("waitingListCount");
-            Long lim = doc.getLong("waitingListLimit");
-            capacity = count + "/" + lim;
-        }
+//        // will implement again after data is available
+//        String capacity = "N/A";
+//
+//        if (doc.getLong("waitingListCount") != null && doc.getLong("waitingListLimit") != null) {
+//            Long count = doc.getLong("waitingListCount");
+//            Long lim = doc.getLong("waitingListLimit");
+//            capacity = count + "/" + lim;
+//        }
 
         Map<String, Object> all = doc.getData();
         if (all != null) {
@@ -110,7 +111,8 @@ public class EventDetailsFragment extends Fragment {
             }
             addAny("Description", doc.getString("description"));
             addAny("Lottery Guidelines", doc.getString("lotteryGuidelines"));
-            addAny("Waiting List Capacity", capacity);
+            addAny("Max Attendees", doc.getLong("capacity"));
+//            addAny("Waiting List Capacity", capacity); // will implement again after data is available
         }
 
         listAdapter.notifyDataSetChanged();
