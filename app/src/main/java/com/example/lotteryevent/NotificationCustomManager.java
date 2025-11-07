@@ -154,7 +154,7 @@ public class NotificationCustomManager {
 
                     generateNotification(title, fullMessage);
                 } else if (size > 1) {
-                    String title = "You have " + String.valueOf(size) + "unread notifications";
+                    String title = "You have " + String.valueOf(size) + " unread notifications";
                     String message = "Click here or go to the notifications section to see all messages you missed!";
 
                     generateNotification(title, message);
