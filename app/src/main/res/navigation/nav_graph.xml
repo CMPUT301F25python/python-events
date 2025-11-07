@@ -85,6 +85,15 @@
     </fragment>
 
     <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.lotteryevent.NotificationsFragment"
+        android:label="Notifications" >
+        <action
+            android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"/>
+    </fragment>
+
+    <fragment
         android:id="@+id/eventDetailsFragment"
         android:name="com.example.lotteryevent.EventDetailsFragment"
         android:label="Event Details"
@@ -93,7 +102,6 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
-
 
     <fragment
         android:id="@+id/entrantListFragment"
