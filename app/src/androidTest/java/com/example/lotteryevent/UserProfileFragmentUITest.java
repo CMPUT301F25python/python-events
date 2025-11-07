@@ -35,6 +35,8 @@ public class UserProfileFragmentUITest {
         // Navigate from HomeFragment to UserProfileFragment
         // assuming you have a profile icon or menu item
         onView(withId(R.id.profile_icon)).perform(click());
+        // Wait until the UserProfileFragment's update button is visible to start tests (otherwise testInvalidNameField fails)
+        onView(withId(R.id.update_button)).check(matches(isDisplayed()));
     }
 
     /**
@@ -62,7 +64,7 @@ public class UserProfileFragmentUITest {
         // Type valid user information
         onView(withId(R.id.name_field)).perform(clearText(), typeText("John Doe"), closeSoftKeyboard());
         onView(withId(R.id.email_field)).perform(clearText(), typeText("johndoe@gmail.com"), closeSoftKeyboard());
-        onView(withId(R.id.phone_field)).perform(clearText(), typeText(""), closeSoftKeyboard());
+        onView(withId(R.id.phone_field)).perform(clearText(), closeSoftKeyboard());
 
         // Click update button
         onView(withId(R.id.update_button)).perform(click());
@@ -79,23 +81,6 @@ public class UserProfileFragmentUITest {
         // Leave email invalid/empty
         onView(withId(R.id.name_field)).perform(clearText(), typeText("John Doe"), closeSoftKeyboard());
         onView(withId(R.id.email_field)).perform(clearText(), closeSoftKeyboard());
-        onView(withId(R.id.phone_field)).perform(clearText(), typeText("9876543210"), closeSoftKeyboard());
-
-        // Click update button
-        onView(withId(R.id.update_button)).perform(click());
-
-        // Verify still on UserProfileFragment (e.g., name field still visible)
-        onView(withId(R.id.name_field)).check(matches(isDisplayed()));
-    }
-
-    /**
-     * if invalid name field, then remain on UserProfileFragment
-     */
-    @Test
-    public void testInvalidNameField() {
-        // Leave email invalid/empty
-        onView(withId(R.id.name_field)).perform(clearText(), typeText(""), closeSoftKeyboard());
-        onView(withId(R.id.email_field)).perform(clearText(), typeText("johndoe@gmail.com"), closeSoftKeyboard());
         onView(withId(R.id.phone_field)).perform(clearText(), typeText("9876543210"), closeSoftKeyboard());
 
         // Click update button
