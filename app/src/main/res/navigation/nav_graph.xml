@@ -69,5 +69,9 @@
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.AvailableEventsFragment"
         android:label="Events" />
+    <fragment
+        android:id="@+id/nav_notifications"
+        android:name="com.example.lotteryevent.NotificationsFragment"
+        android:label="Notifications" />
 
 </navigation>
