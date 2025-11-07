@@ -56,65 +56,78 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void bind(@NonNull DocumentSnapshot doc) {
-        if (!doc.exists()) {
-            Toast.makeText(requireContext(), "Event not found", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        dataList.clear();
+//        try {
+            if (!doc.exists()) {
+                Toast.makeText(requireContext(), "Event not found", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dataList.clear();
 
-        String capacity = "N/A";
+            String capacity = "N/A";
 
-        if (doc.getLong("waitinglistCount") != null && doc.getLong("waitinglistlimit") != null) {
-            Long count = doc.getLong("waitinglistCount");
-            Long lim = doc.getLong("waitinglistlimit");
-            capacity = count + "/" + lim;
-        }
+            if (doc.getLong("waitingListCount") != null && doc.getLong("waitingListLimit") != null) {
+                Long count = doc.getLong("waitingListCount");
+                Long lim = doc.getLong("waitingListLimit");
+                capacity = count + "/" + lim;
+            }
 
-        Map<String, Object> all = doc.getData();
-        if (all != null) {
-            // Prefer explicit fields first
-            add("Name", doc.getString("name"));
-            add("Organizer", doc.getString("organizerName"));
-            add("Date and Time", Objects.requireNonNull(doc.getTimestamp("eventStartDateTime")).toDate().toString());
-            add("Location", doc.getString("location"));
-            add("Description", doc.getString("description"));
-            add("Lottery Guidelines", doc.getString("lotteryGuidelines"));
-            add("Waiting List Capacity", capacity);
-        }
+            Map<String, Object> all = doc.getData();
+            if (all != null) {
+                // Prefer explicit fields first
+                addAny("Name", doc.getString("name"));
+                addAny("Organizer", doc.getString("organizerName"));
+                addAny("Location", doc.getString("location"));
+                try { // Timestamps are dramatic and cannot deal if they are null or empty smh
+                    addAny("Date and Time", Objects.requireNonNull(doc.getTimestamp("eventStartDateTime")).toDate().toString());
+                } catch (Throwable t) {
+                    // never let binding crash the fragment
+                    android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
+                    Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
+                }
+                addAny("Description", doc.getString("description"));
+                addAny("Lottery Guidelines", doc.getString("lotteryGuidelines"));
+                addAny("Waiting List Capacity", capacity);
+            }
 
-//        // Then add any other fields generically
-//        Map<String, Object> all = doc.getData();
-//        if (all != null) {
-//            for (Map.Entry<String, Object> e : all.entrySet()) {
-//                String k = e.getKey();
-//                if (k.equals("name") || k.equals("location") || k.equals("status") || k.equals("description")) continue;
-//                dataList.add(k + ": " + String.valueOf(e.getValue()));
-//            }
+            listAdapter.notifyDataSetChanged();
+//        } catch (Throwable t) {
+//            // last-resort guard: never let binding crash the fragment
+//            android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
+//            Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
 //        }
-
-        listAdapter.notifyDataSetChanged();
     }
 
-//    private void addIfPresent(@NonNull List<String> out, String label, @Nullable Object value) {
-//        if (value == null) return;
-//        if (value instanceof String && ((String) value).trim().isEmpty()) return;
-//        if (value instanceof com.google.firebase.Timestamp ts) {
-//            out.add(label + ": " + ts.toDate());
-//        } else {
-//            out.add(label + ": " + value.toString());
-//        }
-//    }
+    private final java.text.DateFormat DF =
+            new java.text.SimpleDateFormat("EEE, MMM d yyyy • h:mm a", java.util.Locale.getDefault());
+
+    private void addAny(String label, @Nullable Object raw) {
+        if (raw == null) return;
+
+        String v;
+        if (raw instanceof com.google.firebase.Timestamp) {
+            v = DF.format(((com.google.firebase.Timestamp) raw).toDate());
+        } else if (raw instanceof java.util.Date) {
+            v = DF.format((java.util.Date) raw);
+        } else {
+            v = raw.toString();
+        }
+
+        v = v.trim();
+        if (v.isEmpty() || "null".equalsIgnoreCase(v)) return;
+        dataList.add(label + ": " + v);
+    }
+
 
 
     private void add(String label, @Nullable String value) {
-        if (value == null) return;                  // null -> skip
-        String v = value.trim();                    // remove spaces/tabs/newlines
-        if (v.isEmpty()) return;                    // blank -> skip
-        if ("null".equalsIgnoreCase(v)) return;     // literal "null" -> skip\
+        if (value == null) return;
+        String v = value.trim();
+        if (v.isEmpty()) return;
+        if ("null".equalsIgnoreCase(v)) return;
         try {
             dataList.add(label + ": " + v);
-        } catch (NumberFormatException e) {
-            android.util.Log.e("EventsMap", "Skipping bad param " + value, e);
+        } catch (Exception e) {
+            return;
         }
     }
 
