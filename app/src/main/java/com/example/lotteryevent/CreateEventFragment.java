@@ -42,6 +42,8 @@ public class CreateEventFragment extends Fragment {
     private EditText editTextEventName, editTextEventDescription, editTextEventLocation;
     private EditText editTextEventStartDate, editTextEventStartTime;
     private EditText editTextEventEndDate, editTextEventEndTime;
+    private EditText editTextRegistrationStartDate, editTextRegistrationStartTime;
+    private EditText editTextRegistrationEndDate, editTextRegistrationEndTime;
     private EditText editTextEventPrice;
     private EditText editTextMaxAttendees;
     private EditText editTextLotteryGuidelines;
@@ -49,6 +51,8 @@ public class CreateEventFragment extends Fragment {
     private Button buttonSave;
     private final Calendar eventStartCalendar = Calendar.getInstance();
     private final Calendar eventEndCalendar = Calendar.getInstance();
+    private final Calendar registrationStartCalendar = Calendar.getInstance();
+    private final Calendar registrationEndCalendar = Calendar.getInstance();
 
     /**
      * Required empty public constructor for fragment instantiation.
@@ -95,6 +99,12 @@ public class CreateEventFragment extends Fragment {
         editTextEventEndDate = view.findViewById(R.id.edit_text_event_end_date);
         editTextEventEndTime = view.findViewById(R.id.edit_text_event_end_time);
 
+        editTextRegistrationStartDate = view.findViewById(R.id.edit_text_registration_start_date);
+        editTextRegistrationStartTime = view.findViewById(R.id.edit_text_registration_start_time);
+
+        editTextRegistrationEndDate = view.findViewById(R.id.edit_text_registration_end_date);
+        editTextRegistrationEndTime = view.findViewById(R.id.edit_text_registration_end_time);
+
         editTextMaxAttendees = view.findViewById(R.id.edit_text_max_attendees);
 
         editTextLotteryGuidelines = view.findViewById(R.id.edit_text_lottery_guidelines);
@@ -117,6 +127,12 @@ public class CreateEventFragment extends Fragment {
 
         editTextEventEndDate.setOnClickListener(v -> showDatePickerDialog(eventEndCalendar, editTextEventEndDate));
         editTextEventEndTime.setOnClickListener(v -> showTimePickerDialog(eventEndCalendar, editTextEventEndTime));
+
+        editTextRegistrationStartDate.setOnClickListener(v -> showDatePickerDialog(registrationStartCalendar, editTextRegistrationStartDate));
+        editTextRegistrationStartTime.setOnClickListener(v -> showTimePickerDialog(registrationStartCalendar, editTextRegistrationStartTime));
+
+        editTextRegistrationEndDate.setOnClickListener(v -> showDatePickerDialog(registrationEndCalendar, editTextRegistrationEndDate));
+        editTextRegistrationEndTime.setOnClickListener(v -> showTimePickerDialog(registrationEndCalendar, editTextRegistrationEndTime));
 
         // Set a click listener on the save button
         buttonSave.setOnClickListener(this::saveEventToFirestore);
@@ -206,6 +222,9 @@ public class CreateEventFragment extends Fragment {
         com.google.firebase.Timestamp eventStartDateTime = getTimestampFromCalendars(eventStartCalendar, editTextEventStartDate, editTextEventStartTime);
         com.google.firebase.Timestamp eventEndDateTime = getTimestampFromCalendars(eventEndCalendar, editTextEventEndDate, editTextEventEndTime);
 
+        com.google.firebase.Timestamp registrationStartDateTime = getTimestampFromCalendars(registrationStartCalendar, editTextRegistrationStartDate, editTextRegistrationStartTime);
+        com.google.firebase.Timestamp registrationEndDateTime = getTimestampFromCalendars(registrationEndCalendar, editTextRegistrationEndDate, editTextRegistrationEndTime);
+
         String validationError = validateEventInput(
                 eventName,
                 editTextEventStartDate.getText().toString(),
@@ -213,7 +232,13 @@ public class CreateEventFragment extends Fragment {
                 editTextEventEndDate.getText().toString(),
                 editTextEventEndTime.getText().toString(),
                 eventStartDateTime,
-                eventEndDateTime
+                eventEndDateTime,
+                editTextRegistrationStartDate.getText().toString(),
+                editTextRegistrationStartTime.getText().toString(),
+                editTextRegistrationEndDate.getText().toString(),
+                editTextRegistrationEndTime.getText().toString(),
+                registrationStartDateTime,
+                registrationEndDateTime
         );
 
         if (validationError != null) {
@@ -244,8 +269,8 @@ public class CreateEventFragment extends Fragment {
                 event.setOrganizerName(organizerName);
                 event.setLocation(location);
                 event.setPrice(price);
-//                event.setRegistrationStartDateTime(null); // to be populated during US 02.01.04
-//                event.setRegistrationEndDateTime(null);
+                event.setRegistrationStartDateTime(registrationStartDateTime);
+                event.setRegistrationEndDateTime(registrationEndDateTime);
                 event.setEventStartDateTime(eventStartDateTime);
                 event.setEventEndDateTime(eventEndDateTime);
                 event.setCapacity(capacity);
@@ -281,41 +306,86 @@ public class CreateEventFragment extends Fragment {
      * Validates the user input for the event form.
      *
      * @param eventName The name of the event.
-     * @param startDateText The text from the start date field.
-     * @param startTimeText The text from the start time field.
-     * @param endDateText The text from the end date field.
-     * @param endTimeText The text from the end time field.
-     * @param eventStartTimestamp The generated start timestamp.
-     * @param eventEndTimestamp The generated end timestamp.
+     * @param startDateText The text from the event start date field.
+     * @param startTimeText The text from the event start time field.
+     * @param endDateText The text from the event end date field.
+     * @param endTimeText The text from the event end time field.
+     * @param eventStartTimestamp The generated event start timestamp.
+     * @param eventEndTimestamp The generated event end timestamp.
+     * @param regStartDateText The text from the registration start date field.
+     * @param regStartTimeText The text from the registration start time field.
+     * @param regEndDateText The text from the registration end date field.
+     * @param regEndTimeText The text from the registration end time field.
+     * @param regStartTimestamp The generated registration start timestamp.
+     * @param regEndTimestamp The generated registration end timestamp.
      * @return A String containing an error message if validation fails, otherwise null.
      */
     public String validateEventInput(String eventName, String startDateText, String startTimeText,
                                      String endDateText, String endTimeText,
                                      com.google.firebase.Timestamp eventStartTimestamp,
-                                     com.google.firebase.Timestamp eventEndTimestamp) {
+                                     com.google.firebase.Timestamp eventEndTimestamp,
+                                     String regStartDateText, String regStartTimeText,
+                                     String regEndDateText, String regEndTimeText,
+                                     com.google.firebase.Timestamp regStartTimestamp,
+                                     com.google.firebase.Timestamp regEndTimestamp) {
 
         if (eventName.isEmpty()) {
             return "Event name is required.";
         }
 
-        boolean isStartDateSet = !startDateText.isEmpty();
-        boolean isStartTimeSet = !startTimeText.isEmpty();
-        boolean isEndDateSet = !endDateText.isEmpty();
-        boolean isEndTimeSet = !endTimeText.isEmpty();
-
-        // Check for incomplete start date/time
-        if (isStartDateSet && !isStartTimeSet) {
-            return "Please select a start time for the selected start date.";
+        // If a registration start date is set, an end date must also be set
+        boolean isRegStartDateSet = !regStartDateText.isEmpty();
+        boolean isRegEndDateSet = !regEndDateText.isEmpty();
+        if (isRegStartDateSet && !isRegEndDateSet) {
+            return "A registration end date is required if a start date is set.";
         }
 
-        // Check for incomplete end date/time
-        if (isEndDateSet && !isEndTimeSet) {
-            return "Please select an end time for the selected end date.";
+        // All dates require a time or the Firestore timestamp will be null
+        boolean isEventStartDateSet = !startDateText.isEmpty();
+        boolean isEventStartTimeSet = !startTimeText.isEmpty();
+        if (isEventStartDateSet && !isEventStartTimeSet) {
+            return "Please select a start time for the selected event start date.";
         }
 
-        // Check if start time is before end time
+        boolean isEventEndDateSet = !endDateText.isEmpty();
+        boolean isEventEndTimeSet = !endTimeText.isEmpty();
+        if (isEventEndDateSet && !isEventEndTimeSet) {
+            return "Please select an end time for the selected event end date.";
+        }
+
+        boolean isRegStartTimeSet = !regStartTimeText.isEmpty();
+        if (isRegStartDateSet && !isRegStartTimeSet) {
+            return "Please select a start time for the selected registration start date.";
+        }
+
+        boolean isRegEndTimeSet = !regEndTimeText.isEmpty();
+        if (isRegEndDateSet && !isRegEndTimeSet) {
+            return "Please select an end time for the selected registration end date.";
+        }
+
+        // Start before end checks:
         if (eventStartTimestamp != null && eventEndTimestamp != null && eventStartTimestamp.compareTo(eventEndTimestamp) >= 0) {
             return "Event start time must be before event end time.";
+        }
+
+        if (regStartTimestamp != null && regEndTimestamp != null && regStartTimestamp.compareTo(regEndTimestamp) >= 0) {
+            return "Registration start time must be before registration end time.";
+        }
+
+        // Check that registration period is before the event starts
+        if (regEndTimestamp != null && eventStartTimestamp != null && regEndTimestamp.compareTo(eventStartTimestamp) > 0) {
+            return "Registration must end before the event starts.";
+        }
+
+        // Date/time is in the future checks:
+        com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
+
+        if (regStartTimestamp != null && regStartTimestamp.compareTo(now) < 0) {
+            return "Registration start time cannot be in the past.";
+        }
+
+        if (eventStartTimestamp != null && eventStartTimestamp.compareTo(now) < 0) {
+            return "Event start time cannot be in the past.";
         }
 
         return null; // Validation successful
