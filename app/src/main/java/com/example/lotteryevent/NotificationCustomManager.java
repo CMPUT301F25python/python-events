@@ -92,7 +92,7 @@ public class NotificationCustomManager {
      * @param organizerId Organizer ID who sent the notif
      * @param organizerName Organizer Name who sent the notif
      */
-    public void sendNotification(String uid, String title, String message, String eventId, String eventName, String organizerId, String organizerName) {
+    public void sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
         Map<String, Object> notification = new HashMap<>();
         notification.put("title", title);
         notification.put("message", message);
@@ -103,9 +103,11 @@ public class NotificationCustomManager {
         notification.put("seen", false);
         String time = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.CANADA).format(new Date());
         notification.put("timestamp", time);
+        notification.put("recipientId", uid);
+        notification.put("type", type);
 
         // adds notif doc to the user's notif collection
-        db.collection("users").document(uid).collection("notifications").add(notification)
+        db.collection("notifications").add(notification)
                 .addOnSuccessListener(v -> Log.d(TAG, "Notification added for user ID " + uid + " with notification ID " + v.getId()))
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Failed to add notification for user " + uid, e);
@@ -138,7 +140,8 @@ public class NotificationCustomManager {
     }
 
     public void checkAndDisplayUnreadNotifications(String uid) {
-        db.collection("users").document(uid).collection("notifications")
+        db.collection("notifications")
+            .whereEqualTo("recipientId", uid)
             .whereEqualTo("seen", false).get()
             .addOnSuccessListener(notifs -> {
                 int size = notifs.size();
@@ -168,7 +171,7 @@ public class NotificationCustomManager {
 
     public void listenForNotifications(String uid) {
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
-        db.collection("users").document(uid).collection("notifications").whereEqualTo("seen", false)
+        db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value,
