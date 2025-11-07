@@ -149,6 +149,8 @@ public class OrganizerEventPageFragment extends Fragment {
 
         initializeViews(view);
 
+        setupClickListeners();
+
         // Fetch and display event data if eventId is available
         if (eventId != null && !eventId.isEmpty()) {
             fetchEventDetails();
@@ -267,13 +269,13 @@ public class OrganizerEventPageFragment extends Fragment {
                             if (posterImage != null && posterUrl != null && !posterUrl.trim().isEmpty()) {
                                 Glide.with(this)
                                         .load(posterUrl)
-                                        .placeholder(R.drawable.ic_image_placeholder) // optional
-                                        .error(R.drawable.ic_image_placeholder)       // optional
+                                        .placeholder(R.drawable.ic_image_placeholder)
+                                        .error(R.drawable.ic_image_placeholder)
                                         .into(posterImage);
                             }
 
-                            updateUi(name, status);
-                          
+                            updateUi();
+
                             this.event = document.toObject(Event.class);
                             if (this.event != null) {
                                 updateUi();
