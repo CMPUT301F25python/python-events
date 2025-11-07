@@ -52,7 +52,6 @@ public class HomeFragment extends Fragment {
     private HomeViewModel homeViewModel;
     private EventAdapter eventAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private NotificationCustomManager notificationCustomManager;
 
 
     /**
@@ -122,22 +121,6 @@ public class HomeFragment extends Fragment {
         // Trigger the initial data fetch from the ViewModel
         homeViewModel.fetchUserEvents();
 
-        notificationCustomManager = new NotificationCustomManager(getContext());
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (user != null) {
-            String uid = user.getUid();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            }
-
-            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
-            notificationCustomManager.listenForNotifications(uid);
-        }
     }
 
     /**
@@ -245,16 +228,4 @@ public class HomeFragment extends Fragment {
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
-
-    private final ActivityResultLauncher<String> getPermission =
-        registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
-            @Override
-            public void onActivityResult(Boolean isGranted) {
-                if (isGranted) {
-                    Toast.makeText(requireContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(requireContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
 }

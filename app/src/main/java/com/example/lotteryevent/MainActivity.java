@@ -53,8 +53,7 @@ public class MainActivity extends AppCompatActivity {
     // device authentication
     private FirebaseAuth mAuth;
     private static final String TAG = "AnonymousAuth";
-
-//    private NotificationCustomManager notificationCustomManager;
+    private NotificationCustomManager notificationCustomManager;
 
     /**
      * Initializes the activity, sets up the main layout, logs user in based on device id, and configures navigation.
@@ -91,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
-//        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
+        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
     }
 
     /**
@@ -109,32 +108,32 @@ public class MainActivity extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         updateUI(currentUser);
 
-//        if (currentUser != null) {
-//            String uid = currentUser.getUid();
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
-//                        != PackageManager.PERMISSION_GRANTED) {
-//                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
-//                }
-//            }
-//
-//            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
-//            notificationCustomManager.listenForNotifications(uid);
-//        }
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                }
+            }
+
+            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
+            notificationCustomManager.listenForNotifications(uid);
+        }
     }
 
-//    private final ActivityResultLauncher<String> getPermission =
-//        registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
-//            @Override
-//            public void onActivityResult(Boolean isGranted) {
-//                if (isGranted) {
-//                    Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show();
-//                } else {
-//                    Toast.makeText(getApplicationContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
-//                }
-//            }
-//        });
+    private final ActivityResultLauncher<String> getPermission =
+        registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+            @Override
+            public void onActivityResult(Boolean isGranted) {
+                if (isGranted) {
+                    Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
     /**
      * Signs the user in anonymously using Firebase Authentication.
