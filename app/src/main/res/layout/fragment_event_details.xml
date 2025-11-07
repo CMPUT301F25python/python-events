@@ -30,17 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
-        <Button
-            android:id="@+id/btn_action"
-            style="@style/PinkButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            tools:text="Action Button"
-            tools:visibility="visible" />
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/text_info_message"
@@ -48,9 +38,36 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:visibility="gone"
-            tools:text="Informational message here."
-            tools:visibility="visible" />
+            tools:text="Informational message here." />
 
+        <LinearLayout
+            android:id="@+id/button_actions_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <Button
+                android:id="@+id/btn_action_negative"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:visibility="gone"
+                tools:text="Decline"
+                tools:visibility="visible" />
+
+            <Button
+                android:id="@+id/btn_action_positive"
+                style="@style/PinkButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                tools:text="Accept / Join" />
+
+        </LinearLayout>
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

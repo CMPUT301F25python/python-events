@@ -66,4 +66,18 @@
     <string name="error_failed_to_load">Failed to load: %1$s</string>
     <string name="error_failed_to_join">Failed to join: %1$s</string>
     <string name="error_failed_to_leave">Failed to leave: %1$s</string>
+
+    <string name="accept_invitation">Accept Invitation</string>
+    <string name="decline_invitation">Decline Invitation</string>
+
+    <string name="info_finalized_organizer">Organizer has finalized event attendance. Better luck next time!</string>
+    <string name="info_accepted">You have accepted your invitation to this event. Enjoy!</string>
+    <string name="info_invitation_cancelled">Your invitation has been cancelled.</string>
+    <string name="success_invitation_declined">Invitation declined.</string>
+    <string name="error_invitation_update_failed">Failed to update invitation status.</string>
+
+    <string name="dialog_leave_warning_title">Are you sure?</string>
+    <string name="dialog_leave_warning_message">Registration for this event has closed. If you leave the waiting list, you will not be able to rejoin.</string>
+    <string name="dialog_leave_confirm">Leave</string>
+    <string name="dialog_cancel">Cancel</string>
 </resources>
