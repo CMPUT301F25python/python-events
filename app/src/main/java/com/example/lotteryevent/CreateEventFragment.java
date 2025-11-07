@@ -398,7 +398,19 @@ public class CreateEventFragment extends Fragment {
             return "Event start time cannot be in the past.";
         }
 
-        if (waitingListLimit < capacity) {
+        if (waitingListLimit != null && capacity == null) {
+            return "A capacity is required to set a waiting list limit.";
+        }
+
+        if (capacity != null && capacity < 0) {
+            return "Capacity cannot be negative.";
+        }
+
+        if (waitingListLimit != null && waitingListLimit < 1) {
+            return "Waiting list limit cannot be smaller than one.";
+        }
+
+        if (waitingListLimit != null && capacity != null && waitingListLimit < capacity) {
             return "Waiting list size must be greater than or equal to the number of attendees.";
         }
 
