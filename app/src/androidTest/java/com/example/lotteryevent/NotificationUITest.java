@@ -28,7 +28,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,17 +69,20 @@ public class NotificationUITest {
                 3);
         db.collection("events").add(event).addOnSuccessListener(documentReference -> {
             String eventId = documentReference.getId();
+            event.setEventId(eventId);
 
             notification = new Notification(
                     user.getUid(), "Congratulations!",
                     "You have been selected for event " + event.getName(),
-                    "lottery_success", String.valueOf(event.getEventId()),
+                    "lottery_win", String.valueOf(event.getEventId()),
                     event.getName(), String.valueOf(user.getUid()),
                     "John Doe");
 
 
             db.collection("notifications")
-                    .add(notification);
+                    .add(notification).addOnSuccessListener(documentReference2 -> {
+                        notification.setNotificationId(documentReference2.getId());
+                    });
         });
 
         try {
@@ -91,6 +96,36 @@ public class NotificationUITest {
         });
     }
 
+    @After
+    public void deleteEventNotif() {
+        db.collection("notifications").document(notification.getNotificationId()).delete();
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        db.collection("events").document(event.getEventId()).delete();
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testNotificationLeadsToEvent() {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        onView(withText(containsString("Tap to accept or decline"))).perform(click());
+
+        onView(withText(containsString("Event Details"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Snowball fight"))).check(matches(isDisplayed()));
+        onView(withText(containsString("John Doe"))).check(matches(isDisplayed()));
+    }
+
     @Test
     public void testNotificationShows() {
         try {
@@ -98,6 +133,6 @@ public class NotificationUITest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        onView(withText(containsString("You have been selected for event " + event.getName()))).check(matches(isDisplayed()));
+        onView(withText(containsString("You've been selected for " + event.getName()))).check(matches(isDisplayed()));
     }
 }
