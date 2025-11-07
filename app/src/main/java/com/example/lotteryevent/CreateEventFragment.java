@@ -286,7 +286,7 @@ public class CreateEventFragment extends Fragment {
                 event.setIsgeolocationRequired(isGeoLocationRequired);
 
                 // Default values for new events
-                event.setStatus("upcoming");
+                event.setStatus("open");
                 event.setWaitinglistCount(0);
                 event.setAttendeeCount(0);
 
