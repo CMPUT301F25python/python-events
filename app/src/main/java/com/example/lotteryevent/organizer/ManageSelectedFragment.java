@@ -85,7 +85,7 @@ public class ManageSelectedFragment extends Fragment {
     private void loadSelectedEntrants() {
         this.db.collection("events")
                 .document(this.eventId)
-                .collection("selected")
+                .collection("entrants")
                 .whereEqualTo("status", "invited")
                 .get()
                 .addOnSuccessListener(query -> {
