@@ -161,6 +161,15 @@ public class UserProfileFragment extends Fragment {
         if(validationResult != null){
             // validation failed
             Log.e("UserProfileFragment", "Profile validation failed for: " + validationResult);
+            if(validationResult.equals(name)){
+                Toast.makeText(getContext(), "Name and email required.", Toast.LENGTH_SHORT).show();
+            }
+            if(validationResult.equals(email)){
+                Toast.makeText(getContext(), "Enter a valid email.", Toast.LENGTH_SHORT).show();
+            }
+            if(validationResult.equals(phone)){
+                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
@@ -355,13 +364,11 @@ public class UserProfileFragment extends Fragment {
     public String validateProfileInfo(String name, String email, String phone){
         // name and email mandatory (check)
         if (name.isEmpty() || email.isEmpty()) {
-            Toast.makeText(getContext(), "Name and email required.", Toast.LENGTH_SHORT).show();
             return name;
         }
 
         // check if valid email address
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(getContext(), "Enter a valid email.", Toast.LENGTH_SHORT).show();
             return email;
         }
 
@@ -369,7 +376,6 @@ public class UserProfileFragment extends Fragment {
         if (!phone.isEmpty()) {
             String phoneDigitsOnly = phone.replaceAll("\\D", "");
             if(phoneDigitsOnly.length() != 10) {
-                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
                 return phone;
             }
         }
