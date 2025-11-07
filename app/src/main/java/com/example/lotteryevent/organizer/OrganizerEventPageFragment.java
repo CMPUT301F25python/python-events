@@ -37,6 +37,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -61,6 +62,8 @@ public class OrganizerEventPageFragment extends Fragment {
     private ImageView posterImage;
     private Button uploadPosterButton;
     private ActivityResultLauncher<String> pickImage;
+    private Uri pendingPosterUri; // holds the image the user picked but hasn’t uploaded yet
+
 
     /**
      * Required empty public constructor for fragment instantiation.
@@ -85,15 +88,25 @@ public class OrganizerEventPageFragment extends Fragment {
             eventId = OrganizerEventPageFragmentArgs.fromBundle(getArguments()).getEventId();
         }
 
-        // System picker for images
         pickImage = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri == null) return;
-            if (eventId == null || eventId.trim().isEmpty()) {
-                Toast.makeText(requireContext(), "Missing event id", Toast.LENGTH_SHORT).show();
-                return;
+
+            // Store it to upload later
+            pendingPosterUri = uri;
+
+            // Preview it immediately
+            if (posterImage != null) {
+                Glide.with(this)
+                        .load(uri)
+                        .placeholder(R.drawable.ic_image_placeholder)
+                        .error(R.drawable.ic_image_placeholder)
+                        .into(posterImage);
             }
-            uploadPoster(uri);
+
+            // Enable the upload button now that we have a selection
+            if (uploadPosterButton != null) uploadPosterButton.setEnabled(true);
         });
+
     }
 
     /**
@@ -125,7 +138,6 @@ public class OrganizerEventPageFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         initializeViews(view);
-        setupClickListeners();
 
         // Fetch and display event data if eventId is available
         if (eventId != null && !eventId.isEmpty()) {
@@ -165,19 +177,22 @@ public class OrganizerEventPageFragment extends Fragment {
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(this::generateQrCode);
 
-        if (uploadPosterButton != null) {
-            uploadPosterButton.setOnClickListener(v -> pickImage.launch("image/*"));
-        }
+        // Tap the image to choose a photo
         if (posterImage != null) {
             posterImage.setOnClickListener(v -> pickImage.launch("image/*"));
         }
 
-        btnRunDraw.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("eventId", eventId);
-            Navigation.findNavController(v)
-                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
-        });
+        // Upload button saves the chosen image
+        if (uploadPosterButton != null) {
+            uploadPosterButton.setEnabled(false); // disabled until a photo is chosen
+            uploadPosterButton.setOnClickListener(v -> {
+                if (pendingPosterUri == null) {
+                    Toast.makeText(requireContext(), "Tap the image box to choose a photo first.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                uploadPoster(pendingPosterUri);
+            });
+        }
 
         // Add placeholder listeners for the other new buttons
         View.OnClickListener notImplementedListener = v -> {
@@ -230,39 +245,64 @@ public class OrganizerEventPageFragment extends Fragment {
     }
 
     private void uploadPoster(@NonNull Uri uri) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event id", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(requireContext(), "Not signed in yet – try again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Toast.makeText(requireContext(), "Uploading poster…", Toast.LENGTH_SHORT).show();
 
-        String fileName = UUID.randomUUID().toString() + ".jpg";
+        String fileName = java.util.UUID.randomUUID().toString() + ".jpg";
         StorageReference ref = storage.getReference()
                 .child("posters")
                 .child(eventId)
                 .child(fileName);
 
+        Log.d(TAG, "putFile to: " + ref.getBucket() + " / " + ref.getPath() + "  uri=" + uri + " (" + uri.getScheme() + ")");
+
         ref.putFile(uri)
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) throw task.getException();
-                    return ref.getDownloadUrl();
-                })
-                .addOnSuccessListener(downloadUri -> {
-                    db.collection("events").document(eventId)
-                            .update("posterUrl", downloadUri.toString())
-                            .addOnSuccessListener(v -> {
-                                Toast.makeText(requireContext(), "Poster updated", Toast.LENGTH_SHORT).show();
-                                if (posterImage != null) {
-                                    Glide.with(this)
-                                            .load(downloadUri)
-                                            .placeholder(R.drawable.ic_image_placeholder)
-                                            .error(R.drawable.ic_image_placeholder)
-                                            .into(posterImage);
-                                }
+                .addOnSuccessListener(taskSnapshot -> {
+                    StorageReference uploadedRef = taskSnapshot.getStorage(); // same as 'ref'
+                    uploadedRef.getDownloadUrl()
+                            .addOnSuccessListener(downloadUri -> {
+                                Log.d(TAG, "downloadUrl=" + downloadUri);
+
+                                // Use update(...) or set(..., merge()) – both are fine
+                                db.collection("events").document(eventId)
+                                        .update(
+                                                "posterUrl", downloadUri.toString(),
+                                                "posterPath", uploadedRef.getPath()
+                                        )
+                                        .addOnSuccessListener(v -> {
+                                            Toast.makeText(requireContext(), "Poster updated", Toast.LENGTH_SHORT).show();
+                                            pendingPosterUri = null;
+                                            if (uploadPosterButton != null) uploadPosterButton.setEnabled(false);
+                                            if (posterImage != null) {
+                                                Glide.with(this)
+                                                        .load(downloadUri)
+                                                        .placeholder(R.drawable.ic_image_placeholder)
+                                                        .error(R.drawable.ic_image_placeholder)
+                                                        .into(posterImage);
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.e(TAG, "Failed to save URL to Firestore", e);
+                                            Toast.makeText(requireContext(), "Saved to Storage, failed to save URL", Toast.LENGTH_SHORT).show();
+                                        });
                             })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(requireContext(), "Saved to Storage, failed to save URL", Toast.LENGTH_SHORT).show()
-                            );
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "getDownloadUrl failed", e);
+                                Toast.makeText(requireContext(), "Upload ok, but couldn’t get URL: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "putFile failed", e);
+                    Toast.makeText(requireContext(), "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
