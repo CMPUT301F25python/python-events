@@ -104,7 +104,7 @@ public class UserProfileFragment extends Fragment {
         loadProfileInfo();
 
         // Save updated user data
-        updateInfo.setOnClickListener(v -> setProfileInfo());
+        updateInfo.setOnClickListener(v -> setProfileInfo(view));
 
         // delete user data
         deleteProfile.setOnClickListener(c -> confirmProfileDeletion(view));
@@ -141,7 +141,7 @@ public class UserProfileFragment extends Fragment {
      * Validates input fields and updates the user's profile in Firestore.
      * Displays a toast message indicating success or failure.
      */
-    private void setProfileInfo() {
+    private void setProfileInfo(View view) {
         String name = nameField.getText().toString().trim();
         String email = emailField.getText().toString().trim();
         String phone = phoneField.getText().toString().trim();
@@ -173,12 +173,9 @@ public class UserProfileFragment extends Fragment {
         profileInfo.put("email", email);
         profileInfo.put("phone", phone.isEmpty() ? null : phone);
 
-        db.collection("users").document(deviceId)
-                .set(profileInfo)
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(getContext(), "Profile updated successfully.", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Error updating profile.", Toast.LENGTH_SHORT).show());
+        db.collection("users").document(deviceId).set(profileInfo);
+        Toast.makeText(getContext(), "Profile updated successfully.", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(view).popBackStack();
     }
 
     /**
