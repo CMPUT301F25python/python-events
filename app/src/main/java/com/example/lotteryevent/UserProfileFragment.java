@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * A {@link Fragment} subclass that allows users to view and update their profile information.
  * This includes name, email, and phone number, all stored in Firestore.
- * The user can later delete their profile information and all associate documents in collections.
+ * The user can later delete their profile information and all associated information in collections.
  * The fragment uses Firebase Authentication to identify the user.
  *
  * <p>Includes validation for user input and provides a back button that navigates to the previous
@@ -138,8 +138,17 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
-     * Validates input fields and updates the user's profile in Firestore.
-     * Displays a toast message indicating success or failure.
+     * Validates user input fields and updates the user's profile information in Firestore.
+     * <p>
+     * This method checks that the name and email fields are not empty, validates the email format,
+     * and verifies that the phone number (if provided) contains exactly 10 digits. If validation
+     * passes, the user's profile document is updated in the "users" collection with the provided
+     * values. Default values are also set for "admin" (false) and "optOutNotifications" (true).
+     * A Toast message is displayed to indicate success or failure, and the view navigates back
+     * upon completion.
+     * </p>
+     *
+     * @param view the current view, used for navigation and context access
      */
     private void setProfileInfo(View view) {
         String name = nameField.getText().toString().trim();
@@ -184,11 +193,13 @@ public class UserProfileFragment extends Fragment {
      * Clears the profile information for a specified user in Firestore.
      * <p>
      * This method sets the "name", "email", and "phone" fields in the user's
-     * document to null, effectively removing all personal data fields.
+     * document to null, resets "admin" to false, and sets "optOutNotifications" to true.
+     * This effectively anonymizes the user profile while maintaining the document reference.
      * </p>
      *
      * @param uid the unique identifier (UID) of the user whose profile information is to be cleared
      */
+
     private void clearProfileInfo(String uid) {
         Map<String, Object> clearFields = new HashMap<>();
         clearFields.put("name", null); // empty
@@ -204,12 +215,13 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
-     * Deletes all specified subcollections for a given user in Firestore.
+     * Deletes the "eventsHistory" subcollection for a specified user in Firestore.
      * <p>
-     * Each document in the specified subcollections will be deleted.
+     * This method iterates through all documents in the "eventsHistory" subcollection
+     * of the user's document and deletes them individually.
      * </p>
      *
-     * @param uid the unique identifier (UID) of the user whose subcollections are to be deleted
+     * @param uid the unique identifier (UID) of the user whose events history is to be deleted
      */
     private void deleteEventsHistory(String uid) {
         db.collection("users").document(uid).collection("eventsHistory").get()
@@ -221,6 +233,15 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection eventsHistory: " + e.getMessage()));
     }
 
+    /**
+     * Deletes all notifications associated with a specific user.
+     * <p>
+     * This method queries the "notifications" collection for documents where
+     * "recipientId" matches the user's UID and deletes each corresponding document.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose notifications will be deleted
+     */
     private void deleteNotifications(String uid){
         db.collection("notifications")
                 .whereEqualTo("recipientId", uid).get()
@@ -232,6 +253,15 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete notifications: " + e.getMessage()));
     }
 
+    /**
+     * Removes a user from all event-related subcollections in the "events" collection.
+     * <p>
+     * This method searches through all events and deletes the user's document (if present)
+     * from the "entrants", "selected", and "waitlist" subcollections within each event.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user to remove from event subcollections
+     */
     private void deleteFromEventsCol(String uid) {
         String[] subcollections = {"entrants", "selected", "waitlist"};
 
@@ -252,6 +282,16 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events: " + e.getMessage()));
     }
 
+    /**
+     * Deletes all events organized by a specific user.
+     * <p>
+     * This method finds all events in the "events" collection where "organizerId" matches
+     * the user's UID, deletes their "entrants" subcollection documents, and then removes
+     * the event documents themselves.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose organized events are to be deleted
+     */
     private void deleteEventsOrganized(String uid){
         db.collection("events")
                 .whereEqualTo("organizerId", uid).get()
@@ -282,11 +322,11 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
-     * Deletes all user data including profile information and subcollections.
+     * Deletes all user-related data from Firestore and navigates back to the previous screen.
      * <p>
-     * This method first clears the user's main document fields and then deletes
-     * all related subcollections. A confirmation Toast message is displayed, and
-     * go back to home.
+     * This method clears the user's profile information, removes event history, notifications,
+     * and event participation or organization data. A confirmation Toast message is displayed
+     * upon successful deletion.
      * </p>
      *
      * @param uid  the unique identifier (UID) of the user whose data will be deleted
@@ -303,10 +343,10 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
-     * Displays a confirmation dialog before deleting a user's profile and associated data.
+     * Displays a confirmation dialog before deleting the user's profile and all associated data.
      * <p>
-     * If the user confirms, the method retrieves the currently authenticated user
-     * and proceeds to delete their data from Firestore. If the user cancels, no action is taken.
+     * If confirmed, the currently authenticated user's data is deleted.
+     * If canceled, no further action is taken.
      * </p>
      *
      * @param view the current view, used for dialog context and navigation
@@ -324,5 +364,4 @@ public class UserProfileFragment extends Fragment {
                 .setNegativeButton("No", null)
                 .show();
     }
-
 }
