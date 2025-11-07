@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                     getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
                 }
             }
-
+            notificationCustomManager.clearNotifications();
             notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
             notificationCustomManager.listenForNotifications(uid);
         }
