@@ -1,5 +1,6 @@
 package com.example.lotteryevent.adapters;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -117,7 +118,13 @@ public class EntrantListAdapter extends RecyclerView.Adapter<EntrantListAdapter.
          * @param entrant The entrant object containing the data to display.
          */
         public void bind(Entrant entrant) {
-            nameTextView.setText(entrant.getUserName());
+            String userName = entrant.getUserName();
+            if (userName == null || userName.isEmpty()) {
+                String unnamed = "Unnamed User";
+                nameTextView.setText(unnamed);
+            } else {
+                nameTextView.setText(entrant.getUserName());
+            }
         }
     }
 }

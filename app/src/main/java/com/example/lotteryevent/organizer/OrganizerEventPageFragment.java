@@ -33,6 +33,7 @@ import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.Timestamp;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
@@ -227,55 +228,53 @@ public class OrganizerEventPageFragment extends Fragment {
     }
 
     /**
-     * Updates the UI based on the fetched event data. This includes setting the event title and
-     * adjusting the visibility and enabled state of organizer action buttons based on the
-     * event's current status.
+     * Updates the UI based on the event's data and the current time.
+     * This method dynamically determines the event's effective state (Upcoming, Open, Closed, Finalized)
+     * and adjusts the UI accordingly.
      */
     private void updateUi() {
         if (this.event == null) {
             return;
         }
 
-        Event event = this.event;
-        String name = event.getName();
-        String status = event.getStatus();
-
+        // Set the event title
         if (getView() != null) {
             TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
-            eventNameLabel.setText(name);
+            eventNameLabel.setText(event.getName());
         }
 
-        if (status == null) {
-            buttonContainer.setVisibility(View.GONE);
-            return;
+        // Get all necessary data points
+        Timestamp now = Timestamp.now();
+        Timestamp regStart = event.getRegistrationStartDateTime();
+        String dbStatus = event.getStatus();
+
+        // Always reset button visibility to handle state transitions correctly
+        btnFinalize.setVisibility(View.VISIBLE);
+        btnRunDraw.setVisibility(View.VISIBLE);
+        btnRunDraw.setEnabled(false);
+        btnFinalize.setEnabled(false);
+
+        // State 1: The event is permanently finalized. This overrides all other logic.
+        if ("finalized".equals(dbStatus)) {
+            buttonContainer.setVisibility(View.VISIBLE);
+            btnFinalize.setVisibility(View.GONE);
+            btnRunDraw.setVisibility(View.GONE);
         }
-
-        boolean drawableStatus = status.equals("open") || status.equals("drawing_complete")
-                || status.equals("closed");
-
-
-
-        switch (status) {
-            case "open":
-            case "closed":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, false, false, false, true, false);
-                break;
-            case "drawing_complete":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, true, true, true, true, true);
-                break;
-            case "finalized":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, true, true, true, false, false);
-                btnFinalize.setVisibility(View.GONE);
-                btnRunDraw.setVisibility(View.GONE);
-                break;
-            case "upcoming":
-            default:
-                buttonContainer.setVisibility(View.GONE);
-                break;
+        // State 2: The event registration has not started yet (Upcoming).
+        else if (regStart != null && now.compareTo(regStart) < 0) {
+            buttonContainer.setVisibility(View.GONE); // Hide all buttons
         }
+        // State 3: Default state - The event has not been finalized.
+        else {
+            buttonContainer.setVisibility(View.VISIBLE);
+            btnRunDraw.setEnabled(true);
+            btnFinalize.setEnabled(true);
+        }
+        btnAcceptedParticipants.setEnabled(true);
+        btnInvitedParticipants.setEnabled(true);
+        btnCancelledParticipants.setEnabled(true);
+        btnViewWaitingList.setEnabled(true);
+        btnViewEntrantMap.setEnabled(true);
     }
 
     /**
@@ -310,36 +309,15 @@ public class OrganizerEventPageFragment extends Fragment {
                     if (currentCount >= capacity) {
                         Log.d(TAG, "Event is at capacity. Disabling Run Draw button.");
                         btnRunDraw.setEnabled(false);
+                    } else {
+                        Log.d(TAG, "Event is not at capacity. Enabling Run Draw button.");
+                        btnRunDraw.setEnabled(true);
                     }
                 }
             } else {
                 Log.w(TAG, "Failed to execute entrant count query.", task.getException());
             }
         });
-    }
-
-    /**
-     * Sets the enabled/disabled state of the various action buttons on the page.
-     * This is used to control which actions are available to the organizer based on the
-     * current status of the event (e.g., open, drawing_complete).
-     *
-     * @param waitingList True to enable the "View Waiting List" button, false to disable.
-     * @param map         True to enable the "View Entrant Map" button, false to disable.
-     * @param accepted    True to enable the "View Accepted Participants" button, false to disable.
-     * @param invited     True to enable the "View Invited Participants" button, false to disable.
-     * @param cancelled   True to enable the "View Cancelled Participants" button, false to disable.
-     * @param runDraw     True to enable the "Run Draw" button, false to disable.
-     * @param finalize    True to enable the "Finalize" button, false to disable.
-     */
-    private void setButtonStates(boolean waitingList, boolean map, boolean accepted,
-                                 boolean invited, boolean cancelled, boolean runDraw, boolean finalize) {
-        btnViewWaitingList.setEnabled(waitingList);
-        btnViewEntrantMap.setEnabled(map);
-        btnAcceptedParticipants.setEnabled(accepted);
-        btnInvitedParticipants.setEnabled(invited);
-        btnCancelledParticipants.setEnabled(cancelled);
-        btnRunDraw.setEnabled(runDraw);
-        btnFinalize.setEnabled(finalize);
     }
 
     /**
