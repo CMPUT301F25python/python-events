@@ -93,7 +93,22 @@ public class RunDrawFragment extends Fragment {
                 return;
             }
 
-            int numToSelect = Integer.parseInt(inputText);
+            int numToSelect;
+
+            // In case input is ever changed from numerical Type
+            try {
+                numToSelect = Integer.parseInt(inputText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (numToSelect <= 0) {
+                Toast.makeText(getContext(), "Number must be greater than 0", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
             // Waitlist status

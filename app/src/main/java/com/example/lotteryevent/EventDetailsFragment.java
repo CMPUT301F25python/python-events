@@ -48,7 +48,6 @@ public class EventDetailsFragment extends Fragment {
     // --- Data ---
     private ArrayAdapter<String> listAdapter;
     private ArrayList<String> dataList;
-    private ListView detailsList;
     private NotificationCustomManager notificationCustomManager;
     private String eventId;
     private Event event;
