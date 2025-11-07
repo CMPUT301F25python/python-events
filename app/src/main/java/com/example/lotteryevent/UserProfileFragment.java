@@ -172,6 +172,8 @@ public class UserProfileFragment extends Fragment {
         profileInfo.put("name", name);
         profileInfo.put("email", email);
         profileInfo.put("phone", phone.isEmpty() ? null : phone);
+        profileInfo.put("admin", false);
+        profileInfo.put("optOutNotifications", true);
 
         db.collection("users").document(deviceId).set(profileInfo);
         Toast.makeText(getContext(), "Profile updated successfully.", Toast.LENGTH_SHORT).show();
@@ -296,7 +298,7 @@ public class UserProfileFragment extends Fragment {
         deleteNotifications(uid); // deletes all notifications
         deleteFromEventsCol(uid); // delete user from current events
         deleteEventsOrganized(uid); // delete users events
-        Toast.makeText(getContext(), "User data wiped successfully.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Profile succesfully deleted.", Toast.LENGTH_SHORT).show();
         Navigation.findNavController(view).popBackStack();
     }
 
