@@ -155,25 +155,13 @@ public class UserProfileFragment extends Fragment {
         String email = emailField.getText().toString().trim();
         String phone = phoneField.getText().toString().trim();
 
-        // name and email mandatory (check)
-        if (name.isEmpty() || email.isEmpty()) {
-            Toast.makeText(getContext(), "Name and email required.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        String validationResult = validateProfileInfo(name, email, phone);
 
-        // check if valid email address
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(getContext(), "Enter a valid email.", Toast.LENGTH_SHORT).show();
+        // if validation does not pass, stay on the profile page
+        if(validationResult != null){
+            // validation failed
+            Log.e("UserProfileFragment", "Profile validation failed for: " + validationResult);
             return;
-        }
-
-        // check if valid phone number (if one has been provided)
-        if (!phone.isEmpty()) {
-            String phoneDigitsOnly = phone.replaceAll("\\D", "");
-            if(phoneDigitsOnly.length() != 10) {
-                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
-                return;
-            }
         }
 
         // prepare Firestore update
@@ -362,5 +350,29 @@ public class UserProfileFragment extends Fragment {
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    public String validateProfileInfo(String name, String email, String phone){
+        // name and email mandatory (check)
+        if (name.isEmpty() || email.isEmpty()) {
+            Toast.makeText(getContext(), "Name and email required.", Toast.LENGTH_SHORT).show();
+            return name;
+        }
+
+        // check if valid email address
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(getContext(), "Enter a valid email.", Toast.LENGTH_SHORT).show();
+            return email;
+        }
+
+        // check if valid phone number (if one has been provided)
+        if (!phone.isEmpty()) {
+            String phoneDigitsOnly = phone.replaceAll("\\D", "");
+            if(phoneDigitsOnly.length() != 10) {
+                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
+                return phone;
+            }
+        }
+        return null; //validation successful
     }
 }
