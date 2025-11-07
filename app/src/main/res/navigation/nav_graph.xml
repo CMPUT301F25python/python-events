@@ -31,7 +31,9 @@
         <action
             android:id="@+id/action_organizerEventPageFragment_to_entrantListFragment"
             app:destination="@id/entrantListFragment" />
-
+        <action
+            android:id="@+id/action_organizerEventPageFragment_to_manageSelectedFragment"
+            app:destination="@id/manageSelectedFragment" />
 
         <argument
             android:name="eventId"
@@ -106,5 +108,17 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
+
+    <fragment
+        android:id="@+id/manageSelectedFragment"
+        android:name="com.example.lotteryevent.organizer.ManageSelectedFragment"
+        android:label="Manage Invited Entrants"
+        tools:layout="@layout/fragment_manage_selected">
+
+        <argument
+            android:name="eventId"
+            app:argType="string"/>
+    </fragment>
+
 
 </navigation>

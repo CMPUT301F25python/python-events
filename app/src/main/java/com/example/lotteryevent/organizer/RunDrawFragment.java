@@ -94,8 +94,6 @@ public class RunDrawFragment extends Fragment {
             }
 
             int numToSelect = Integer.parseInt(inputText);
-
-            // Temp Debug block to confirm correct EventId
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
             // Waitlist status
@@ -105,18 +103,9 @@ public class RunDrawFragment extends Fragment {
                     .get()
                     .addOnSuccessListener(query -> {
 
-
                         List<String> waitlist = new ArrayList<>();
                         for (DocumentSnapshot d : query.getDocuments()) {
                             waitlist.add(d.getId());
-                        }
-                        int waitlistCount = waitlist.size();
-
-                        // Prevent organizer from selecting more people than available
-                        if (numToSelect > waitlistCount) {
-                            Toast.makeText(getContext(), "You cannot select more participants than are on the wait list(" +waitlistCount + ").",
-                                    Toast.LENGTH_LONG).show();
-                            return;
                         }
 
                         if (waitlist.isEmpty()) {
@@ -124,10 +113,18 @@ public class RunDrawFragment extends Fragment {
                             return;
                         }
 
+                        // Prevent organizer from selecting more people than available
+                        if (numToSelect > waitlist.size()) {
+                            Toast.makeText(getContext(),
+                                    "You cannot select more participants than are on the wait list (" + waitlist.size() + ").",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
                         Collections.shuffle(waitlist);
                         List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Update selected user to "invited"
+                        // Update selected user status to "invited"
                         for (String uid : chosen) {
                             db.collection("events").document(eventId)
                                     .collection("entrants")
@@ -135,18 +132,25 @@ public class RunDrawFragment extends Fragment {
                                     .update("status", "invited");
                         }
 
-                        Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
+                        // Change event status to drawing complete
+                        db.collection("events").document(eventId)
+                                .update("status", "drawing_complete")
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
 
-                        Bundle bundle = new Bundle();
-                        bundle.putString("eventId", eventId);
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("eventId", eventId);
 
-                        Navigation.findNavController(view)
-                                .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                    Navigation.findNavController(view)
+                                            .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Error updating event status", Toast.LENGTH_SHORT).show();
+                                });
                     })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
-                    );
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
+                    });
         });
     }
-
 }

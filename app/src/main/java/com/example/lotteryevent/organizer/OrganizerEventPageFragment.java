@@ -164,7 +164,11 @@ public class OrganizerEventPageFragment extends Fragment {
             } else if (id == R.id.btnAcceptedParticipants) {
                 status = "accepted";
             } else if (id == R.id.btnInvitedParticipants) {
-                status = "invited";
+                // Navigate to ManageSelected Fragment
+                Navigation.findNavController(v).navigate(
+                        OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
+                );
+                return;
             } else if (id == R.id.btnCancelledParticipants) {
                 status = "cancelled";
             } else {
