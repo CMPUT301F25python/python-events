@@ -162,12 +162,12 @@ public class UserProfileFragment extends Fragment {
             // validation failed
             Log.e("UserProfileFragment", "Profile validation failed for: " + validationResult);
             if(validationResult.equals(name)){
-                Toast.makeText(getContext(), "Name and email required.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Name is required.", Toast.LENGTH_SHORT).show();
             }
             if(validationResult.equals(email)){
                 Toast.makeText(getContext(), "Enter a valid email.", Toast.LENGTH_SHORT).show();
             }
-            if(validationResult.equals(phone)){
+            if(validationResult.equals(phone) && !phone.isEmpty()){
                 Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
             }
             return;
@@ -363,12 +363,12 @@ public class UserProfileFragment extends Fragment {
 
     public String validateProfileInfo(String name, String email, String phone){
         // name and email mandatory (check)
-        if (name.isEmpty() || email.isEmpty()) {
+        if (name.isEmpty()) {
             return name;
         }
 
         // check if valid email address
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() || email.isEmpty()) {
             return email;
         }
 

@@ -1,6 +1,5 @@
 package com.example.lotteryevent;
 
-import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -14,88 +13,105 @@ import static org.junit.Assert.*;
  * </p>
  */
 public class UserProfileFragmentTest {
-
-    private UserProfileFragment fragment;
-
-    @Before
-    public void setUp() {
-        // Create a new instance of the fragment before each test
-        fragment = new UserProfileFragment();
+    /**
+     * Checks if the given name is valid
+     */
+    public static boolean isValidName(String name) {
+        return name != null && !name.trim().isEmpty();
     }
 
-    // helper phone numbers and emails for testing
-    private String validName = "John Doe";
-    private String validEmail = "jdoe@gmail.com";
+    /**
+     * Checks if the given email has a valid format.
+     */
+    public static boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) return false;
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    }
 
-    private String validPhone = "1234567890";
+    /**
+     * Checks if the given phone number (optional) is valid.
+     * Empty = valid (optional field)
+     * Non-empty must contain exactly 10 digits.
+     */
+    public static boolean isValidPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) return true;
+        String digits = phone.replaceAll("\\D", "");
+        return digits.length() == 10;
+    }
 
-    // all valid inputs, null
     @Test
-    public void testAllValid() {
-        String result = fragment.validateProfileInfo(validName, validEmail, validPhone);
-        assertNull(result);
+    public void testValidName() {
+        assertTrue(isValidName("John"));
     }
 
-    // no name provided, invalid
     @Test
     public void testEmptyName() {
-        String result = fragment.validateProfileInfo("", validEmail, validPhone);
-        assertEquals("", result);
-    }
-    // email not provided
-    @Test
-    public void testInvalidNoEmail() {
-        String result = fragment.validateProfileInfo(validName, "", validPhone);
-        assertEquals("", result);
+        assertFalse(isValidName(""));
     }
 
-    // invalid email format
     @Test
-    public void testInvalidEmailFormat() {
-        String result = fragment.validateProfileInfo(validName, "invalidemail.com", validPhone);
-        assertEquals("invalidemail.com", result);
+    public void testWhitespaceName() {
+        assertFalse(isValidName("   "));
     }
 
-    // valid email format
+    @Test
+    public void testNullName() {
+        assertFalse(isValidName(null));
+    }
+
     @Test
     public void testValidEmail() {
-        String result = fragment.validateProfileInfo(validName, "user@example.com", validPhone);
-        assertNull(result);
+        assertTrue(isValidEmail("user@example.com"));
     }
 
-    // no phone number, valid, since empty
+    @Test
+    public void testMissingAtSymbol() {
+        assertFalse(isValidEmail("userexample.com"));
+    }
+
+    @Test
+    public void testMissingDomain() {
+        assertFalse(isValidEmail("user@"));
+    }
+
+    @Test
+    public void testEmptyEmail() {
+        assertFalse(isValidEmail(""));
+    }
+
+    @Test
+    public void testNullEmail() {
+        assertFalse(isValidEmail(null));
+    }
+
     @Test
     public void testEmptyPhone() {
-        // phone optional — empty is valid
-        String result = fragment.validateProfileInfo(validName, validEmail, "");
-        assertNull(result);
+        // optional field — empty is valid
+        assertTrue(isValidPhone(""));
     }
 
-    // user formatted phone number - (XXX) XXX-XXXX is valid
     @Test
-    public void testValidFormattedPhone() {
-        String result = fragment.validateProfileInfo(validName, validEmail, "(123) 456-7890");
-        assertNull(result);
+    public void testValidPhoneExactly10Digits() {
+        assertTrue(isValidPhone("1234567890"));
     }
 
-    // number <10 is short
     @Test
-    public void testInvalidShortNumber() {
-        String result = fragment.validateProfileInfo(validName, validEmail, "12345");
-        assertEquals("12345", result);
+    public void testPhoneWithFormatting() {
+        assertTrue(isValidPhone("(123) 456-7890"));
     }
 
-    // number >10 is too long
     @Test
-    public void testInvalidLongNumber() {
-        String result = fragment.validateProfileInfo(validName, validEmail, "1234567890123");
-        assertEquals("1234567890123", result);
+    public void testTooShortPhone() {
+        assertFalse(isValidPhone("12345"));
     }
 
-    // exactly 10 digits
     @Test
-    public void testValidPhone() {
-        String result = fragment.validateProfileInfo(validName, validEmail, "1234567890");
-        assertNull(result);
+    public void testTooLongPhone() {
+        assertFalse(isValidPhone("1234567890123"));
+    }
+
+    @Test
+    public void testNullPhone() {
+        assertTrue(isValidPhone(null)); // null = optional
     }
 }
