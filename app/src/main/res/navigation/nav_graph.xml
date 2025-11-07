@@ -28,6 +28,12 @@
         <action
             android:id="@+id/action_organizerEventPageFragment_to_runDrawFragment"
             app:destination="@id/runDrawFragment"/>
+        <action
+            android:id="@+id/action_organizerEventPageFragment_to_entrantListFragment"
+            app:destination="@id/entrantListFragment" />
+        <action
+            android:id="@+id/action_organizerEventPageFragment_to_manageSelectedFragment"
+            app:destination="@id/manageSelectedFragment" />
 
         <argument
             android:name="eventId"
@@ -48,11 +54,16 @@
         android:id="@+id/confirmDrawAndNotifyFragment"
         android:name="com.example.lotteryevent.organizer.ConfirmDrawAndNotifyFragment"
         android:label="Confirm Draw and Notify"
-        tools:layout="@layout/fragment_confirm_draw_and_notify"
-        >
+        tools:layout="@layout/fragment_confirm_draw_and_notify">
+
+        <argument
+            android:name="eventId"
+            app:argType="string"/>
+
         <action
-            android:id="@+id/action_confirmDrawAndNotifyFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
+            android:id="@+id/action_confirmDrawAndNotifyFragment_to_organizerEventPageFragment"
+            app:destination="@id/organizerEventPageFragment" />
+
     </fragment>
 
     <fragment
@@ -74,10 +85,13 @@
     </fragment>
 
     <fragment
-        android:id="@+id/runDrawFragment"
-        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
-        android:label="Run Draw"
-        tools:layout="@layout/fragment_run_draw"/>
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.lotteryevent.NotificationsFragment"
+        android:label="Notifications" >
+        <action
+            android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"/>
+    </fragment>
 
     <fragment
         android:id="@+id/eventDetailsFragment"
@@ -88,6 +102,42 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
-        android:label="Events" />
+
+    <fragment
+        android:id="@+id/qrScannerFragment"
+        android:name="com.example.lotteryevent.QrScannerFragment"
+        android:label="Scan QR Code"
+        tools:layout="@layout/fragment_qr_scanner">
+        <action
+            android:id="@+id/action_qrScannerFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"
+            app:popUpTo="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/entrantListFragment"
+        android:name="com.example.lotteryevent.organizer.EntrantListFragment"
+        android:label="Entrants"
+        tools:layout="@layout/fragment_entrant_list" >
+
+        <argument
+            android:name="status"
+            app:argType="string" />
+        <argument
+            android:name="eventId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/manageSelectedFragment"
+        android:name="com.example.lotteryevent.organizer.ManageSelectedFragment"
+        android:label="Manage Invited Entrants"
+        tools:layout="@layout/fragment_manage_selected">
+
+        <argument
+            android:name="eventId"
+            app:argType="string"/>
+    </fragment>
+
 
 </navigation>

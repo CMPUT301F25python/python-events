@@ -27,18 +27,27 @@ import androidx.navigation.Navigation;
 
 import android.os.Environment;
 import com.bumptech.glide.Glide;
+
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.data.Event;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.AggregateQuery;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
+import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.Timestamp;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Arrays;
 
 /**
  * Displays info about a single event for the organizer to view.
@@ -54,6 +63,7 @@ public class OrganizerEventPageFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseStorage storage;
     private String eventId;
+    private Event event;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
     private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
@@ -146,7 +156,6 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
-        setupClickListeners();
     }
 
     /**
@@ -194,24 +203,55 @@ public class OrganizerEventPageFragment extends Fragment {
             });
         }
 
-        // Add placeholder listeners for the other new buttons
+        View.OnClickListener entrantListNavListener = v -> {
+            String status;
+            int id = v.getId();
+
+            if (id == R.id.btnViewWaitingList) {
+                status = "waiting";
+            } else if (id == R.id.btnAcceptedParticipants) {
+                status = "accepted";
+            } else if (id == R.id.btnInvitedParticipants) {
+                // Navigate to ManageSelected Fragment
+                Navigation.findNavController(v).navigate(
+                        OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
+                );
+                return;
+            } else if (id == R.id.btnCancelledParticipants) {
+                status = "cancelled";
+            } else {
+                return;
+            }
+
+            OrganizerEventPageFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
+                    OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
+
+            Navigation.findNavController(v).navigate(action);
+        };
+
+        btnViewWaitingList.setOnClickListener(entrantListNavListener);
+        btnAcceptedParticipants.setOnClickListener(entrantListNavListener);
+        btnInvitedParticipants.setOnClickListener(entrantListNavListener);
+        btnCancelledParticipants.setOnClickListener(entrantListNavListener);
+
         View.OnClickListener notImplementedListener = v -> {
             Button b = (Button) v;
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
         };
-
-        btnViewWaitingList.setOnClickListener(notImplementedListener);
         btnViewEntrantMap.setOnClickListener(notImplementedListener);
-        btnAcceptedParticipants.setOnClickListener(notImplementedListener);
-        btnInvitedParticipants.setOnClickListener(notImplementedListener);
-        btnCancelledParticipants.setOnClickListener(notImplementedListener);
         btnFinalize.setOnClickListener(notImplementedListener);
     }
 
 
     /**
-     * Fetches the details of the event from the Firestore database using the eventId.
-     * On success, it updates the UI with the event's name.
+     * Fetches the details of the event from the Firestore database using the `eventId`.
+     * On a successful fetch, it populates the local {@link Event} object and then calls
+     * {@link #updateUi()} to refresh the user interface with the event's data.
+     * It also triggers a check to see if the "Run Draw" button should be disabled based on
+     * the current number of entrants versus the event's capacity by calling
+     * {@link #checkCapacityAndDisableDrawButton()}.
+     * If the fetch fails or the event document does not exist, an error message is logged
+     * and a Toast is shown to the user.
      */
     private void fetchEventDetails() {
         db.collection("events").document(eventId)
@@ -233,6 +273,14 @@ public class OrganizerEventPageFragment extends Fragment {
                             }
 
                             updateUi(name, status);
+                          
+                            this.event = document.toObject(Event.class);
+                            if (this.event != null) {
+                                updateUi();
+                                checkCapacityAndDisableDrawButton();
+                            } else {
+                                Log.w(TAG, "Failed to parse Event object.");
+                            }
                         } else {
                             Log.d(TAG, "No such document");
                             Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
@@ -306,66 +354,97 @@ public class OrganizerEventPageFragment extends Fragment {
     }
 
     /**
-     * Updates the UI elements with the fetched event data.
-     * Specifically, sets the title in the activity's action bar.
-     * @param title The title of the event.
+     * Updates the UI based on the event's data and the current time.
+     * This method dynamically determines the event's effective state (Upcoming, Open, Closed, Finalized)
+     * and adjusts the UI accordingly.
      */
-    private void updateUi(String title, String status) {
-        if (getView() != null) {
-            TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
-            eventNameLabel.setText(title);
-        }
+    private void updateUi() {
 
-        if (status == null) {
-            buttonContainer.setVisibility(View.GONE);
+        if (this.event == null) {
             return;
         }
 
-        switch (status) {
-            case "open":
-            case "closed":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, false, false, false, true, false);
-                break;
-            case "drawing_complete":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, true, true, true, true, true);
-                break;
-            case "finalized":
-                buttonContainer.setVisibility(View.VISIBLE);
-                setButtonStates(true, true, true, true, true, false, false);
-                btnFinalize.setVisibility(View.GONE);
-                btnRunDraw.setVisibility(View.GONE);
-                break;
-            case "upcoming":
-            default:
-                buttonContainer.setVisibility(View.GONE);
-                break;
+        // Set the event title
+        if (getView() != null) {
+            TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
+            eventNameLabel.setText(event.getName());
         }
+
+        // Get all necessary data points
+        Timestamp now = Timestamp.now();
+        Timestamp regStart = event.getRegistrationStartDateTime();
+        String dbStatus = event.getStatus();
+
+        // Always reset button visibility to handle state transitions correctly
+        btnFinalize.setVisibility(View.VISIBLE);
+        btnRunDraw.setVisibility(View.VISIBLE);
+        btnRunDraw.setEnabled(false);
+        btnFinalize.setEnabled(false);
+
+        // State 1: The event is permanently finalized. This overrides all other logic.
+        if ("finalized".equals(dbStatus)) {
+            buttonContainer.setVisibility(View.VISIBLE);
+            btnFinalize.setVisibility(View.GONE);
+            btnRunDraw.setVisibility(View.GONE);
+        }
+        // State 2: The event registration has not started yet (Upcoming).
+        else if (regStart != null && now.compareTo(regStart) < 0) {
+            buttonContainer.setVisibility(View.GONE); // Hide all buttons
+        }
+        // State 3: Default state - The event has not been finalized.
+        else {
+            buttonContainer.setVisibility(View.VISIBLE);
+            btnRunDraw.setEnabled(true);
+            btnFinalize.setEnabled(true);
+        }
+        btnAcceptedParticipants.setEnabled(true);
+        btnInvitedParticipants.setEnabled(true);
+        btnCancelledParticipants.setEnabled(true);
+        btnViewWaitingList.setEnabled(true);
+        btnViewEntrantMap.setEnabled(true);
     }
 
     /**
-     * Sets the enabled/disabled state of the various action buttons on the page.
-     * This is used to control which actions are available to the organizer based on the
-     * current status of the event (e.g., open, drawing_complete).
-     *
-     * @param waitingList True to enable the "View Waiting List" button, false to disable.
-     * @param map         True to enable the "View Entrant Map" button, false to disable.
-     * @param accepted    True to enable the "View Accepted Participants" button, false to disable.
-     * @param invited     True to enable the "View Invited Participants" button, false to disable.
-     * @param cancelled   True to enable the "View Cancelled Participants" button, false to disable.
-     * @param runDraw     True to enable the "Run Draw" button, false to disable.
-     * @param finalize    True to enable the "Finalize" button, false to disable.
+     * Checks if the number of 'invited' and 'accepted' entrants has reached the event's capacity.
+     * If it has, this method disables the "Run Draw" button to prevent over-inviting.
+     * This uses an efficient Firestore aggregate query to get the count.
      */
-    private void setButtonStates(boolean waitingList, boolean map, boolean accepted,
-                                 boolean invited, boolean cancelled, boolean runDraw, boolean finalize) {
-        btnViewWaitingList.setEnabled(waitingList);
-        btnViewEntrantMap.setEnabled(map);
-        btnAcceptedParticipants.setEnabled(accepted);
-        btnInvitedParticipants.setEnabled(invited);
-        btnCancelledParticipants.setEnabled(cancelled);
-        btnRunDraw.setEnabled(runDraw);
-        btnFinalize.setEnabled(finalize);
+    private void checkCapacityAndDisableDrawButton() {
+        // Guard clauses: Can't perform the check without an event, eventId, or capacity.
+        if (event == null || eventId == null || event.getCapacity() == null || event.getCapacity() == 0) {
+            return;
+        }
+
+        // 1. Create a query for all entrants who are either "invited" or "accepted".
+        Query query = db.collection("events").document(eventId).collection("entrants")
+                .whereIn("status", Arrays.asList("invited", "accepted"));
+
+        // 2. Create an aggregate query to get the COUNT of the documents from the query above.
+        AggregateQuery countQuery = query.count();
+
+        // 3. Execute the count query.
+        countQuery.get(AggregateSource.SERVER).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                AggregateQuerySnapshot snapshot = task.getResult();
+                if (snapshot != null) {
+                    long currentCount = snapshot.getCount();
+                    Integer capacity = event.getCapacity();
+
+                    Log.d(TAG, "Capacity check: " + currentCount + " invited/accepted entrants. Capacity is " + capacity);
+
+                    // 4. If the count of invited/accepted people is >= capacity, disable the button.
+                    if (currentCount >= capacity) {
+                        Log.d(TAG, "Event is at capacity. Disabling Run Draw button.");
+                        btnRunDraw.setEnabled(false);
+                    } else {
+                        Log.d(TAG, "Event is not at capacity. Enabling Run Draw button.");
+                        btnRunDraw.setEnabled(true);
+                    }
+                }
+            } else {
+                Log.w(TAG, "Failed to execute entrant count query.", task.getException());
+            }
+        });
     }
 
     /**

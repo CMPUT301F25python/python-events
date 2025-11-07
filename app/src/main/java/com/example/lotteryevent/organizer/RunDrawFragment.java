@@ -65,6 +65,9 @@ public class RunDrawFragment extends Fragment {
     }
 
     /**
+     * This block handles the logic for the removal and adding of users to waitlist and selected list
+     * after draw has been initialized. Also ensures that number of participants selected doesn't exceed
+     * number of people on the waitlist
      *
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
@@ -90,14 +93,29 @@ public class RunDrawFragment extends Fragment {
                 return;
             }
 
-            int numToSelect = Integer.parseInt(inputText);
+            int numToSelect;
 
-            // Temp Debug block to confirm correct EventId
+            // In case input is ever changed from numerical Type
+            try {
+                numToSelect = Integer.parseInt(inputText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (numToSelect <= 0) {
+                Toast.makeText(getContext(), "Number of participants must be greater than zero.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
-            // Read waitlist subcollection
+            // Waitlist status
             db.collection("events").document(eventId)
-                    .collection("waitlist").get()
+                    .collection("entrants")
+                    .whereEqualTo("status", "waiting")
+                    .get()
                     .addOnSuccessListener(query -> {
 
                         List<String> waitlist = new ArrayList<>();
@@ -110,38 +128,46 @@ public class RunDrawFragment extends Fragment {
                             return;
                         }
 
-                        int requested = Math.min(numToSelect, waitlist.size());
+                        // Prevent organizer from selecting more people than available
+                        if (numToSelect > waitlist.size()) {
+                            Toast.makeText(getContext(),
+                                    "You cannot select more participants than are on the wait list (" + waitlist.size() + ").",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
                         Collections.shuffle(waitlist);
-                        List<String> chosen = waitlist.subList(0, requested);
+                        List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Remove chosen users from waitlist
+                        com.google.firebase.firestore.WriteBatch batch = db.batch();
+
                         for (String uid : chosen) {
-                            db.collection("events").document(eventId)
-                                    .collection("waitlist")
-                                    .document(uid)
-                                    .delete();
+                            com.google.firebase.firestore.DocumentReference userRef = db.collection("events").document(eventId)
+                                    .collection("entrants")
+                                    .document(uid);
+                            batch.update(userRef, "status", "invited");
                         }
 
-                        // Add selected users to "selected" subcollection
-                        for (String uid : chosen) {
-                            db.collection("events").document(eventId)
-                                    .collection("selected")
-                                    .document(uid)
-                                    .set(new HashMap<String, Object>());
-                        }
+                        // Commit the batch operation
+                        batch.commit()
+                                .addOnSuccessListener(aVoid -> {
+                                    // Toast message if all users have been successfully updated
+                                    Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
 
-                        Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("eventId", eventId);
 
-                        Bundle bundle = new Bundle();
-                        bundle.putString("eventId", eventId);
-
-                        Navigation.findNavController(view)
-                                .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                    Navigation.findNavController(view)
+                                            .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Error updating user statuses.", Toast.LENGTH_SHORT).show();
+                                    android.util.Log.e("RunDraw", "Batch update failed", e);
+                                });
                     })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
-                    );
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
+                    });
         });
     }
-
 }

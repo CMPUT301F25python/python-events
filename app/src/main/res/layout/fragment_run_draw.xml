@@ -9,17 +9,6 @@
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/EventName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Event Name"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="16dp"
-        tools:ignore="HardcodedText" />
-
-    <TextView
         android:id="@+id/waitingList"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
