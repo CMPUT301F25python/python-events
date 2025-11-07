@@ -34,7 +34,7 @@
     <string name="email_field">Email</string>
     <string name="mock_email">jdoe@gmail.com</string>
     <string name="number_field">Phone Number (optional)</string>
-    <string name="mock_number">XXX-XXX-XXXX</string>
+    <string name="mock_number">(XXX) XXX-XXXX</string>
     <string name="notification_field">Notification Preferences</string>
     <string name="notification_statement">I want to receive notifications from administrators and organizers</string>
     <string name="update_button">Update</string>
