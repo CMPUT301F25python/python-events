@@ -222,7 +222,7 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection eventsHistory: " + e.getMessage()));
     }
 
-    private void deleteNotifications(String uid, View view){
+    private void deleteNotifications(String uid){
         db.collection("notifications")
                 .whereEqualTo("recipientId", uid).get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -233,14 +233,21 @@ public class UserProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete notifications: " + e.getMessage()));
     }
 
-    private void deleteFromEventsCol(String uid, View view){
+    private void deleteFromEventsCol(String uid) {
+        String[] subcollections = {"entrants", "selected", "waitlist"};
+
         db.collection("events").get()
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        db.collection("events").document(doc.getId())
-                                .collection("entrants").document(uid).delete()
-                                .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Removed user from entrants for event " + doc.getId()))
-                                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to remove user from entrants: " + e.getMessage()));
+                        String eventId = doc.getId();
+
+                        for (String sub : subcollections) {
+                            db.collection("events").document(eventId)
+                                    .collection(sub).document(uid)
+                                    .delete()
+                                    .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Removed user from " + sub + " for event " + eventId))
+                                    .addOnFailureListener(e -> Log.e("UserProfile", "Failed to remove user from " + sub + ": " + e.getMessage()));
+                        }
                     }
                 })
                 .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events: " + e.getMessage()));
@@ -289,8 +296,8 @@ public class UserProfileFragment extends Fragment {
     private void deleteUserData(String uid, View view) {
         clearProfileInfo(uid); // clears main document fields
         deleteEventsHistory(uid); // deletes events history
-        deleteNotifications(uid,view); // deletes all notifications
-        deleteFromEventsCol(uid,view); // delete user from current events
+        deleteNotifications(uid); // deletes all notifications
+        deleteFromEventsCol(uid); // delete user from current events
         deleteEventsOrganized(uid); // delete users events
         Toast.makeText(getContext(), "User data wiped successfully.", Toast.LENGTH_SHORT).show();
         Navigation.findNavController(view).popBackStack();
