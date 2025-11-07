@@ -44,16 +44,14 @@ public class LotteryManager {
     public void selectWinners(String eventId, int numSelectedEntrants) {
         DocumentReference eventRef = this.db.collection("events").document(eventId);
         // Read waitlist from subcollection
-        eventRef.collection("waitlist")
+        eventRef.collection("entrants")
+                .whereEqualTo("status", "waiting")
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(query -> {
                     List<String> waitlist = new ArrayList<>();
 
-                    for (var doc : querySnapshot.getDocuments()) {
-                        String uid = doc.getString("uid");
-                        if (uid != null) {
-                            waitlist.add(uid);
-                        }
+                    for (var doc : query) {
+                        waitlist.add(doc.getId());
                     }
 
                     if (waitlist.isEmpty()) {
@@ -66,21 +64,14 @@ public class LotteryManager {
                     int requested = Math.min(numSelectedEntrants, waitlist.size());
                     List<String> winners = waitlist.subList(0, requested);
 
-                    // Write winners to "selected"
+                    // Update winners status to "invited"
                     for (String uid : winners) {
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("uid", uid);
-                        eventRef.collection("selected").document(uid).set(data);
+                        eventRef.collection("entrants")
+                                .document(uid)
+                                .update("status", "invited");
                     }
 
-                    // Remove winners from waitlist
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-                        if (winners.contains(doc.getString("uid"))) {
-                            doc.getReference().delete();
-                        }
-                    }
-
-                    System.out.println("Winners selected for event " + eventId);
+                    System.out.println("Selected " + winners.size() + " winners for event " + eventId);
                 })
                 .addOnFailureListener(e ->
                         System.out.println("Error reading waitlist: " + e.getMessage()));

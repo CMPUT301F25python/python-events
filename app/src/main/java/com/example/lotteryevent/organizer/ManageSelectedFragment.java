@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.SelectedAdapter;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -27,9 +28,7 @@ import java.util.List;
  * through the lottery for a specific event
  *
  * <p>
- *     The organizer may cancel a selected entrant from the waitlist. Cancelling removes the user from the selected list
- *     and into the the waitlist in the FireStore subcollection under the same event ID.
- *     This allows organizers to revoke selection from chosen participants
+ *      A selected entrant is represented by "invited" status in firestore
  * </p>
  *
  */
@@ -66,6 +65,7 @@ public class ManageSelectedFragment extends Fragment {
         RecyclerView recyclerView  =view.findViewById(R.id.recyclerViewSelected);
         recyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
 
+        // Cancelling user reverts their status back to "waiting"
         this.selectedAdapter = new SelectedAdapter(this.selectedUsers, userId -> this.cancelSelectedUser(userId));
         recyclerView.setAdapter(this.selectedAdapter);
 
@@ -78,7 +78,7 @@ public class ManageSelectedFragment extends Fragment {
      * Loads all selected entrants for the event from firestore and displays them
      *
      * <p>
-     *     Entrants are stored as document IDs under "selected" subcollection
+     *     Entrants are stored as document IDs with "invited" status
      * </p>
      *
      */
@@ -86,11 +86,12 @@ public class ManageSelectedFragment extends Fragment {
         this.db.collection("events")
                 .document(this.eventId)
                 .collection("selected")
+                .whereEqualTo("status", "invited")
                 .get()
                 .addOnSuccessListener(query -> {
                     this.selectedUsers.clear();
 
-                    for (QueryDocumentSnapshot doc : query) {
+                    for (DocumentSnapshot doc : query.getDocuments()) {
                         String uid = doc.getId();
 
                         this.selectedUsers.add(uid);
@@ -103,35 +104,25 @@ public class ManageSelectedFragment extends Fragment {
     }
 
     /**
-     * Cancels a selected entrant by removing them from selected list and returning them
-     * to event waitlist
+     * Cancels a selected entrant by setting their status back to "waiting"
      *
      * @param userId
+     * This is the user's ID stored as docId in firestore
      */
     private void cancelSelectedUser(String userId) {
         // Remove entrant from selected list
         this.db.collection("events")
                 .document(this.eventId)
-                .collection("selected")
+                .collection("entrants")
                 .document(userId)
-                .delete()
+                .update("status", "waiting")
                 .addOnSuccessListener(aVoid -> {
+                    this.selectedUsers.remove(userId);
+                    this.selectedAdapter.notifyDataSetChanged();
 
-                    // Add user back to waitlist
-                    this.db.collection("events")
-                            .document(this.eventId)
-                            .collection("waitlist")
-                            .document(userId)
-                            .set(new HashMap<>())
-                            .addOnSuccessListener(unused -> {
-                                this.selectedUsers.remove(userId);
-                                this.selectedAdapter.notifyDataSetChanged();
-
-                                Toast.makeText(this.getContext(), "User cancelled and returned to waitlist", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> Toast.makeText(this.getContext(), "Failed to return user to waitlist", Toast.LENGTH_SHORT).show());
+                    Toast.makeText(this.getContext(), "User cancelled and returned to waitlist", Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this.getContext(), "Failed to remove selected user", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(this.getContext(), "Failed to return user to waitlist", Toast.LENGTH_SHORT).show()
+                );
     }
-
 }

@@ -19,10 +19,10 @@ import java.util.List;
  * <p>
  *     Groups a list of  user Ids that represent selected entrants
  *     and displays them as a scrollable list.
- *
+ * <p>
  *     Each item includes: user Id (displayed) as well as a cancel button allowing
  *     the organizer to remove the user from selected list
- *
+ * <p>
  * </p>
  */
 public class SelectedAdapter extends RecyclerView.Adapter<SelectedAdapter.ViewHolder> {

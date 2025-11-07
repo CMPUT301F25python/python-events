@@ -98,9 +98,11 @@ public class RunDrawFragment extends Fragment {
             // Temp Debug block to confirm correct EventId
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
-            // Read waitlist subcollection
+            // Waitlist status
             db.collection("events").document(eventId)
-                    .collection("waitlist").get()
+                    .collection("entrants")
+                    .whereEqualTo("status", "waiting")
+                    .get()
                     .addOnSuccessListener(query -> {
 
 
@@ -108,7 +110,7 @@ public class RunDrawFragment extends Fragment {
                         for (DocumentSnapshot d : query.getDocuments()) {
                             waitlist.add(d.getId());
                         }
-                        int waitlistCount = query.size();
+                        int waitlistCount = waitlist.size();
 
                         // Prevent organizer from selecting more people than available
                         if (numToSelect > waitlistCount) {
@@ -122,24 +124,15 @@ public class RunDrawFragment extends Fragment {
                             return;
                         }
 
-                        int requested = Math.min(numToSelect, waitlist.size());
                         Collections.shuffle(waitlist);
-                        List<String> chosen = waitlist.subList(0, requested);
+                        List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Remove chosen users from waitlist
+                        // Update selected user to "invited"
                         for (String uid : chosen) {
                             db.collection("events").document(eventId)
-                                    .collection("waitlist")
+                                    .collection("entrants")
                                     .document(uid)
-                                    .delete();
-                        }
-
-                        // Add selected users to "selected" subcollection
-                        for (String uid : chosen) {
-                            db.collection("events").document(eventId)
-                                    .collection("selected")
-                                    .document(uid)
-                                    .set(new HashMap<String, Object>());
+                                    .update("status", "invited");
                         }
 
                         Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
