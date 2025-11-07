@@ -54,7 +54,7 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,      // Event Timestamps
                 "2025-01-01", "08:00", // Reg Start
                 "2025-01-01", "09:00", // Reg End
-                now, inOneHour,                // Reg Timestamps
+                inOneHour, inTwoHours,                // Reg Timestamps
                 10, 15 // capacity and waiting list limit
         );
         assertNull("Validation should pass with all valid inputs", result);
@@ -203,6 +203,23 @@ public class CreateEventFragmentTest {
                 0,0
         );
         assertEquals("A registration end date is required if a start date is set.", result);
+    }
+
+    // Validate that there must be a capacity if waiting list limit is set
+    @Test
+    public void testValidation_WaitingListRequiresCapacity() {
+        // A waiting list limit is set, but the main capacity is not
+        String result = fragment.validateEventInput(
+                "Valid Future Event",
+                "2028-01-01", "10:00",
+                "2028-01-01", "12:00",
+                inThreeHours, inFourHours,
+                "2028-01-01", "08:00",
+                "2028-01-01", "09:00",
+                inOneHour, inTwoHours,
+                null, 20 // Capacity is null, but waiting list is not
+        );
+        assertEquals("A capacity is required to set a waiting list limit.", result);
     }
 
     // Validate waiting list capacity size vs attendee size
