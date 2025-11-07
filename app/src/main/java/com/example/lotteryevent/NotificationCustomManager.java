@@ -1,4 +1,5 @@
 package com.example.lotteryevent;
+import com.example.lotteryevent.data.Notification;
 
 import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 
@@ -16,9 +17,11 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -93,18 +96,17 @@ public class NotificationCustomManager {
      * @param organizerName Organizer Name who sent the notif
      */
     public void sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
-        Map<String, Object> notification = new HashMap<>();
-        notification.put("title", title);
-        notification.put("message", message);
-        notification.put("eventId", eventId);
-        notification.put("eventName", eventName);
-        notification.put("organizerId", organizerId);
-        notification.put("organizerName", organizerName);
-        notification.put("seen", false);
-        String time = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss", Locale.CANADA).format(new Date());
-        notification.put("timestamp", time);
-        notification.put("recipientId", uid);
-        notification.put("type", type);
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setEventId(eventId);
+        notification.setEventName(eventName);
+        notification.setOrganizerId(organizerId);
+        notification.setOrganizerName(organizerName);
+        notification.setSeen(false);
+        notification.setRecipientId(uid);
+        notification.setType(type);
+        notification.setTimestamp(Timestamp.now());
 
         // adds notif doc to the user's notif collection
         db.collection("notifications").add(notification)
@@ -146,12 +148,15 @@ public class NotificationCustomManager {
             .addOnSuccessListener(notifs -> {
                 int size = notifs.size();
                 if (size == 1) {
-                    DocumentSnapshot d = notifs.getDocuments().get(0);
-                    String title = d.getString("title");
-                    String message = d.getString("message");
-                    String eventName = d.getString("eventName");
-                    String organizerName = d.getString("organizerName");
-                    String timestamp = d.getString("timestamp");
+                    Notification notification = notifs.getDocuments().get(0).toObject(Notification.class);
+                    String title = notification.getTitle();
+                    String message = notification.getMessage();
+                    String eventName = notification.getEventName();
+                    String organizerName = notification.getOrganizerName();
+
+                    Timestamp timestampRaw = notification.getTimestamp();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                    String timestamp = dateFormat.format(timestampRaw.toDate());
 
                     String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
 
@@ -191,12 +196,15 @@ public class NotificationCustomManager {
 
                         for (DocumentChange dc : value.getDocumentChanges()) {
                             if (dc.getType() == ADDED) {
-                                DocumentSnapshot d = dc.getDocument();
-                                String title = d.getString("title");
-                                String message = d.getString("message");
-                                String eventName = d.getString("eventName");
-                                String organizerName = d.getString("organizerName");
-                                String timestamp = d.getString("timestamp");
+                                Notification notification = dc.getDocument().toObject(Notification.class);
+                                String title = notification.getTitle();
+                                String message = notification.getMessage();
+                                String eventName = notification.getEventName();
+                                String organizerName = notification.getOrganizerName();
+
+                                Timestamp timestampRaw = notification.getTimestamp();
+                                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                                String timestamp = dateFormat.format(timestampRaw.toDate());
 
                                 String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
 
