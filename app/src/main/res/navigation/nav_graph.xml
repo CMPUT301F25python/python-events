@@ -35,6 +35,27 @@
     </fragment>
 
     <fragment
+        android:id="@+id/runDrawFragment"
+        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
+        android:label="Run Draw"
+        tools:layout="@layout/fragment_run_draw">
+        <action
+            android:id="@+id/action_runDrawFragment_to_confirmDrawAndNotifyFragment"
+            app:destination="@id/confirmDrawAndNotifyFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/confirmDrawAndNotifyFragment"
+        android:name="com.example.lotteryevent.organizer.ConfirmDrawAndNotifyFragment"
+        android:label="Confirm Draw and Notify"
+        tools:layout="@layout/fragment_confirm_draw_and_notify"
+        >
+        <action
+            android:id="@+id/action_confirmDrawAndNotifyFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
         android:id="@+id/createEventFragment"
         android:name="com.example.lotteryevent.CreateEventFragment"
         android:label="@string/create_new_event"
@@ -44,7 +65,6 @@
         android:name="com.example.lotteryevent.UserProfileFragment"
         android:label="@string/user_profile_page"
         tools:layout="@layout/fragment_user_profile" />
-
     <fragment
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.AvailableEventsFragment"
@@ -68,5 +88,6 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
+        android:label="Events" />
 
 </navigation>

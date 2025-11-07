@@ -18,6 +18,8 @@
     <string name="registration_information">Registration Information</string>
     <string name="waiting_list_information">Waiting List Information</string>
     <string name="event_information">Event Information</string>
+    <string name="confirm_and_notify_button_text">Confirm and Notify</string>
+    <string name="cancel_button">Cancel</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="user_profile_page">Profile</string>
@@ -32,4 +34,18 @@
     <string name="update_button">Update</string>
     <string name="reg_history_button">Registration History</string>
     <string name="delete_button">Delete Profile</string>
+    <string name="qr_code">QR Code</string>
+    <string name="qr_code_for_event_info_page">Scan for event details</string>
+    <string name="save">Save</string>
+    <string name="share">Share</string>
+    <string name="close">Close</string>
+    <string name="lottery_guidelines">Lottery Guidelines</string>
+    <string name="confirm_and_notify_button">Confirm and Notify</string>
+    <string name="view_waiting_list">View Waiting List</string>
+    <string name="view_entrant_map">View Entrant Map</string>
+    <string name="accepted_participants">Accepted Participants</string>
+    <string name="invited_participants">Invited Participants</string>
+    <string name="cancelled_participants">Cancelled Participants</string>
+    <string name="run_draw">Run Draw</string>
+    <string name="finalize">Finalize</string>
 </resources>

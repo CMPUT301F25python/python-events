@@ -16,6 +16,7 @@ import java.util.Collections;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.annotation.Nullable;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
@@ -130,6 +131,12 @@ public class RunDrawFragment extends Fragment {
                         }
 
                         Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
+
+                        Bundle bundle = new Bundle();
+                        bundle.putString("eventId", eventId);
+
+                        Navigation.findNavController(view)
+                                .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
                     })
                     .addOnFailureListener(e ->
                             Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
