@@ -54,7 +54,8 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,      // Event Timestamps
                 "2025-01-01", "08:00", // Reg Start
                 "2025-01-01", "09:00", // Reg End
-                now, inOneHour                // Reg Timestamps
+                now, inOneHour,                // Reg Timestamps
+                10, 15 // capacity and waiting list limit
         );
         assertNull("Validation should pass with all valid inputs", result);
     }
@@ -69,7 +70,9 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,
                 "2025-01-01", "08:00",
                 "2025-01-01", "09:00",
-                now, inOneHour
+                now, inOneHour,
+                0, 0
+
         );
         assertEquals("Event name is required.", result);
     }
@@ -84,7 +87,9 @@ public class CreateEventFragmentTest {
                 null, inThreeHours,
                 "2025-01-01", "08:00",
                 "2025-01-01", "09:00",
-                now, inOneHour
+                now, inOneHour,
+                0, 0
+
         );
         assertEquals("Please select a start time for the selected event start date.", result);
     }
@@ -98,7 +103,8 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,
                 "2025-01-01", "08:00",
                 "2025-01-01", "", // Reg End Time is empty
-                now, null
+                now, null,
+                0, 0
         );
         assertEquals("Please select an end time for the selected registration end date.", result);
     }
@@ -114,7 +120,8 @@ public class CreateEventFragmentTest {
                 inThreeHours, inTwoHours, // Start is after End
                 "2025-01-01", "08:00",
                 "2025-01-01", "09:00",
-                now, inOneHour
+                now, inOneHour,
+                0, 0
         );
         assertEquals("Event start time must be before event end time.", result);
     }
@@ -128,7 +135,8 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,
                 "2025-01-01", "10:00",
                 "2025-01-01", "10:00",
-                now, now // Reg timestamps are identical
+                now, now, // Reg timestamps are identical
+                0, 0
         );
         assertEquals("Registration start time must be before registration end time.", result);
     }
@@ -142,7 +150,8 @@ public class CreateEventFragmentTest {
                 inTwoHours, inFourHours,
                 "2025-01-01", "09:00",
                 "2025-01-01", "11:00", // Registration ends at 11
-                inOneHour, inThreeHours
+                inOneHour, inThreeHours,
+                0, 0
         );
         assertEquals("Registration must end before the event starts.", result);
     }
@@ -158,7 +167,8 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,
                 "2024-01-01", "08:00", // Reg started in the past
                 "2025-01-01", "09:00",
-                oneHourAgo, inOneHour
+                oneHourAgo, inOneHour,
+                0,0
         );
         assertEquals("Registration start time cannot be in the past.", result);
     }
@@ -172,7 +182,8 @@ public class CreateEventFragmentTest {
                 oneHourAgo, inThreeHours,  // The event start timestamp is in the past
                 "", "",                  // <-- No registration start date
                 "", "",                  // <-- No registration end date
-                null, null               // <-- Registration timestamps are null
+                null, null,               // <-- Registration timestamps are null
+                0, 0
         );
         assertEquals("Event start time cannot be in the past.", result);
     }
@@ -188,8 +199,25 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,
                 "2025-01-01", "10:00", // Registration Start is set
                 "", "",                  // Registration End is MISSING
-                now, null                // Timestamps reflect missing end date
+                now, null,                // Timestamps reflect missing end date
+                0,0
         );
         assertEquals("A registration end date is required if a start date is set.", result);
     }
+
+    // Validate waiting list capacity size vs attendee size
+    @Test
+    public void testValidation_WaitingListLimitIsLessThanCapacity() {
+        String result = fragment.validateEventInput("Valid Future Event",
+                "2028-01-01", "10:00",
+                "2028-01-01", "12:00",
+                inThreeHours, inFourHours,
+                "2028-01-01", "08:00",
+                "2028-01-01", "09:00",
+                inOneHour, inTwoHours,
+                10, 5
+        );
+        assertEquals("Waiting list size must be greater than or equal to the number of attendees.", result);
+    }
+
 }
