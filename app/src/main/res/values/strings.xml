@@ -81,4 +81,5 @@
     <string name="dialog_leave_warning_message">Registration for this event has closed. If you leave the waiting list, you will not be able to rejoin.</string>
     <string name="dialog_leave_confirm">Leave</string>
     <string name="dialog_cancel">Cancel</string>
+    <string name="max_waiting_list_size">Max Waiting List Size</string>
 </resources>
