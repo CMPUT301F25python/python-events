@@ -175,18 +175,16 @@ public class NotificationCustomManager {
                     Notification notification = notifs.getDocuments().get(0).toObject(Notification.class);
                     String title = notification.getTitle();
                     String message = notification.getMessage();
-                    String eventName = notification.getEventName();
-                    String organizerName = notification.getOrganizerName();
 
                     Timestamp timestampRaw = notification.getTimestamp();
                     SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                     String timestamp = dateFormat.format(timestampRaw.toDate());
 
-                    String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
+                    String fullMessage = message + "\n" + timestamp;
 
                     generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
                 } else if (size > 1) {
-                    // namy notifs, jsut tell multiple unread
+                    // many notifs, just tell multiple unread
                     String title = "You have " + String.valueOf(size) + " unread notifications";
                     String message = "Click here or go to the notifications section to see all messages you missed!";
 
@@ -228,14 +226,12 @@ public class NotificationCustomManager {
                                 Notification notification = dc.getDocument().toObject(Notification.class);
                                 String title = notification.getTitle();
                                 String message = notification.getMessage();
-                                String eventName = notification.getEventName();
-                                String organizerName = notification.getOrganizerName();
 
                                 Timestamp timestampRaw = notification.getTimestamp();
                                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                                 String timestamp = dateFormat.format(timestampRaw.toDate());
 
-                                String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
+                                String fullMessage = message + "\n" + timestamp;
 
                                 generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
                             }

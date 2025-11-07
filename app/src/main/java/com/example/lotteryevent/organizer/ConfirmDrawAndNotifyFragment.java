@@ -216,7 +216,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                         String organizerId = document.getString("organizerId");
                         String organizerName = document.getString("organizerName");
                         String title = "Congratulations!";
-                        String message = "You have been chosen from to sign up for the event " + eventName + "! Please click here to confirm your registration.";
+                        String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
                         String type = "lottery_win";
                         notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
                     } else {
