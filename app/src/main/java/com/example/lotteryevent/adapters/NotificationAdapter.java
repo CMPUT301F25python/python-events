@@ -23,11 +23,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A {@link RecyclerView.Adapter} that is responsible for displaying a list of {@link Notification}
+ * objects in a list format. It handles the creation and binding of views for each notification.
+ * This adapter also provides a mechanism for handling click events on individual notification cards.
+ */
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
     private final List<Notification> notificationsList = new ArrayList<>();
     private NotificationAdapter.OnItemClickListener listener;
     private final int rowLayoutResId;
 
+    /**
+     * Sets the fragment used as the layout for each notif card
+     * @param rowLayoutResId The fragment used as the layout for each notif card
+     */
     public NotificationAdapter(@LayoutRes int rowLayoutResId) {
         this.rowLayoutResId = rowLayoutResId;
     }
@@ -39,8 +48,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
      */
     public interface OnItemClickListener {
         /**
-         * Called when an event tile in the RecyclerView is clicked.
-         *
+         * Called when a notification card in the RecyclerView is clicked.
          * @param notification The {@link Notification} object corresponding to the clicked item.
          */
         void onItemClick(Notification notification);
@@ -48,7 +56,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     /**
      * Registers a callback to be invoked when an item in this adapter has been clicked.
-     *
      * @param listener The callback that will be executed.
      */
     public void setOnItemClickListener(NotificationAdapter.OnItemClickListener listener) {
@@ -56,15 +63,15 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     /**
-     * Called when the RecyclerView needs a new {@link EventAdapter.EventViewHolder} to represent an item.
+     * Called when the RecyclerView needs a new {@link NotificationAdapter.NotificationViewHolder} to represent an item.
      * <p>
      * This new ViewHolder is constructed with a new View that is inflated from the
-     * {@code R.layout.tile_event} XML layout file.
+     * {@code R.layout.item_notification} XML layout file.
      *
      * @param parent   The ViewGroup into which the new View will be added after it is bound to
      *                 an adapter position.
      * @param viewType The view type of the new View.
-     * @return A new {@link EventAdapter.EventViewHolder} that holds a View for an event tile.
+     * @return A new {@link NotificationAdapter.NotificationViewHolder} that holds a View for an event tile.
      */
     @NonNull
     @Override
@@ -76,10 +83,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     /**
      * Called by RecyclerView to display the data at the specified position. This method
-     * updates the contents of the {@link EventAdapter.EventViewHolder#itemView} to reflect the item at the
+     * updates the contents of the {@link NotificationAdapter.NotificationViewHolder} to reflect the item at the
      * given position.
      *
-     * @param holder   The {@link EventAdapter.EventViewHolder} which should be updated to represent the
+     * @param holder   The {@link NotificationAdapter.NotificationViewHolder} which should be updated to represent the
      *                 contents of the item at the given position in the data set.
      * @param position The position of the item within the adapter's data set.
      */
@@ -91,7 +98,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     /**
      * Returns the total number of items in the data set held by the adapter.
-     *
      * @return The total number of events in the list.
      */
     @Override
@@ -100,11 +106,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     /**
-     * Updates the list of events displayed by the adapter. This method clears the current
+     * Updates the list of notifs displayed by the adapter. This method clears the current
      * list and replaces it with the new list, then notifies the RecyclerView that the
      * data set has changed.
-     *
-     * @param newNotifications The new list of {@link Event} objects to be displayed.
+     * @param newNotifications The new list of {@link Notification} objects to be displayed.
      */
     public void setNotifications(List<Notification> newNotifications) {
         this.notificationsList.clear();
@@ -113,9 +118,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     /**
-     * A {@link RecyclerView.ViewHolder} that describes an event tile view and its metadata
-     * within the RecyclerView. It holds references to the individual views within the tile
-     * (e.g., TextView, ImageView) and handles click events.
+     * A {@link RecyclerView.ViewHolder} that describes a notification card view and its metadata
+     * within the RecyclerView. It holds references to the individual views within the card
+     * and handles click events.
      */
     class NotificationViewHolder extends RecyclerView.ViewHolder {
         private final TextView message;
@@ -123,9 +128,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         private final MaterialCardView notifications_material_card;
 
         /**
-         * Constructs a new {@link EventAdapter.EventViewHolder}.
-         *
-         * @param itemView The view that represents a single event tile, inflated from a layout file.
+         * Constructs a new {@link NotificationAdapter.NotificationViewHolder}.
+         * @param itemView The view that represents a single notif card, inflated from a layout file.
          */
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -144,6 +148,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             });
         }
 
+        /**
+         * Binds an {@link Notification} object's data to the views within the ViewHolder.
+         * For this version, it sets the notif message and time stamp and background color depending
+         * on if the notif has been seen by the user (clicked on).
+         * @param notification The {@link Notification} object containing the data to display.
+         */
         void bind(Notification notification) {
             String message = null;
 

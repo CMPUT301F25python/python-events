@@ -35,6 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * This fragment is used to view all notifications, included those already seen. If a notification
+ * indicates a lottery win, the user can click on it to go to the even details page to accept or
+ * decline the invitation. To mark a notif as seen, need to click on it.
+ */
 public class NotificationsFragment extends Fragment {
     private static final String TAG = "NotificationsFragment";
     private FirebaseFirestore db;
@@ -44,7 +49,7 @@ public class NotificationsFragment extends Fragment {
     private NotificationCustomManager notificationCustomManager;
 
     /**
-     *
+     * Inflates layout
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
@@ -61,7 +66,7 @@ public class NotificationsFragment extends Fragment {
     }
 
     /**
-     *
+     * Sets up recycler view and adapter, gets notifications to show
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
@@ -81,7 +86,7 @@ public class NotificationsFragment extends Fragment {
 
         notificationCustomManager = new NotificationCustomManager(getContext());
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        if (notificationId != null) {
+        if (notificationId != null) { // set notif as seen
             notificationCustomManager.markNotificationAsSeen(notificationId);
         }
 
@@ -117,6 +122,11 @@ public class NotificationsFragment extends Fragment {
         }
     }
 
+    /**
+     * Marks notif as seen and if a lottery success notif, redirects to event page
+     * @param notification notification clicked on
+     * @param view view of fragment
+     */
     private void redirectOnNotificationClick(Notification notification, View view) {
         if (notification.getSeen() != true) {
             notification.setSeen(true);

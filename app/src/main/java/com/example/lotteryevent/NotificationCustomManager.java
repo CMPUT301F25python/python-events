@@ -21,25 +21,15 @@ import androidx.navigation.NavDeepLinkBuilder;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -64,7 +54,6 @@ public class NotificationCustomManager {
         return c.incrementAndGet();
     }
 
-
     /**
      * Sets up manager instance and creates notification channel
      * @param context Context from the fragment creating a NotificationCustomManager object, used for toasts, intents
@@ -76,10 +65,10 @@ public class NotificationCustomManager {
     }
 
     /**
-     * will be implemented in task 01.04.01
+     * sets up the notification channel that notifs will be communicated on
      */
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // creates channel for newer version devices
             NotificationChannel channel = new NotificationChannel(channelID, channelDescription, NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription(this.channelDescription);
 
@@ -120,6 +109,14 @@ public class NotificationCustomManager {
                 });
     }
 
+    /**
+     * Creates the actual notification in the target user's device with intent on where it will navigate to
+     * @param title title of the notif
+     * @param message message of the notif
+     * @param eventId event id that notif comes from
+     * @param notificationId notif id
+     * @param notifType notif type
+     */
     @SuppressLint("MissingPermission")
     public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
@@ -128,8 +125,9 @@ public class NotificationCustomManager {
 
         PendingIntent pendingIntent = null;
         Bundle bundle = new Bundle();
-        bundle.putString("notificationId", notificationId);
+        bundle.putString("notificationId", notificationId); // used to mark notif as seen
 
+        // if one notif and is a lottery win, navigate to the event and mark notif
         if (notifType != null && Objects.equals(notifType, "lottery_win")) {
             bundle.putString("eventId", eventId);
 
@@ -138,7 +136,7 @@ public class NotificationCustomManager {
                     .setDestination(R.id.eventDetailsFragment)
                     .setArguments(bundle)
                     .createPendingIntent();
-        } else {
+        } else { // navigate to notifs screen
             pendingIntent = new NavDeepLinkBuilder(this.myContext)
                     .setGraph(R.navigation.nav_graph)
                     .setDestination(R.id.notificationsFragment)
@@ -161,11 +159,17 @@ public class NotificationCustomManager {
         notificationManager.notify(getID(), builder.build());
     }
 
+    /**
+     * Checks db for unread notifs once and either geneerates one notif if only one or a bulk notif
+     * of a number of unread notifs
+     * @param uid recipient user's id
+     */
     public void checkAndDisplayUnreadNotifications(String uid) {
         db.collection("notifications")
             .whereEqualTo("recipientId", uid)
             .whereEqualTo("seen", false).get()
             .addOnSuccessListener(notifs -> {
+                // One notif, can notify with its contents
                 int size = notifs.size();
                 if (size == 1) {
                     Notification notification = notifs.getDocuments().get(0).toObject(Notification.class);
@@ -182,6 +186,7 @@ public class NotificationCustomManager {
 
                     generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
                 } else if (size > 1) {
+                    // namy notifs, jsut tell multiple unread
                     String title = "You have " + String.valueOf(size) + " unread notifications";
                     String message = "Click here or go to the notifications section to see all messages you missed!";
 
@@ -194,6 +199,10 @@ public class NotificationCustomManager {
             });
     }
 
+    /**
+     * listens for new notifs while on the app, if found generates notif
+     * @param uid recipient user's id
+     */
     public void listenForNotifications(String uid) {
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
         db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
@@ -235,6 +244,10 @@ public class NotificationCustomManager {
                 });
     }
 
+    /**
+     * Marks a provided notif as seen to True
+     * @param notificationId notif id
+     */
     public void markNotificationAsSeen(String notificationId) {
         db.collection("notifications")
             .document(notificationId)
