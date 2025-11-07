@@ -12,88 +12,161 @@ public class CreateEventFragmentTest {
 
     private CreateEventFragment fragment;
 
+    // Helper Timestamps for testing
+    private Timestamp oneHourAgo;
+    private Timestamp now;
+    private Timestamp inOneHour;
+    private Timestamp inTwoHours;
+    private Timestamp inThreeHours;
+    private Timestamp inFourHours;
+
+
     @Before
     public void setUp() {
         // Create a new instance of the fragment before each test
         fragment = new CreateEventFragment();
+
+        // Initialize timestamps here to get fresh values for each test run
+        long currentTime = System.currentTimeMillis();
+        oneHourAgo = new Timestamp(new Date(currentTime - 3600 * 1000));
+        now = new Timestamp(new Date(currentTime));
+        inOneHour = new Timestamp(new Date(currentTime + 3600 * 1000));
+        inTwoHours = new Timestamp(new Date(currentTime + 7200 * 1000));
+        inThreeHours = new Timestamp(new Date(currentTime + 10800 * 1000));
+        inFourHours = new Timestamp(new Date(currentTime + 14400 * 1000));
     }
 
-    // Helper Timestamps for testing
-    private Timestamp now = new Timestamp(new Date());
-    private Timestamp oneHourFromNow = new Timestamp(new Date(System.currentTimeMillis() + 3600 * 1000));
-    private Timestamp oneHourAgo = new Timestamp(new Date(System.currentTimeMillis() - 3600 * 1000));
-
+    // All Valid Scenarios
     @Test
     public void testValidation_Success() {
-        // Scenario: All inputs are valid
+        // Scenario: All inputs are valid and in the future
         String result = fragment.validateEventInput(
-                "Valid Event",
-                "2025-12-25", "10:00",
-                "2025-12-25", "12:00",
-                now, oneHourFromNow
+                "Valid Future Event",
+                "2025-01-01", "10:00", // Event Start
+                "2025-01-01", "12:00", // Event End
+                inTwoHours, inThreeHours,      // Event Timestamps
+                "2025-01-01", "08:00", // Reg Start
+                "2025-01-01", "09:00", // Reg End
+                now, inOneHour                // Reg Timestamps
         );
-        // Assert that the result is null, meaning no error
-        assertNull("Validation should pass with valid inputs", result);
+        assertNull("Validation should pass with all valid inputs", result);
     }
 
+    // Basic Field Validation
     @Test
     public void testValidation_EmptyEventName() {
-        // Scenario: Event name is missing
         String result = fragment.validateEventInput(
                 "", // Empty name
-                "2025-12-25", "10:00",
-                "2025-12-25", "12:00",
-                now, oneHourFromNow
+                "2025-01-01", "10:00",
+                "2025-01-01", "12:00",
+                inTwoHours, inThreeHours,
+                "2025-01-01", "08:00",
+                "2025-01-01", "09:00",
+                now, inOneHour
         );
-        // Assert that the correct error message is returned
         assertEquals("Event name is required.", result);
     }
 
+    // Incomplete Date/Time Pairs
     @Test
-    public void testValidation_MissingStartTime() {
-        // Scenario: Start date is set, but start time is missing
+    public void testValidation_MissingEventStartTime() {
         String result = fragment.validateEventInput(
                 "Test Event",
-                "2025-12-25", "", // Start time is empty
-                "2025-12-25", "12:00",
-                null, oneHourFromNow // Start timestamp would be null
+                "2025-01-01", "", // Event Start Time is empty
+                "2025-01-01", "12:00",
+                null, inThreeHours,
+                "2025-01-01", "08:00",
+                "2025-01-01", "09:00",
+                now, inOneHour
         );
-        assertEquals("Please select a start time for the selected start date.", result);
+        assertEquals("Please select a start time for the selected event start date.", result);
     }
 
     @Test
-    public void testValidation_MissingEndTime() {
-        // Scenario: End date is set, but end time is missing
+    public void testValidation_MissingRegistrationEndTime() {
         String result = fragment.validateEventInput(
                 "Test Event",
-                "2025-12-25", "10:00",
-                "2025-12-25", "", // End time is empty
-                now, null // End timestamp would be null
+                "2025-01-01", "10:00",
+                "2025-01-01", "12:00",
+                inTwoHours, inThreeHours,
+                "2025-01-01", "08:00",
+                "2025-01-01", "", // Reg End Time is empty
+                now, null
         );
-        assertEquals("Please select an end time for the selected end date.", result);
+        assertEquals("Please select an end time for the selected registration end date.", result);
     }
 
+
+    // Start dates before end dates
     @Test
-    public void testValidation_StartTimeAfterEndTime() {
-        // Scenario: Start time is after end time
+    public void testValidation_EventStartTimeAfterEndTime() {
         String result = fragment.validateEventInput(
                 "Test Event",
-                "2025-12-25", "12:00",
-                "2025-12-25", "10:00",
-                oneHourFromNow, now // Start is after End
+                "2025-01-01", "12:00",
+                "2025-01-01", "10:00",
+                inThreeHours, inTwoHours, // Start is after End
+                "2025-01-01", "08:00",
+                "2025-01-01", "09:00",
+                now, inOneHour
         );
         assertEquals("Event start time must be before event end time.", result);
     }
 
     @Test
-    public void testValidation_StartTimeEqualsEndTime() {
-        // Scenario: Start time is the same as end time
+    public void testValidation_RegistrationStartTimeEqualsEndTime() {
         String result = fragment.validateEventInput(
                 "Test Event",
-                "2025-12-25", "10:00",
-                "2025-12-25", "10:00",
-                now, now // Timestamps are identical
+                "2025-01-01", "12:00",
+                "2025-01-01", "13:00",
+                inTwoHours, inThreeHours,
+                "2025-01-01", "10:00",
+                "2025-01-01", "10:00",
+                now, now // Reg timestamps are identical
         );
-        assertEquals("Event start time must be before event end time.", result);
+        assertEquals("Registration start time must be before registration end time.", result);
+    }
+
+    @Test
+    public void testValidation_RegistrationEndsAfterEventStarts() {
+        String result = fragment.validateEventInput(
+                "Test Event",
+                "2025-01-01", "10:00", // Event starts at 10
+                "2025-01-01", "12:00",
+                inTwoHours, inFourHours,
+                "2025-01-01", "09:00",
+                "2025-01-01", "11:00", // Registration ends at 11
+                inOneHour, inThreeHours
+        );
+        assertEquals("Registration must end before the event starts.", result);
+    }
+
+
+    // Past Date/Time Validation
+    @Test
+    public void testValidation_RegistrationStartTimeInThePast() {
+        String result = fragment.validateEventInput(
+                "Test Event",
+                "2025-01-01", "10:00",
+                "2025-01-01", "12:00",
+                inTwoHours, inThreeHours,
+                "2024-01-01", "08:00", // Reg started in the past
+                "2025-01-01", "09:00",
+                oneHourAgo, inOneHour
+        );
+        assertEquals("Registration start time cannot be in the past.", result);
+    }
+
+    @Test
+    public void testValidation_EventStartTimeInThePast() {
+        String result = fragment.validateEventInput(
+                "Test Event",
+                "2024-01-01", "10:00", // Event started in the past
+                "2025-01-01", "12:00",
+                oneHourAgo, inThreeHours,
+                "2023-01-01", "08:00",
+                "2023-01-01", "09:00",
+                oneHourAgo, oneHourAgo
+        );
+        assertEquals("Event start time cannot be in the past.", result);
     }
 }
