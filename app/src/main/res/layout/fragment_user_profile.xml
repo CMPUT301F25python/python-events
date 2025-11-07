@@ -88,7 +88,7 @@
                 android:id="@+id/notifications_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"
+                android:checked="false"
                 android:paddingTop="8dp"
                 android:text="@string/notification_statement"
                 android:textColor="@color/grey" />
@@ -108,7 +108,7 @@
                 android:radius="30dp" />
 
             <Button
-                android:id="@+id/historyButton"
+                android:id="@+id/history_button"
                 android:layout_width="270dp"
                 android:layout_height="50dp"
                 android:layout_gravity="center_horizontal"
@@ -121,7 +121,7 @@
                 android:textSize="18sp" />
 
             <Button
-                android:id="@+id/deleteButton"
+                android:id="@+id/delete_button"
                 android:layout_width="207dp"
                 android:layout_height="50dp"
                 android:layout_gravity="center_horizontal"

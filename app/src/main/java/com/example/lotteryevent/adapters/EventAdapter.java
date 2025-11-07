@@ -151,15 +151,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
          */
         // in EventAdapter.EventViewHolder
         void bind(@NonNull Event event) {
-            titleTextView.setText(event.getName() != null ? event.getName() : "(Unnamed)");
+            titleTextView.setText(event.getName());
         }
 
-
-//        public void setData(@NonNull List<AvailableEventsFragment.Event> items) {
-//            data.clear();
-//            data.addAll(items);
-//            notifyDataSetChanged(); // simple refresh (use DiffUtil later for nicer animations)
-//        }
 
     }
 }

@@ -281,6 +281,7 @@ public class Event {
         this.lotteryGuidelines = lotteryGuidelines;
     }
 
-    public void setId(String id) {
-    }
+//    public String getId() { return eventId; }
+//    public void setId(String id) {
+//    }
 }
