@@ -57,6 +57,7 @@ public class HomeViewModel extends ViewModel {
                         List<Event> userEvents = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Event event = document.toObject(Event.class);
+                            event.setEventId(document.getId());
                             userEvents.add(event);
                         }
                         _events.setValue(userEvents);

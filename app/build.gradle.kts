@@ -34,6 +34,8 @@ android {
 }
 
 dependencies {
+
+    implementation("com.github.bumptech.glide:glide:5.0.5")
     // --- Default and Firebase Dependencies ---
     implementation(libs.appcompat)
     implementation(libs.material)
@@ -42,6 +44,10 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.firebase.storage)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation(platform(libs.firebase.bom))
     implementation("com.google.firebase:firebase-firestore")
@@ -49,6 +55,10 @@ dependencies {
     // --- Navigation Dependencies ---
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // --- Other Dependencies ---
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
