@@ -95,23 +95,33 @@ public class AvailableEventsFragment extends Fragment {
                     List<Event> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snap.getDocuments()) {
                         Event e = new Event();
-                        e.setId(doc.getId());
-                        e.setName(doc.getString("name"));
+
+                        String id = doc.getId();
+                        e.setEventId(id);
+
+                        String title = doc.getString("name");
+                        if (title == null || title.trim().isEmpty()) {
+                            title = id;
+                        }
+                        e.setName(title);
+
                         e.setLocation(doc.getString("location"));
                         e.setDescription(doc.getString("description"));
-//                        String status = doc.getString("status");
-//                        e.setStatus(status);
-//                        if ("upcoming".equalsIgnoreCase(status)) {
-//                            list.add(e);
-//                        }
+
                         list.add(e);
                     }
                     adapter.setEvents(list);
                 });
 
         adapter.setOnItemClickListener(event -> {
+            String id = event.getEventId();
+            if (id == null || id.trim().isEmpty() || "null".equals(id)) {
+                Toast.makeText(requireContext(), "Missing/invalid event id", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             Bundle args = new Bundle();
-            args.putString("eventId", String.valueOf(event.getId()));
+            args.putString("eventId", id);
 
             androidx.navigation.NavController nav =
                     androidx.navigation.fragment.NavHostFragment.findNavController(AvailableEventsFragment.this);

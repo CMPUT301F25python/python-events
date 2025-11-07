@@ -278,7 +278,7 @@ public class Event {
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
-    public String getId() { return eventId; }
-    public void setId(String id) {
-    }
+//    public String getId() { return eventId; }
+//    public void setId(String id) {
+//    }
 }
