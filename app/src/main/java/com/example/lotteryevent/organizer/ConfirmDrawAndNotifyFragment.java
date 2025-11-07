@@ -180,37 +180,41 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 .whereEqualTo("status", "invited")
                 .get()
                 .addOnSuccessListener(query -> {
-                    // no users selected from lottery
+
                     if (query.isEmpty()) {
                         Toast.makeText(getContext(), "No chosen entrants to confirm and notify.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // used to check all users' notify queries sent before changing fragments
-                        AtomicInteger completed = new AtomicInteger(0);
-                        int total = query.size();
-                        for (DocumentSnapshot d : query.getDocuments()) {
-                            String uid = d.getId();
-                            db.collection("users").document(uid).get()
-                                            .addOnSuccessListener(user -> { // user of that id found, can successfully notify them
-                                                notifyEntrant(uid);
-                                                int current = completed.incrementAndGet();
-                                                if (current == total) {
-                                                    var action = ConfirmDrawAndNotifyFragmentDirections.actionConfirmDrawAndNotifyFragmentToManageSelectedFragment(eventId);
-                                                    Navigation.findNavController(view).navigate(action);
-                                                }
-                                            })
-                                            .addOnFailureListener(user -> { // user with that id not found, cannot notify. move on to the next user
-                                                Toast.makeText(getContext(), "User with id " + uid + " not found and could not be notified.", Toast.LENGTH_SHORT).show();
-                                                int current = completed.incrementAndGet();
-                                                if (current == total) {
-                                                    var action = ConfirmDrawAndNotifyFragmentDirections.actionConfirmDrawAndNotifyFragmentToManageSelectedFragment(eventId);
-                                                    Navigation.findNavController(view).navigate(action);}
-                                            });
-                        }
+                        return;
                     }
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Error loading selected entrants", Toast.LENGTH_SHORT).show();
-                });
+
+                    AtomicInteger completed = new AtomicInteger(0);
+                    int total = query.size();
+
+                    for (DocumentSnapshot d : query.getDocuments()) {
+                        String uid = d.getId();
+
+                        db.collection("users").document(uid).get()
+                                .addOnSuccessListener(user -> {
+                                    // Notify this entrant
+                                    notifyEntrant(uid);
+                                    updateAfterNotification(completed, total, view);
+                                })
+                                .addOnFailureListener(user -> {
+                                    Toast.makeText(getContext(), "User " + uid + " not found. Skipped.", Toast.LENGTH_SHORT).show();
+                                    updateAfterNotification(completed, total, view);
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Error loading selected entrants", Toast.LENGTH_SHORT).show()
+                );
     }
+
+    private void updateAfterNotification(AtomicInteger completed, int total, View view) {
+        if (completed.incrementAndGet() == total) {
+            navigateBack(view);
+        }
+    }
+
 
     /**
      * Gets event's name, organizer id, organizer name, and creates message to send to notification manager's
@@ -254,12 +258,20 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                         entrantDoc.getReference().update("status", "waiting");
                     }
                     Toast.makeText(getContext(), "Lottery Cancelled", Toast.LENGTH_SHORT).show();
+                    navigateBack(view);
 
-                    Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
                 }
             })
             .addOnFailureListener(e ->
                     Toast.makeText(getContext(), "Error cancelling lottery", Toast.LENGTH_SHORT).show()
             );
         }
+
+    private void navigateBack(View view) {
+        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
+                ConfirmDrawAndNotifyFragmentDirections
+                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(eventId);
+
+        Navigation.findNavController(view).navigate(action);
+    }
 }

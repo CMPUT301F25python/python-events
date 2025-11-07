@@ -25,7 +25,7 @@ import java.util.List;
 public class AvailableEventsFragment extends Fragment {
 
     private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private FirebaseAuth auth; // not highlighted for some reason, but it is being used
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
@@ -75,10 +75,10 @@ public class AvailableEventsFragment extends Fragment {
         adapter = new EventAdapter(R.layout.item_event);
         recyclerView.setAdapter(adapter);
 
-        // click handling
-        // adapter.setOnItemClickListener(event ->
-        //         Toast.makeText(requireContext(), "Clicked: " + event.getName(), Toast.LENGTH_SHORT).show()
-        // );
+//         click handling
+         adapter.setOnItemClickListener(event ->
+                 Toast.makeText(requireContext(), "Clicked: " + event.getName(), Toast.LENGTH_SHORT).show()
+         );
 
         // Firestore listener
         registration = db.collection("events")
@@ -92,23 +92,43 @@ public class AvailableEventsFragment extends Fragment {
                     List<Event> list = new ArrayList<>();
                     for (DocumentSnapshot doc : snap.getDocuments()) {
                         Event e = new Event();
-                        e.setId(doc.getId());
-                        e.setName(doc.getString("name"));
+
+                        String id = doc.getId();
+                        e.setEventId(id);
+
+                        String title = doc.getString("name");
+                        if (title == null || title.trim().isEmpty()) {
+                            title = id;
+                        }
+                        e.setName(title);
+
                         e.setLocation(doc.getString("location"));
                         e.setDescription(doc.getString("description"));
-//                        String status = doc.getString("status");
-//                        e.setStatus(status);
-//                        if ("upcoming".equalsIgnoreCase(status)) {
-//                            list.add(e);
-//                        }
+
                         list.add(e);
                     }
                     adapter.setEvents(list);
                 });
+
+        adapter.setOnItemClickListener(event -> {
+            String id = event.getEventId();
+            if (id == null || id.trim().isEmpty() || "null".equals(id)) {
+                Toast.makeText(requireContext(), "Missing/invalid event id", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Bundle args = new Bundle();
+            args.putString("eventId", id);
+
+            androidx.navigation.NavController nav =
+                    androidx.navigation.fragment.NavHostFragment.findNavController(AvailableEventsFragment.this);
+            nav.navigate(R.id.eventDetailsFragment, args);
+        });
+
     }
 
     /**
-     *
+     * Destroys view
      */
     @Override
     public void onDestroyView() {

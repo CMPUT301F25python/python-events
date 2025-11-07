@@ -1,26 +1,45 @@
 package com.example.lotteryevent.organizer;
 
+import android.content.ContentValues;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavDeepLink;
-import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 
-import com.example.lotteryevent.organizer.OrganizerEventPageFragmentArgs;
+import android.os.Environment;
+
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.data.Event;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.AggregateQuery;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
+import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.Query;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
+import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
  * Displays info about a single event for the organizer to view.
@@ -35,8 +54,15 @@ public class OrganizerEventPageFragment extends Fragment {
 
     private FirebaseFirestore db;
     private String eventId;
-    private Button manageSelectedBtn;
+    private Event event;
+    private Button qrCodeRequest;
+    private LinearLayout buttonContainer;
+    private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
+    private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
 
+    /**
+     * Required empty public constructor for fragment instantiation.
+     */
     public OrganizerEventPageFragment() { }
 
     /**
@@ -85,6 +111,8 @@ public class OrganizerEventPageFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        initializeViews(view);
+        setupClickListeners();
 
         // Fetch and display event data if eventId is available
         if (eventId != null && !eventId.isEmpty()) {
@@ -93,51 +121,86 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
+    }
 
-        Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
-        runLotteryButton.setOnClickListener(v -> {
+    /**
+     * Initializes the UI components by finding them in the view hierarchy.
+     * This method should be called in {@code onViewCreated} to ensure the view
+     * is fully inflated before attempting to find any child views.
+     *
+     * @param view The root view of the fragment's layout from which to find the UI components.
+     */
+    private void initializeViews(View view) {
+        qrCodeRequest = view.findViewById(R.id.request_qr_code);
+        buttonContainer = view.findViewById(R.id.organizer_button_container);
+        btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
+        btnViewEntrantMap = view.findViewById(R.id.btnViewEntrantMap);
+        btnAcceptedParticipants = view.findViewById(R.id.btnAcceptedParticipants);
+        btnInvitedParticipants = view.findViewById(R.id.btnInvitedParticipants);
+        btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
+        btnRunDraw = view.findViewById(R.id.btnRunDraw);
+        btnFinalize = view.findViewById(R.id.btnFinalize);
+    }
+
+    /**
+     * Binds click listeners to the interactive UI elements on the page.
+     */
+    private void setupClickListeners() {
+        qrCodeRequest.setOnClickListener(this::generateQrCode);
+
+        btnRunDraw.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("eventId", eventId);
-
-            Navigation.findNavController(view)
+            Navigation.findNavController(v)
                     .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
         });
 
-        //Temporarily Commented out for troubleshooting
+        View.OnClickListener entrantListNavListener = v -> {
+            String status;
+            int id = v.getId();
 
-//        this.manageSelectedBtn = view.findViewById(R.id.btnManageSelected);
-//        this.manageSelectedBtn.setVisibility(View.GONE); // hide until we confirm data
-//        this.manageSelectedBtn.setOnClickListener(v -> {
-//            OrganizerEventPageFragmentDirections
-//                    .ActionOrganizerEventPageFragmentToManageSelectedFragment action =
-//                    OrganizerEventPageFragmentDirections
-//                            .actionOrganizerEventPageFragmentToManageSelectedFragment(eventId);
-//            Navigation.findNavController(v).navigate(action);
-//        });
-//
-//        refreshManageSelectedVisibility();
+            if (id == R.id.btnViewWaitingList) {
+                status = "waiting";
+            } else if (id == R.id.btnAcceptedParticipants) {
+                status = "accepted";
+            } else if (id == R.id.btnInvitedParticipants) {
+                status = "invited";
+            } else if (id == R.id.btnCancelledParticipants) {
+                status = "cancelled";
+            } else {
+                return;
+            }
+
+            OrganizerEventPageFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
+                    OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
+
+            Navigation.findNavController(v).navigate(action);
+        };
+
+        btnViewWaitingList.setOnClickListener(entrantListNavListener);
+        btnAcceptedParticipants.setOnClickListener(entrantListNavListener);
+        btnInvitedParticipants.setOnClickListener(entrantListNavListener);
+        btnCancelledParticipants.setOnClickListener(entrantListNavListener);
+
+        View.OnClickListener notImplementedListener = v -> {
+            Button b = (Button) v;
+            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
+        };
+        btnViewEntrantMap.setOnClickListener(notImplementedListener);
+        btnFinalize.setOnClickListener(notImplementedListener);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        refreshManageSelectedVisibility();
-    }
 
-    // Temporarily commented out for troubleshooting
-    private void refreshManageSelectedVisibility() {
-        if (eventId == null) return;
-        db.collection("events").document(eventId)
-                .collection("selected").limit(1).get()
-                .addOnSuccessListener(q -> {
-                    boolean hasSelected = !q.isEmpty();
-                    if (manageSelectedBtn != null) {
-                        manageSelectedBtn.setVisibility(hasSelected ? View.VISIBLE : View.GONE);
-                    }
-                });
-    }
-
-
+    /**
+     * Fetches the details of the event from the Firestore database using the `eventId`.
+     * On a successful fetch, it populates the local {@link Event} object and then calls
+     * {@link #updateUi()} to refresh the user interface with the event's data.
+     * It also triggers a check to see if the "Run Draw" button should be disabled based on
+     * the current number of entrants versus the event's capacity by calling
+     * {@link #checkCapacityAndDisableDrawButton()}.
+     * If the fetch fails or the event document does not exist, an error message is logged
+     * and a Toast is shown to the user.
+     */
     private void fetchEventDetails() {
         db.collection("events").document(eventId)
                 .get()
@@ -145,11 +208,13 @@ public class OrganizerEventPageFragment extends Fragment {
                     if (task.isSuccessful()) {
                         DocumentSnapshot document = task.getResult();
                         if (document != null && document.exists()) {
-                            Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                            // TODO: Grace is probably gonna expand out the Event class, that can be integrated later
-                            String name = document.getString("name");
-
-                            updateUi(name);
+                            this.event = document.toObject(Event.class);
+                            if (this.event != null) {
+                                updateUi();
+                                checkCapacityAndDisableDrawButton();
+                            } else {
+                                Log.w(TAG, "Failed to parse Event object.");
+                            }
                         } else {
                             Log.d(TAG, "No such document");
                             Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
@@ -161,7 +226,259 @@ public class OrganizerEventPageFragment extends Fragment {
                 });
     }
 
-    private void updateUi(String title) {
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(title);
+    /**
+     * Updates the UI based on the fetched event data. This includes setting the event title and
+     * adjusting the visibility and enabled state of organizer action buttons based on the
+     * event's current status.
+     */
+    private void updateUi() {
+
+        if (this.event == null) {
+            return;
+        }
+
+        Event event = this.event;
+        String name = event.getName();
+        String status = event.getStatus();
+
+        if (getView() != null) {
+            TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
+            eventNameLabel.setText(name);
+        }
+
+        if (status == null) {
+            buttonContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        boolean drawableStatus = status.equals("open") || status.equals("drawing_complete")
+                || status.equals("closed");
+
+
+
+        switch (status) {
+            case "open":
+            case "closed":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, false, false, false, true, false);
+                break;
+            case "drawing_complete":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, true, true, true, true, true);
+                break;
+            case "finalized":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, true, true, true, false, false);
+                btnFinalize.setVisibility(View.GONE);
+                btnRunDraw.setVisibility(View.GONE);
+                break;
+            case "upcoming":
+            default:
+                buttonContainer.setVisibility(View.GONE);
+                break;
+        }
     }
+
+    /**
+     * Checks if the number of 'invited' and 'accepted' entrants has reached the event's capacity.
+     * If it has, this method disables the "Run Draw" button to prevent over-inviting.
+     * This uses an efficient Firestore aggregate query to get the count.
+     */
+    private void checkCapacityAndDisableDrawButton() {
+        // Guard clauses: Can't perform the check without an event, eventId, or capacity.
+        if (event == null || eventId == null || event.getCapacity() == null || event.getCapacity() == 0) {
+            return;
+        }
+
+        // 1. Create a query for all entrants who are either "invited" or "accepted".
+        Query query = db.collection("events").document(eventId).collection("entrants")
+                .whereIn("status", Arrays.asList("invited", "accepted"));
+
+        // 2. Create an aggregate query to get the COUNT of the documents from the query above.
+        AggregateQuery countQuery = query.count();
+
+        // 3. Execute the count query.
+        countQuery.get(AggregateSource.SERVER).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                AggregateQuerySnapshot snapshot = task.getResult();
+                if (snapshot != null) {
+                    long currentCount = snapshot.getCount();
+                    Integer capacity = event.getCapacity();
+
+                    Log.d(TAG, "Capacity check: " + currentCount + " invited/accepted entrants. Capacity is " + capacity);
+
+                    // 4. If the count of invited/accepted people is >= capacity, disable the button.
+                    if (currentCount >= capacity) {
+                        Log.d(TAG, "Event is at capacity. Disabling Run Draw button.");
+                        btnRunDraw.setEnabled(false);
+                    }
+                }
+            } else {
+                Log.w(TAG, "Failed to execute entrant count query.", task.getException());
+            }
+        });
+    }
+
+    /**
+     * Sets the enabled/disabled state of the various action buttons on the page.
+     * This is used to control which actions are available to the organizer based on the
+     * current status of the event (e.g., open, drawing_complete).
+     *
+     * @param waitingList True to enable the "View Waiting List" button, false to disable.
+     * @param map         True to enable the "View Entrant Map" button, false to disable.
+     * @param accepted    True to enable the "View Accepted Participants" button, false to disable.
+     * @param invited     True to enable the "View Invited Participants" button, false to disable.
+     * @param cancelled   True to enable the "View Cancelled Participants" button, false to disable.
+     * @param runDraw     True to enable the "Run Draw" button, false to disable.
+     * @param finalize    True to enable the "Finalize" button, false to disable.
+     */
+    private void setButtonStates(boolean waitingList, boolean map, boolean accepted,
+                                 boolean invited, boolean cancelled, boolean runDraw, boolean finalize) {
+        btnViewWaitingList.setEnabled(waitingList);
+        btnViewEntrantMap.setEnabled(map);
+        btnAcceptedParticipants.setEnabled(accepted);
+        btnInvitedParticipants.setEnabled(invited);
+        btnCancelledParticipants.setEnabled(cancelled);
+        btnRunDraw.setEnabled(runDraw);
+        btnFinalize.setEnabled(finalize);
+    }
+
+    /**
+     * Displays a dialog containing the generated QR code bitmap.
+     * The dialog provides options to save, share, or close the view.
+     * @param qrCodeBitmap The QR code image to display.
+     */
+    private void showQrCodeDialog(Bitmap qrCodeBitmap) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();View dialogView = inflater.inflate(R.layout.dialog_qr_code, null);
+
+        ImageView qrCodeImageView = dialogView.findViewById(R.id.image_view_qr_code);
+        Button saveButton = dialogView.findViewById(R.id.button_dialog_save);
+        Button shareButton = dialogView.findViewById(R.id.button_dialog_share);
+        Button closeButton = dialogView.findViewById(R.id.button_dialog_close);
+
+        qrCodeImageView.setImageBitmap(qrCodeBitmap);
+
+        // Set the view for the builder, but do not add buttons to the builder itself
+        builder.setView(dialogView);
+
+        // Create the dialog so we can interact with it
+        AlertDialog dialog = builder.create();
+
+        // Set click listeners on custom buttons
+        saveButton.setOnClickListener(v -> {
+            Uri uri = saveBitmapToPictures(qrCodeBitmap);
+            if (uri != null) {
+                Toast.makeText(getContext(), "QR Code saved to Photos!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Failed to save QR Code.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        shareButton.setOnClickListener(v -> {
+            shareQrCode(qrCodeBitmap);
+        });
+
+        closeButton.setOnClickListener(v -> {
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    /**
+     * Initiates the QR code generation process.
+     * It uses the current eventId as the data for the QR code and displays the result in a dialog.
+     * @param view The view that triggered this action.
+     */
+    private void generateQrCode(View view) {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String qrCodeText = eventId;
+        // generate QR code
+        Bitmap qrcodeBitMap = generateQRCode(qrCodeText, 600, 600);
+
+        if (qrcodeBitMap == null) {
+            Toast.makeText(getContext(), "Error: Failed to generate QR code.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showQrCodeDialog(qrcodeBitMap);
+    }
+
+    /**
+     * Generates a QR code bitmap from a given text.
+     *
+     * @param text The text to encode in the QR code.
+     * @param width The desired width of the QR code bitmap.
+     * @param height The desired height of the QR code bitmap.
+     * @return The generated QR code as a Bitmap, or null if an error occurred.
+     */
+    private static Bitmap generateQRCode(String text, int width, int height) {
+        QRCodeWriter writer = new QRCodeWriter();
+        try {
+            BitMatrix bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, width, height);
+            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            return bmp;
+        } catch (WriterException e) {
+            Log.e(TAG, "Error generating QR Code", e); // Also a good idea to log the error
+            return null;
+        }
+    }
+
+    /**
+     * Saves a bitmap to storage and then triggers a system share intent.
+     * This allows the user to share the QR code image with other apps.
+     * @param qrCodeBitmap The QR code bitmap to be shared.
+     */
+    private void shareQrCode(Bitmap qrCodeBitmap) {
+        // Save the bitmap using the helper.
+        Uri uri = saveBitmapToPictures(qrCodeBitmap);
+        if (uri == null) {
+            Toast.makeText(getContext(), "Failed to share QR Code.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create and start the share intent.
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/png");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(shareIntent, "Share QR Code"));
+    }
+
+    /**
+     * Saves a bitmap image to the device's public "Pictures" directory.
+     * <p>
+     * This method uses the MediaStore API, which is the modern and recommended approach for
+     * saving shared media. The saved image will be visible in gallery apps.
+     *
+     * @param bitmap The bitmap image to save.
+     * @return The Uri of the saved image on success, or null if the save operation failed.
+     */
+    private Uri saveBitmapToPictures(Bitmap bitmap) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, "event_qr_code_" + System.currentTimeMillis() + ".png");
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);
+
+        Uri uri = getContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        if (uri != null) {
+            try (OutputStream outputStream = getContext().getContentResolver().openOutputStream(uri)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                return uri; // Success
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to save bitmap", e);
+            }
+        }
+        return null; // Failure
+    }
+
 }

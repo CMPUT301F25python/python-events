@@ -1,6 +1,7 @@
 package com.example.lotteryevent;
 
 import android.os.Bundle;
+import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,12 +29,13 @@ import java.util.Map;
 /**
  * A {@link Fragment} subclass that allows users to view and update their profile information.
  * This includes name, email, and phone number, all stored in Firestore.
+ * The user can later delete their profile information and all associated information in collections.
  * The fragment uses Firebase Authentication to identify the user.
  *
  * <p>Includes validation for user input and provides a back button that navigates to the previous
  * fragment using Jetpack Navigation.</p>
  *
- * @author
+ * @author Sanaa Bhaidani
  * @version 1.0
  */
 public class UserProfileFragment extends Fragment {
@@ -42,6 +44,7 @@ public class UserProfileFragment extends Fragment {
     private EditText emailField;
     private EditText phoneField;
     private Button updateInfo;
+    private Button deleteProfile;
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String deviceId;
@@ -93,12 +96,18 @@ public class UserProfileFragment extends Fragment {
         emailField = view.findViewById(R.id.email_field);
         phoneField = view.findViewById(R.id.phone_field);
         updateInfo = view.findViewById(R.id.update_button);
+        deleteProfile = view.findViewById(R.id.delete_button);
+
+        phoneField.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 
         // Load user data
         loadProfileInfo();
 
         // Save updated user data
-        updateInfo.setOnClickListener(v -> setProfileInfo());
+        updateInfo.setOnClickListener(v -> setProfileInfo(view));
+
+        // delete user data
+        deleteProfile.setOnClickListener(c -> confirmProfileDeletion(view));
 
     }
 
@@ -129,10 +138,19 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
-     * Validates input fields and updates the user's profile in Firestore.
-     * Displays a toast message indicating success or failure.
+     * Validates user input fields and updates the user's profile information in Firestore.
+     * <p>
+     * This method checks that the name and email fields are not empty, validates the email format,
+     * and verifies that the phone number (if provided) contains exactly 10 digits. If validation
+     * passes, the user's profile document is updated in the "users" collection with the provided
+     * values. Default values are also set for "admin" (false) and "optOutNotifications" (true).
+     * A Toast message is displayed to indicate success or failure, and the view navigates back
+     * upon completion.
+     * </p>
+     *
+     * @param view the current view, used for navigation and context access
      */
-    private void setProfileInfo() {
+    private void setProfileInfo(View view) {
         String name = nameField.getText().toString().trim();
         String email = emailField.getText().toString().trim();
         String phone = phoneField.getText().toString().trim();
@@ -150,9 +168,12 @@ public class UserProfileFragment extends Fragment {
         }
 
         // check if valid phone number (if one has been provided)
-        if (!phone.isEmpty() && phone.length() != 10) {
-            Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
-            return;
+        if (!phone.isEmpty()) {
+            String phoneDigitsOnly = phone.replaceAll("\\D", "");
+            if(phoneDigitsOnly.length() != 10) {
+                Toast.makeText(getContext(), "Enter a valid phone number.", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
 
         // prepare Firestore update
@@ -160,12 +181,186 @@ public class UserProfileFragment extends Fragment {
         profileInfo.put("name", name);
         profileInfo.put("email", email);
         profileInfo.put("phone", phone.isEmpty() ? null : phone);
+        profileInfo.put("admin", false);
+        profileInfo.put("optOutNotifications", true);
 
-        db.collection("users").document(deviceId)
-                .set(profileInfo)
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(getContext(), "Profile updated successfully.", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Error updating profile.", Toast.LENGTH_SHORT).show());
+        db.collection("users").document(deviceId).set(profileInfo);
+        Toast.makeText(getContext(), "Profile updated successfully.", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(view).popBackStack();
+    }
+
+    /**
+     * Clears the profile information for a specified user in Firestore.
+     * <p>
+     * This method sets the "name", "email", and "phone" fields in the user's
+     * document to null, resets "admin" to false, and sets "optOutNotifications" to true.
+     * This effectively anonymizes the user profile while maintaining the document reference.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose profile information is to be cleared
+     */
+    private void clearProfileInfo(String uid) {
+        Map<String, Object> clearFields = new HashMap<>();
+        clearFields.put("name", null); // empty
+        clearFields.put("email", null); // empty
+        clearFields.put("phone", null); // empty
+        clearFields.put("admin", false); // default false
+        clearFields.put("optOutNotifications", true); // default true
+
+        db.collection("users").document(uid)
+                .update(clearFields)
+                .addOnSuccessListener(aVoid -> Log.d("UserProfile", "User profile cleared"))
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to clear profile: " + e.getMessage()));
+    }
+
+    /**
+     * Deletes the "eventsHistory" subcollection for a specified user in Firestore.
+     * <p>
+     * This method iterates through all documents in the "eventsHistory" subcollection
+     * of the user's document and deletes them individually.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose events history is to be deleted
+     */
+    private void deleteEventsHistory(String uid) {
+        db.collection("users").document(uid).collection("eventsHistory").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().delete();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection eventsHistory: " + e.getMessage()));
+    }
+
+    /**
+     * Deletes all notifications associated with a specific user.
+     * <p>
+     * This method queries the "notifications" collection for documents where
+     * "recipientId" matches the user's UID and deletes each corresponding document.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose notifications will be deleted
+     */
+    private void deleteNotifications(String uid){
+        db.collection("notifications")
+                .whereEqualTo("recipientId", uid).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().delete();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete notifications: " + e.getMessage()));
+    }
+
+    /**
+     * Removes a user from all event-related subcollections in the "events" collection.
+     * <p>
+     * This method searches through all events and deletes the user's document (if present)
+     * from the "entrants", "selected", and "waitlist" subcollections within each event.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user to remove from event subcollections
+     */
+    private void deleteFromEventsCol(String uid) {
+        String[] subcollections = {"entrants", "selected", "waitlist"};
+
+        db.collection("events").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String eventId = doc.getId();
+
+                        for (String sub : subcollections) {
+                            db.collection("events").document(eventId)
+                                    .collection(sub).document(uid)
+                                    .delete()
+                                    .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Removed user from " + sub + " for event " + eventId))
+                                    .addOnFailureListener(e -> Log.e("UserProfile", "Failed to remove user from " + sub + ": " + e.getMessage()));
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events: " + e.getMessage()));
+    }
+
+    /**
+     * Deletes all events organized by a specific user.
+     * <p>
+     * This method finds all events in the "events" collection where "organizerId" matches
+     * the user's UID, deletes their "entrants" subcollection documents, and then removes
+     * the event documents themselves.
+     * </p>
+     *
+     * @param uid the unique identifier (UID) of the user whose organized events are to be deleted
+     */
+    private void deleteEventsOrganized(String uid){
+        db.collection("events")
+                .whereEqualTo("organizerId", uid).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // if user didn't organize any events, bypass
+                    if(querySnapshot.isEmpty()){
+                        return;
+                    }
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String eventId = doc.getId();
+
+                        // delete entrants subcollection
+                        db.collection("events").document(eventId).collection("entrants").get()
+                                .addOnSuccessListener(entrantsSnapshot -> {
+                                    for (DocumentSnapshot entrant : entrantsSnapshot.getDocuments()) {
+                                        entrant.getReference().delete();
+                                    }
+
+                                    // delete event document
+                                    db.collection("events").document(eventId).delete()
+                                            .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Deleted event " + eventId + " organized by user."))
+                                            .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete event " + eventId + ": " + e.getMessage()));
+                                })
+                                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete entrants for " + eventId + ": " + e.getMessage()));
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events organized by user: " + e.getMessage()));
+    }
+
+    /**
+     * Deletes all user-related data from Firestore and navigates back to the previous screen.
+     * <p>
+     * This method clears the user's profile information, removes event history, notifications,
+     * and event participation or organization data. A confirmation Toast message is displayed
+     * upon successful deletion.
+     * </p>
+     *
+     * @param uid  the unique identifier (UID) of the user whose data will be deleted
+     * @param view the current view, used for navigation and context access
+     */
+    private void deleteUserData(String uid, View view) {
+        clearProfileInfo(uid); // clears main document fields
+        deleteEventsHistory(uid); // deletes events history
+        deleteNotifications(uid); // deletes all notifications
+        deleteFromEventsCol(uid); // delete user from current events
+        deleteEventsOrganized(uid); // delete users events
+        Toast.makeText(getContext(), "Profile succesfully deleted.", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(view).popBackStack();
+    }
+
+    /**
+     * Displays a confirmation dialog before deleting the user's profile and all associated data.
+     * <p>
+     * If confirmed, the currently authenticated user's data is deleted.
+     * If canceled, no further action is taken.
+     * </p>
+     *
+     * @param view the current view, used for dialog context and navigation
+     */
+    private void confirmProfileDeletion(View view){
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Data")
+                .setMessage("This will clear your profile information and delete all associated data. Are you sure you want to delete your profile?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    FirebaseUser currentUser = auth.getCurrentUser();
+                    if (currentUser != null) {
+                        deleteUserData(currentUser.getUid(), view);
+                    }
+                })
+                .setNegativeButton("No", null)
+                .show();
     }
 }
