@@ -13,11 +13,7 @@ import org.junit.Test;
 import java.util.Date;
 
 /**
- * Unit tests for the validation logic within the {@link CreateEventFragment}.
- * <p>
- * This class tests the {@code validateEventInput} method to ensure all business rules
- * for creating an event are correctly enforced. It covers scenarios such as empty fields,
- * chronological order of dates, and the integrity of the registration period.
+ * Unit Tests for Data Notification, testing its constructor, getters, and setters
  */
 public class NotificationTest {
 
@@ -32,6 +28,9 @@ public class NotificationTest {
     private String organizerId;
     private String organizerName;
 
+    /**
+     * assigns fields for notif
+     */
     @Before
     public void setUp() {
         uid = "Wa54uQ98ykOHpRq0IbZtMJoHAkU2";
@@ -44,7 +43,9 @@ public class NotificationTest {
         organizerName = "Organizer Name";
     }
 
-    // All Valid Scenarios
+    /**
+     * tests notif constructor
+     */
     @Test
     public void testConstructor() {
 
@@ -62,6 +63,9 @@ public class NotificationTest {
         assertNotEquals(null, notification.getTimestamp());
     }
 
+    /**
+     * tests notif's getters and setters
+     */
     @Test
     public void testGettersSetters() {
         Notification notification = new Notification();

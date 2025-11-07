@@ -30,6 +30,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests flow around sending custom notif to entrants
+ */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class SendCustomNotifUITest {
@@ -40,8 +43,11 @@ public class SendCustomNotifUITest {
     @Rule
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
 
+    /**
+     * Sets up data for tests, event
+     */
     @Before
-    public void navigateToCreateEventFragment() {
+    public void setUpTest() {
         db = FirebaseFirestore.getInstance();
         try {
             Thread.sleep(3000);
@@ -75,8 +81,11 @@ public class SendCustomNotifUITest {
         }
     }
 
+    /**
+     * removes data used for test
+     */
     @After
-    public void deleteEventNotif() {
+    public void tearDownTests() {
         db.collection("events").document(event.getEventId()).delete();
         try {
             Thread.sleep(3000);
@@ -85,6 +94,10 @@ public class SendCustomNotifUITest {
         }
     }
 
+    /**
+     * Tests send notif button on Waiting list page, testing input field edit, and notify all and cancel
+     * buttons in terms of what flow immediately happens next
+     */
     @Test
     public void testNotifyButtonWaiting() {
         scenario.getScenario().onActivity(activity -> {
@@ -112,6 +125,10 @@ public class SendCustomNotifUITest {
 
     }
 
+    /**
+     * Tests send notif button on Accepted list page, testing input field edit, and notify all and cancel
+     * buttons in terms of what flow immediately happens next
+     */
     @Test
     public void testNotifyButtonAccepted() {
         scenario.getScenario().onActivity(activity -> {
@@ -138,6 +155,10 @@ public class SendCustomNotifUITest {
         onView(withText(containsString("Cancel"))).perform(click());
     }
 
+    /**
+     * Tests send notif button on Invited list page, testing input field edit, and notify all and cancel
+     * buttons in terms of what flow immediately happens next
+     */
     @Test
     public void testNotifyButtonInvited() {
         scenario.getScenario().onActivity(activity -> {
@@ -164,6 +185,10 @@ public class SendCustomNotifUITest {
         onView(withText(containsString("Cancel"))).perform(click());
     }
 
+    /**
+     * Tests send notif button on Cancelled list page, testing input field edit, and notify all and cancel
+     * buttons in terms of what flow immediately happens next
+     */
     @Test
     public void testNotifyButtonCancelled() {
         scenario.getScenario().onActivity(activity -> {

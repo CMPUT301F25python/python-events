@@ -30,6 +30,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests for flow around pressing the confirm draw and notify button,
+ * Checking which screen one goes to
+ */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class ConfirmDrawAndNotifyTest {
@@ -41,8 +45,11 @@ public class ConfirmDrawAndNotifyTest {
     @Rule
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
 
+    /**
+     * Sets up db bu making event and event's entrant
+     */
     @Before
-    public void navigateToCreateEventFragment() {
+    public void setUpTests() {
         db = FirebaseFirestore.getInstance();
         try {
             Thread.sleep(3000);
@@ -92,8 +99,11 @@ public class ConfirmDrawAndNotifyTest {
         });
     }
 
+    /**
+     * Removes data used for testing
+     */
     @After
-    public void deleteEventNotif() {
+    public void tearDownTests() {
         db.collection("events").document(event.getEventId()).collection("entrants").document(entrant.getUserId()).delete();
         try {
             Thread.sleep(3000);
@@ -108,6 +118,10 @@ public class ConfirmDrawAndNotifyTest {
         }
     }
 
+    /**
+     * Tests for correct values on Confirm and Notify screen and the screen change behaviour when
+     * confirm and notify button is selected
+     */
     @Test
     public void testConfirmAndNotify() {
         try {
@@ -123,7 +137,6 @@ public class ConfirmDrawAndNotifyTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
 
         onView(withText(containsString("Confirm Draw and Notify"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
@@ -148,6 +161,9 @@ public class ConfirmDrawAndNotifyTest {
         }
     }
 
+    /**
+     * Tests screen change behaviour around cancelling confirm and notify
+     */
     @Test
     public void testConfirmAndNotifyCancel() {
         try {

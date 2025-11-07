@@ -35,6 +35,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests notification screen and behaviour of clicking lottery success notif
+ */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class NotificationUITest {
@@ -45,8 +48,11 @@ public class NotificationUITest {
     @Rule
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
 
+    /**
+     * Sets up data needed for tests, event and lottery success notif
+     */
     @Before
-    public void navigateToCreateEventFragment() {
+    public void setUpTest() {
         db = FirebaseFirestore.getInstance();
         try {
             Thread.sleep(3000);
@@ -96,8 +102,11 @@ public class NotificationUITest {
         });
     }
 
+    /**
+     * Removes data used for tests
+     */
     @After
-    public void deleteEventNotif() {
+    public void tearDownTest() {
         db.collection("notifications").document(notification.getNotificationId()).delete();
         try {
             Thread.sleep(3000);
@@ -112,6 +121,9 @@ public class NotificationUITest {
         }
     }
 
+    /**
+     * tests lottery success notif leads to the notif's event page
+     */
     @Test
     public void testNotificationLeadsToEvent() {
         try {
@@ -126,6 +138,9 @@ public class NotificationUITest {
         onView(withText(containsString("John Doe"))).check(matches(isDisplayed()));
     }
 
+    /**
+     * Tests notif shows on notif screen
+     */
     @Test
     public void testNotificationShows() {
         try {
