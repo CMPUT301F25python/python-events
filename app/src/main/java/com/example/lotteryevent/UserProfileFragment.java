@@ -199,7 +199,6 @@ public class UserProfileFragment extends Fragment {
      *
      * @param uid the unique identifier (UID) of the user whose profile information is to be cleared
      */
-
     private void clearProfileInfo(String uid) {
         Map<String, Object> clearFields = new HashMap<>();
         clearFields.put("name", null); // empty
