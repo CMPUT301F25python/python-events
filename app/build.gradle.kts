@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-
+    // --- Default and Firebase Dependencies ---
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -42,17 +42,27 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.play.services.mlkit.barcode.scanning)
+    implementation(platform(libs.firebase.bom))
+    implementation("com.google.firebase:firebase-firestore")
+
+    // --- Navigation Dependencies ---
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
+
+    // --- Other Dependencies ---
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("com.google.guava:guava:33.5.0-android")
+    implementation("com.google.zxing:core:3.5.3")
+
+    // --- Testing Dependencies ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(platform(libs.firebase.bom))
-    implementation("com.google.firebase:firebase-firestore")
-    implementation(libs.navigation.fragment)
-    implementation(libs.navigation.ui)
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    implementation("com.google.zxing:core:3.5.3")
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+    // --- Camera Dependencies ---
+    implementation(libs.camera.core)
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.view)
 }
