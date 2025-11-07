@@ -52,11 +52,16 @@
         android:id="@+id/confirmDrawAndNotifyFragment"
         android:name="com.example.lotteryevent.organizer.ConfirmDrawAndNotifyFragment"
         android:label="Confirm Draw and Notify"
-        tools:layout="@layout/fragment_confirm_draw_and_notify"
-        >
+        tools:layout="@layout/fragment_confirm_draw_and_notify">
+
+        <argument
+            android:name="eventId"
+            app:argType="string"/>
+
         <action
-            android:id="@+id/action_confirmDrawAndNotifyFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
+            android:id="@+id/action_confirmDrawAndNotifyFragment_to_organizerEventPageFragment"
+            app:destination="@id/organizerEventPageFragment" />
+
     </fragment>
 
     <fragment
@@ -75,6 +80,15 @@
         android:label="Events"
         tools:layout="@layout/fragment_available_events">
 
+    </fragment>
+
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.lotteryevent.NotificationsFragment"
+        android:label="Notifications" >
+        <action
+            android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"/>
     </fragment>
 
     <fragment

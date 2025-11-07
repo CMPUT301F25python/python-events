@@ -65,6 +65,9 @@ public class RunDrawFragment extends Fragment {
     }
 
     /**
+     * This block handles the logic for the removal and adding of users to waitlist and selected list
+     * after draw has been initialized. Also ensures that number of participants selected doesn't exceed
+     * number of people on the waitlist
      *
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
@@ -95,14 +98,25 @@ public class RunDrawFragment extends Fragment {
             // Temp Debug block to confirm correct EventId
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
-            // Read waitlist subcollection
+            // Waitlist status
             db.collection("events").document(eventId)
-                    .collection("waitlist").get()
+                    .collection("entrants")
+                    .whereEqualTo("status", "waiting")
+                    .get()
                     .addOnSuccessListener(query -> {
+
 
                         List<String> waitlist = new ArrayList<>();
                         for (DocumentSnapshot d : query.getDocuments()) {
                             waitlist.add(d.getId());
+                        }
+                        int waitlistCount = waitlist.size();
+
+                        // Prevent organizer from selecting more people than available
+                        if (numToSelect > waitlistCount) {
+                            Toast.makeText(getContext(), "You cannot select more participants than are on the wait list(" +waitlistCount + ").",
+                                    Toast.LENGTH_LONG).show();
+                            return;
                         }
 
                         if (waitlist.isEmpty()) {
@@ -110,24 +124,15 @@ public class RunDrawFragment extends Fragment {
                             return;
                         }
 
-                        int requested = Math.min(numToSelect, waitlist.size());
                         Collections.shuffle(waitlist);
-                        List<String> chosen = waitlist.subList(0, requested);
+                        List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Remove chosen users from waitlist
+                        // Update selected user to "invited"
                         for (String uid : chosen) {
                             db.collection("events").document(eventId)
-                                    .collection("waitlist")
+                                    .collection("entrants")
                                     .document(uid)
-                                    .delete();
-                        }
-
-                        // Add selected users to "selected" subcollection
-                        for (String uid : chosen) {
-                            db.collection("events").document(eventId)
-                                    .collection("selected")
-                                    .document(uid)
-                                    .set(new HashMap<String, Object>());
+                                    .update("status", "invited");
                         }
 
                         Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();

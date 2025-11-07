@@ -233,6 +233,7 @@ public class OrganizerEventPageFragment extends Fragment {
      * and adjusts the UI accordingly.
      */
     private void updateUi() {
+
         if (this.event == null) {
             return;
         }
