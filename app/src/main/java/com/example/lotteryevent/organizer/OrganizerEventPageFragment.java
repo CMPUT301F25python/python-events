@@ -13,13 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -47,6 +47,9 @@ public class OrganizerEventPageFragment extends Fragment {
     private FirebaseFirestore db;
     private String eventId;
     private Button qrCodeRequest;
+    private LinearLayout buttonContainer;
+    private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
+    private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
 
     /**
      * Required empty public constructor for fragment instantiation.
@@ -99,6 +102,9 @@ public class OrganizerEventPageFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        initializeViews(view);
+        setupClickListeners();
+
         // Fetch and display event data if eventId is available
         if (eventId != null && !eventId.isEmpty()) {
             fetchEventDetails();
@@ -106,17 +112,26 @@ public class OrganizerEventPageFragment extends Fragment {
             Log.e(TAG, "Event ID is null or empty.");
             Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
         }
-        Button runLotteryButton = view.findViewById(R.id.btnRunLottery);
-        runLotteryButton.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("eventId", eventId);
-
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
-        });
-
-        qrCodeRequest = view.findViewById(R.id.request_qr_code);
         setupClickListeners();
+    }
+
+    /**
+     * Initializes the UI components by finding them in the view hierarchy.
+     * This method should be called in {@code onViewCreated} to ensure the view
+     * is fully inflated before attempting to find any child views.
+     *
+     * @param view The root view of the fragment's layout from which to find the UI components.
+     */
+    private void initializeViews(View view) {
+        qrCodeRequest = view.findViewById(R.id.request_qr_code);
+        buttonContainer = view.findViewById(R.id.organizer_button_container);
+        btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
+        btnViewEntrantMap = view.findViewById(R.id.btnViewEntrantMap);
+        btnAcceptedParticipants = view.findViewById(R.id.btnAcceptedParticipants);
+        btnInvitedParticipants = view.findViewById(R.id.btnInvitedParticipants);
+        btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
+        btnRunDraw = view.findViewById(R.id.btnRunDraw);
+        btnFinalize = view.findViewById(R.id.btnFinalize);
     }
 
     /**
@@ -124,6 +139,26 @@ public class OrganizerEventPageFragment extends Fragment {
      */
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(this::generateQrCode);
+
+        btnRunDraw.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
+        });
+
+        // Add placeholder listeners for the other new buttons
+        View.OnClickListener notImplementedListener = v -> {
+            Button b = (Button) v;
+            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
+        };
+
+        btnViewWaitingList.setOnClickListener(notImplementedListener);
+        btnViewEntrantMap.setOnClickListener(notImplementedListener);
+        btnAcceptedParticipants.setOnClickListener(notImplementedListener);
+        btnInvitedParticipants.setOnClickListener(notImplementedListener);
+        btnCancelledParticipants.setOnClickListener(notImplementedListener);
+        btnFinalize.setOnClickListener(notImplementedListener);
     }
 
 
@@ -138,11 +173,9 @@ public class OrganizerEventPageFragment extends Fragment {
                     if (task.isSuccessful()) {
                         DocumentSnapshot document = task.getResult();
                         if (document != null && document.exists()) {
-                            Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                            // TODO: Grace is probably gonna expand out the Event class, that can be integrated later
                             String name = document.getString("name");
-
-                            updateUi(name);
+                            String status = document.getString("status");
+                            updateUi(name, status);
                         } else {
                             Log.d(TAG, "No such document");
                             Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
@@ -159,8 +192,62 @@ public class OrganizerEventPageFragment extends Fragment {
      * Specifically, sets the title in the activity's action bar.
      * @param title The title of the event.
      */
-    private void updateUi(String title) {
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(title);
+    private void updateUi(String title, String status) {
+        if (getView() != null) {
+            TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
+            eventNameLabel.setText(title);
+        }
+
+        if (status == null) {
+            buttonContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        switch (status) {
+            case "open":
+            case "closed":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, false, false, false, true, false);
+                break;
+            case "drawing_complete":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, true, true, true, true, true);
+                break;
+            case "finalized":
+                buttonContainer.setVisibility(View.VISIBLE);
+                setButtonStates(true, true, true, true, true, false, false);
+                btnFinalize.setVisibility(View.GONE);
+                btnRunDraw.setVisibility(View.GONE);
+                break;
+            case "upcoming":
+            default:
+                buttonContainer.setVisibility(View.GONE);
+                break;
+        }
+    }
+
+    /**
+     * Sets the enabled/disabled state of the various action buttons on the page.
+     * This is used to control which actions are available to the organizer based on the
+     * current status of the event (e.g., open, drawing_complete).
+     *
+     * @param waitingList True to enable the "View Waiting List" button, false to disable.
+     * @param map         True to enable the "View Entrant Map" button, false to disable.
+     * @param accepted    True to enable the "View Accepted Participants" button, false to disable.
+     * @param invited     True to enable the "View Invited Participants" button, false to disable.
+     * @param cancelled   True to enable the "View Cancelled Participants" button, false to disable.
+     * @param runDraw     True to enable the "Run Draw" button, false to disable.
+     * @param finalize    True to enable the "Finalize" button, false to disable.
+     */
+    private void setButtonStates(boolean waitingList, boolean map, boolean accepted,
+                                 boolean invited, boolean cancelled, boolean runDraw, boolean finalize) {
+        btnViewWaitingList.setEnabled(waitingList);
+        btnViewEntrantMap.setEnabled(map);
+        btnAcceptedParticipants.setEnabled(accepted);
+        btnInvitedParticipants.setEnabled(invited);
+        btnCancelledParticipants.setEnabled(cancelled);
+        btnRunDraw.setEnabled(runDraw);
+        btnFinalize.setEnabled(finalize);
     }
 
     /**
