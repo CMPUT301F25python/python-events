@@ -17,6 +17,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -24,14 +26,18 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import android.os.Environment;
+import com.bumptech.glide.Glide;
 import com.example.lotteryevent.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import java.io.OutputStream;
+import java.util.UUID;
 
 /**
  * Displays info about a single event for the organizer to view.
@@ -45,11 +51,16 @@ public class OrganizerEventPageFragment extends Fragment {
     private static final String TAG = "OrganizerEventPage";
 
     private FirebaseFirestore db;
+    private FirebaseStorage storage;
     private String eventId;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
     private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
     private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
+
+    private ImageView posterImage;
+    private Button uploadPosterButton;
+    private ActivityResultLauncher<String> pickImage;
 
     /**
      * Required empty public constructor for fragment instantiation.
@@ -67,11 +78,22 @@ public class OrganizerEventPageFragment extends Fragment {
 
         // Initialize Firestore
         db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
 
         // Retrieve the eventId from navigation arguments
         if (getArguments() != null) {
             eventId = OrganizerEventPageFragmentArgs.fromBundle(getArguments()).getEventId();
         }
+
+        // System picker for images
+        pickImage = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri == null) return;
+            if (eventId == null || eventId.trim().isEmpty()) {
+                Toast.makeText(requireContext(), "Missing event id", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            uploadPoster(uri);
+        });
     }
 
     /**
@@ -132,6 +154,9 @@ public class OrganizerEventPageFragment extends Fragment {
         btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
+
+        posterImage = view.findViewById(R.id.poster_image);
+        uploadPosterButton = view.findViewById(R.id.upload_poster_button);
     }
 
     /**
@@ -139,6 +164,13 @@ public class OrganizerEventPageFragment extends Fragment {
      */
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(this::generateQrCode);
+
+        if (uploadPosterButton != null) {
+            uploadPosterButton.setOnClickListener(v -> pickImage.launch("image/*"));
+        }
+        if (posterImage != null) {
+            posterImage.setOnClickListener(v -> pickImage.launch("image/*"));
+        }
 
         btnRunDraw.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
@@ -175,6 +207,16 @@ public class OrganizerEventPageFragment extends Fragment {
                         if (document != null && document.exists()) {
                             String name = document.getString("name");
                             String status = document.getString("status");
+
+                            String posterUrl = document.getString("posterUrl");
+                            if (posterImage != null && posterUrl != null && !posterUrl.trim().isEmpty()) {
+                                Glide.with(this)
+                                        .load(posterUrl)
+                                        .placeholder(R.drawable.ic_image_placeholder) // optional
+                                        .error(R.drawable.ic_image_placeholder)       // optional
+                                        .into(posterImage);
+                            }
+
                             updateUi(name, status);
                         } else {
                             Log.d(TAG, "No such document");
@@ -185,6 +227,42 @@ public class OrganizerEventPageFragment extends Fragment {
                         Toast.makeText(getContext(), "Failed to load event details.", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void uploadPoster(@NonNull Uri uri) {
+        Toast.makeText(requireContext(), "Uploading poster…", Toast.LENGTH_SHORT).show();
+
+        String fileName = UUID.randomUUID().toString() + ".jpg";
+        StorageReference ref = storage.getReference()
+                .child("posters")
+                .child(eventId)
+                .child(fileName);
+
+        ref.putFile(uri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    return ref.getDownloadUrl();
+                })
+                .addOnSuccessListener(downloadUri -> {
+                    db.collection("events").document(eventId)
+                            .update("posterUrl", downloadUri.toString())
+                            .addOnSuccessListener(v -> {
+                                Toast.makeText(requireContext(), "Poster updated", Toast.LENGTH_SHORT).show();
+                                if (posterImage != null) {
+                                    Glide.with(this)
+                                            .load(downloadUri)
+                                            .placeholder(R.drawable.ic_image_placeholder)
+                                            .error(R.drawable.ic_image_placeholder)
+                                            .into(posterImage);
+                                }
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(requireContext(), "Saved to Storage, failed to save URL", Toast.LENGTH_SHORT).show()
+                            );
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(), "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
     }
 
     /**

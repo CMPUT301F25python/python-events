@@ -12,6 +12,7 @@ navigationFragment = "2.9.5"
 firebaseAuth = "24.0.1"
 firebaseFirestore = "26.0.2"
 firebaseCrashlyticsBuildtools = "3.0.6"
+firebaseStorage = "22.0.1"
 
 [libraries]
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
@@ -27,6 +28,7 @@ navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "n
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage", version.ref = "firebaseStorage" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
