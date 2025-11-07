@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.example.lotteryevent.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +108,16 @@ public class AvailableEventsFragment extends Fragment {
                     }
                     adapter.setEvents(list);
                 });
+
+        adapter.setOnItemClickListener(event -> {
+            Bundle args = new Bundle();
+            args.putString("eventId", String.valueOf(event.getId()));
+
+            androidx.navigation.NavController nav =
+                    androidx.navigation.fragment.NavHostFragment.findNavController(AvailableEventsFragment.this);
+            nav.navigate(R.id.eventDetailsFragment, args);
+        });
+
     }
 
     /**

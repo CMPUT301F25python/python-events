@@ -48,13 +48,25 @@
     <fragment
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.AvailableEventsFragment"
-        android:label="Events" />
-  
+        android:label="Events"
+        tools:layout="@layout/fragment_available_events">
+
+    </fragment>
+
     <fragment
         android:id="@+id/runDrawFragment"
         android:name="com.example.lotteryevent.organizer.RunDrawFragment"
         android:label="Run Draw"
         tools:layout="@layout/fragment_run_draw"/>
 
+    <fragment
+        android:id="@+id/eventDetailsFragment"
+        android:name="com.example.lotteryevent.EventDetailsFragment"
+        android:label="Event Details"
+        tools:layout="@layout/fragment_event_details">
+        <argument
+            android:name="eventId"
+            app:argType="string" />
+    </fragment>
 
 </navigation>
