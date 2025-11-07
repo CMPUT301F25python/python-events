@@ -22,6 +22,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 /**
  * This Fragment allows the organizer to view and manage entrants who were selected
@@ -105,23 +106,63 @@ public class ManageSelectedFragment extends Fragment {
 
     /**
      * Cancels a selected entrant by setting their status back to "waiting"
+     * and automatically selects the next waiting user if one exists
      *
      * @param userId
      * This is the user's ID stored as docId in firestore
      */
     private void cancelSelectedUser(String userId) {
         // Remove entrant from selected list
-        this.db.collection("events")
-                .document(this.eventId)
+        db.collection("events")
+                .document(eventId)
                 .collection("entrants")
                 .document(userId)
                 .update("status", "waiting")
                 .addOnSuccessListener(aVoid -> {
-                    this.loadSelectedEntrants();
+
+                    selectedUsers.remove(userId);
+                    selectedAdapter.notifyDataSetChanged();
 
                     Toast.makeText(this.getContext(), "User cancelled and returned to waitlist", Toast.LENGTH_SHORT).show();
+
+                    // Get waiting users
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("entrants")
+                            .whereEqualTo("status", "waiting")
+                            .get()
+                            .addOnSuccessListener(query -> {
+
+                                if (!query.isEmpty()) {
+                                    List<DocumentSnapshot> waitlistDocs = query.getDocuments();
+
+                                    // Pick a random waiting user
+                                    int randomUser = new Random().nextInt(waitlistDocs.size());
+                                    DocumentSnapshot nextUser = waitlistDocs.get(randomUser);
+                                    String nextUserID = nextUser.getId();
+
+                                    // Invite random replacement
+                                    db.collection("events")
+                                            .document(eventId)
+                                            .collection("entrants")
+                                            .document(nextUserID)
+                                            .update("status", "invited")
+                                            .addOnSuccessListener(v2 -> {
+                                                selectedUsers.add(nextUserID);
+                                                selectedAdapter.notifyDataSetChanged();
+
+                                                Toast.makeText(getContext(), "Replacement randomly selected from waitlist", Toast.LENGTH_SHORT).show();
+                                            })
+                                            .addOnFailureListener(e ->
+                                                    Toast.makeText(getContext(), "Failed to invite replacement", Toast.LENGTH_SHORT).show());
+                                }else {
+                                    Toast.makeText(getContext(), "No Users left in the waitlist", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show());
                 })
-                .addOnFailureListener(e -> Toast.makeText(this.getContext(), "Failed to return user to waitlist", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to return user to waitlist", Toast.LENGTH_SHORT).show()
                 );
     }
 }

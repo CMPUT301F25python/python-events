@@ -245,7 +245,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     }
 
     /**
-     * Cancels the lottery by bringing entrants back to the waiting collection and switches fragment to the home fragment
+     * Cancels the lottery by bringing entrants back to the waiting list and switches fragment to the home fragment
      * @param view Used to navigate to another fragment
      */
     private void cancelLottery(@NonNull View view) {
@@ -268,6 +268,10 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
             );
         }
 
+    /**
+     * This is a helper function that
+     * @param view
+     */
     private void navigateBack(View view) {
         ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
                 ConfirmDrawAndNotifyFragmentDirections
