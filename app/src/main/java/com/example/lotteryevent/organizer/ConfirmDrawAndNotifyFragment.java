@@ -1,5 +1,6 @@
 package com.example.lotteryevent.organizer;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -99,37 +100,43 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      * Fills TextViews on the screen with entrant metrics including number of entrants in the waiting list,
      * number of spaces available in the event, and number of entrants chosen by the lottery.
      */
+    @SuppressLint("SetTextI18n")
     private void fillEntrantMetrics() {
-        // used to find the total number of entrants, adds from the waiting list and the selected list
+        // Used to find the total number of entrants, adds from the waiting list and the selected list
         AtomicInteger chosenEntrants = new AtomicInteger();
 
+        // Count invited entrants
         db.collection("events").document(eventId)
-            .collection("waitlist").get()
-            .addOnSuccessListener(queryWaitlist -> {
+            .collection("entrants")
+            .whereEqualTo("status", "waiting")
+            .get()
+            .addOnSuccessListener(waitQuery -> {
+
                 // displays the number of entrants in the waiting list
-                waitingListCountText.setText(String.valueOf(queryWaitlist.getDocuments().size()));
+                waitingListCountText.setText(String.valueOf(waitQuery.size()));
             })
             .addOnFailureListener(e ->
                     Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
             );
 
+        // Count invited entrants
         db.collection("events").document(eventId)
-            .collection("selected").get()
+            .collection("entrants")
+            .whereEqualTo("status", "invited")
+            .get()
             .addOnSuccessListener(querySelected -> {
-                chosenEntrants.set(querySelected.getDocuments().size());
-                // displays number of drawn entrants
-                selectedUsersCountText.setText(String.valueOf(querySelected.getDocuments().size()));
+                selectedUsersCountText.setText(String.valueOf(querySelected.size()));
 
+                // Load event capacity and show available spots
                 db.collection("events").document(eventId).get()
                         .addOnSuccessListener(document -> {
                             if (document != null && document.exists()) {
-                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                                 Long capacityLong = document.getLong("capacity");
 
                                 if (capacityLong != null) {
                                     int capacity = capacityLong.intValue();
                                     // calculates and displays the capacity of the event left after the draw
-                                    int spacesLeft = capacity - chosenEntrants.get();
+                                    int spacesLeft = capacity - querySelected.size();
                                     if (spacesLeft > 0) {
                                         availableSpaceCountText.setText(String.valueOf(spacesLeft));
                                     } else {
@@ -169,38 +176,45 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      */
     private void confirmSelectedUsersAndNotify(@NonNull View view) {
         db.collection("events").document(eventId)
-                .collection("selected").get()
+                .collection("entrants")
+                .whereEqualTo("status", "invited")
+                .get()
                 .addOnSuccessListener(query -> {
-                    // no users selected from lottery
+
                     if (query.isEmpty()) {
                         Toast.makeText(getContext(), "No chosen entrants to confirm and notify.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        // used to check all users' notify queries sent before changing fragments
-                        AtomicInteger completed = new AtomicInteger(0);
-                        int total = query.size();
-                        for (DocumentSnapshot d : query.getDocuments()) {
-                            String uid = d.getId();
-                            db.collection("users").document(uid).get()
-                                            .addOnSuccessListener(user -> { // user of that id found, can successfully notify them
-                                                notifyEntrant(uid);
-                                                int current = completed.incrementAndGet();
-                                                if (current == total) {
-                                                    Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
-                                                }
-                                            })
-                                            .addOnFailureListener(user -> { // user with that id not found, cannot notify. move on to the next user
-                                                Toast.makeText(getContext(), "User with id " + uid + " not found and could not be notified.", Toast.LENGTH_SHORT).show();
-                                                int current = completed.incrementAndGet();
-                                                if (current == total) {
-                                                    Navigation.findNavController(view).navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
-                                                }
-                                            });
-                        }
+                        return;
                     }
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Error loading selected entrants", Toast.LENGTH_SHORT).show();
-                });
+
+                    AtomicInteger completed = new AtomicInteger(0);
+                    int total = query.size();
+
+                    for (DocumentSnapshot d : query.getDocuments()) {
+                        String uid = d.getId();
+
+                        db.collection("users").document(uid).get()
+                                .addOnSuccessListener(user -> {
+                                    // Notify this entrant
+                                    notifyEntrant(uid);
+                                    updateAfterNotification(completed, total, view);
+                                })
+                                .addOnFailureListener(user -> {
+                                    Toast.makeText(getContext(), "User " + uid + " not found. Skipped.", Toast.LENGTH_SHORT).show();
+                                    updateAfterNotification(completed, total, view);
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Error loading selected entrants", Toast.LENGTH_SHORT).show()
+                );
     }
+
+    private void updateAfterNotification(AtomicInteger completed, int total, View view) {
+        if (completed.incrementAndGet() == total) {
+            navigateBack(view);
+        }
+    }
+
 
     /**
      * Gets event's name, organizer id, organizer name, and creates message to send to notification manager's
@@ -236,34 +250,29 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      */
     private void cancelLottery(@NonNull View view) {
         db.collection("events").document(eventId)
-            .collection("selected").get()
+            .collection("entrants")
+            .whereEqualTo("status", "invited")
+            .get()
             .addOnSuccessListener(query -> {
                 if (!query.isEmpty()) {
-                    for (DocumentSnapshot d : query.getDocuments()) {
-                        String id = d.getId();
-
-                        // for each selected entrant, adds them back to the waiting collection
-                        db.collection("events").document(eventId)
-                            .collection("waitlist").document(id).set(new HashMap<String, Object>())
-                            .addOnSuccessListener(queryWaitList -> {
-                                Log.d(TAG, "Document ID " + id + " successfully written!");
-                                // remove entrant from the selected collection
-                                db.collection("events").document(eventId)
-                                        .collection("selected").document(id).delete()
-                                        .addOnSuccessListener(v -> {Log.d(TAG, "Document ID " + id + " deleted successfully");})
-                                        .addOnFailureListener(v -> {Log.d(TAG, "Document ID " + id + " deletion unsuccessful");});
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(getContext(), "Error adding entrant back to waitlist", Toast.LENGTH_SHORT).show()
-                            );
+                    for (DocumentSnapshot entrantDoc : query.getDocuments()) {
+                        entrantDoc.getReference().update("status", "waiting");
                     }
+                    Toast.makeText(getContext(), "Lottery Cancelled", Toast.LENGTH_SHORT).show();
+                    navigateBack(view);
+
                 }
             })
             .addOnFailureListener(e ->
-                    Toast.makeText(getContext(), "Error loading selected entrant users", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(getContext(), "Error cancelling lottery", Toast.LENGTH_SHORT).show()
             );
+        }
 
-        Navigation.findNavController(view)
-                .navigate(R.id.action_confirmDrawAndNotifyFragment_to_homeFragment);
+    private void navigateBack(View view) {
+        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
+                ConfirmDrawAndNotifyFragmentDirections
+                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(eventId);
+
+        Navigation.findNavController(view).navigate(action);
     }
 }

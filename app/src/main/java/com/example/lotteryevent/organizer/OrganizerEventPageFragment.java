@@ -232,6 +232,7 @@ public class OrganizerEventPageFragment extends Fragment {
      * event's current status.
      */
     private void updateUi() {
+
         if (this.event == null) {
             return;
         }
