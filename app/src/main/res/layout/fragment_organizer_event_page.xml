@@ -15,8 +15,13 @@
             android:id="@+id/event_name_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="16dp" />
 
         <Button
             android:id="@+id/request_qr_code"

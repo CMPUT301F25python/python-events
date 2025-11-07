@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -160,7 +161,10 @@ public class OrganizerEventPageFragment extends Fragment {
      * @param title The title of the event.
      */
     private void updateUi(String title) {
-        ((AppCompatActivity) requireActivity()).getSupportActionBar().setTitle(title);
+        if (getView() != null) {
+            TextView eventNameLabel = getView().findViewById(R.id.event_name_label);
+            eventNameLabel.setText(title);
+        }
     }
 
     /**
