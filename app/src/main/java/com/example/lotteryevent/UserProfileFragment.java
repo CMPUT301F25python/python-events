@@ -192,9 +192,11 @@ public class UserProfileFragment extends Fragment {
      */
     private void clearProfileInfo(String uid) {
         Map<String, Object> clearFields = new HashMap<>();
-        clearFields.put("name", null);
-        clearFields.put("email", null);
-        clearFields.put("phone", null);
+        clearFields.put("name", null); // empty
+        clearFields.put("email", null); // empty
+        clearFields.put("phone", null); // empty
+        clearFields.put("admin", false); // default false
+        clearFields.put("optOutNotifications", true); // default true
 
         db.collection("users").document(uid)
                 .update(clearFields)
@@ -210,21 +212,67 @@ public class UserProfileFragment extends Fragment {
      *
      * @param uid the unique identifier (UID) of the user whose subcollections are to be deleted
      */
-    private void deleteSubcollections(String uid) {
+    private void deleteEventsHistory(String uid) {
+        db.collection("users").document(uid).collection("eventsHistory").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().delete();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection eventsHistory: " + e.getMessage()));
+    }
 
-        // ---------- NOTE: MANUALLY update for every addition collection a user has ------
-        String[] subcollections = {"notifications"};
+    private void deleteNotifications(String uid, View view){
+        db.collection("notifications")
+                .whereEqualTo("recipientId", uid).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().delete();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete notifications: " + e.getMessage()));
+    }
 
-        for (String collection : subcollections) {
-            db.collection("users").document(uid).collection(collection)
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                            doc.getReference().delete();
-                        }
-                    })
-                    .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete subcollection " + collection + ": " + e.getMessage()));
-        }
+    private void deleteFromEventsCol(String uid, View view){
+        db.collection("events").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        db.collection("events").document(doc.getId())
+                                .collection("entrants").document(uid).delete()
+                                .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Removed user from entrants for event " + doc.getId()))
+                                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to remove user from entrants: " + e.getMessage()));
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events: " + e.getMessage()));
+    }
+
+    private void deleteEventsOrganized(String uid){
+        db.collection("events")
+                .whereEqualTo("organizerId", uid).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // if user didn't organize any events, bypass
+                    if(querySnapshot.isEmpty()){
+                        return;
+                    }
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String eventId = doc.getId();
+
+                        // delete entrants subcollection
+                        db.collection("events").document(eventId).collection("entrants").get()
+                                .addOnSuccessListener(entrantsSnapshot -> {
+                                    for (DocumentSnapshot entrant : entrantsSnapshot.getDocuments()) {
+                                        entrant.getReference().delete();
+                                    }
+
+                                    // delete event document
+                                    db.collection("events").document(eventId).delete()
+                                            .addOnSuccessListener(aVoid -> Log.d("UserProfile", "Deleted event " + eventId + " organized by user."))
+                                            .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete event " + eventId + ": " + e.getMessage()));
+                                })
+                                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to delete entrants for " + eventId + ": " + e.getMessage()));
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("UserProfile", "Failed to query events organized by user: " + e.getMessage()));
     }
 
     /**
@@ -240,7 +288,10 @@ public class UserProfileFragment extends Fragment {
      */
     private void deleteUserData(String uid, View view) {
         clearProfileInfo(uid); // clears main document fields
-        deleteSubcollections(uid); // deletes all subcollections
+        deleteEventsHistory(uid); // deletes events history
+        deleteNotifications(uid,view); // deletes all notifications
+        deleteFromEventsCol(uid,view); // delete user from current events
+        deleteEventsOrganized(uid); // delete users events
         Toast.makeText(getContext(), "User data wiped successfully.", Toast.LENGTH_SHORT).show();
         Navigation.findNavController(view).popBackStack();
     }
