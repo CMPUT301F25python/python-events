@@ -13,7 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.data.Notification;
+import com.google.firebase.Timestamp;
 
+import java.text.SimpleDateFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +117,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
      */
     class NotificationViewHolder extends RecyclerView.ViewHolder {
         private final TextView message;
+        private final TextView timestamp;
 
         /**
          * Constructs a new {@link EventAdapter.EventViewHolder}.
@@ -124,6 +127,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
             message = itemView.findViewById(R.id.notification_message);
+            timestamp = itemView.findViewById(R.id.notification_timestamp);
 
             // Set a click listener on the entire tile view.
             itemView.setOnClickListener(v -> {
@@ -148,7 +152,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 message = "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage();
             }
 
+            Timestamp timestampRaw = notification.getTimestamp();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+            String timestamp = dateFormat.format(timestampRaw.toDate());
+
             this.message.setText(message);
+            this.timestamp.setText(timestamp);
         }
     }
 }

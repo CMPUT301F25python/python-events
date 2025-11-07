@@ -31,6 +31,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class NotificationsFragment extends Fragment {
     private static final String TAG = "NotificationsFragment";
@@ -100,8 +101,15 @@ public class NotificationsFragment extends Fragment {
                             list.add(notification);
                         }
                         adapter.setNotifications(list);
+                        adapter.setOnItemClickListener(n -> redirectOnNotificationClick(n));
                     }
                 });
+        }
+    }
+
+    private void redirectOnNotificationClick(Notification notification) {
+        if (Objects.equals(notification.getType(), "lottery_win")) {
+            System.out.println("not implemented yet");
         }
     }
 }

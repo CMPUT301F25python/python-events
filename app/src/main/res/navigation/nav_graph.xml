@@ -70,8 +70,12 @@
         android:name="com.example.lotteryevent.AvailableEventsFragment"
         android:label="Events" />
     <fragment
-        android:id="@+id/nav_notifications"
+        android:id="@+id/notificationsFragment"
         android:name="com.example.lotteryevent.NotificationsFragment"
-        android:label="Notifications" />
+        android:label="Notifications">
+<!--        <action-->
+<!--            android:id="@+id/action_notificationsFragment_to_confirmDrawAndNotifyFragment"-->
+<!--            app:destination="@id/confirmDrawAndNotifyFragment"/>-->
+    </fragment>
 
 </navigation>
