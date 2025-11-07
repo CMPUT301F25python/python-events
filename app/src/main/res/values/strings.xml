@@ -54,4 +54,32 @@
     <string name="cancelled_participants">Cancelled Participants</string>
     <string name="run_draw">Run Draw</string>
     <string name="finalize">Finalize</string>
+    <string name="join_waiting_list">Join Waiting List</string>
+    <string name="leave_waiting_list">Leave Waiting List</string>
+
+    <string name="info_cannot_join_closed">You can no longer join this event\'s waiting list.</string>
+    <string name="error_missing_event_id">Missing event id</string>
+    <string name="error_event_not_found">Event not found</string>
+
+    <string name="success_joined_waiting_list">Successfully joined waiting list!</string>
+    <string name="success_left_waiting_list">You have left the waiting list.</string>
+    <string name="error_failed_to_load">Failed to load: %1$s</string>
+    <string name="error_failed_to_join">Failed to join: %1$s</string>
+    <string name="error_failed_to_leave">Failed to leave: %1$s</string>
+
+    <string name="accept_invitation">Accept Invitation</string>
+    <string name="decline_invitation">Decline Invitation</string>
+
+    <string name="info_finalized_organizer">Organizer has finalized event attendance. Better luck next time!</string>
+    <string name="info_accepted">You have accepted your invitation to this event. Enjoy!</string>
+    <string name="info_declined">You have declined your invitation to this event.</string>
+    <string name="info_invitation_cancelled">Your invitation has been cancelled.</string>
+    <string name="success_invitation_declined">Invitation declined.</string>
+    <string name="error_invitation_update_failed">Failed to update invitation status.</string>
+
+    <string name="dialog_leave_warning_title">Are you sure?</string>
+    <string name="dialog_leave_warning_message">Registration for this event has closed. If you leave the waiting list, you will not be able to rejoin.</string>
+    <string name="dialog_leave_confirm">Leave</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="max_waiting_list_size">Max Waiting List Size</string>
 </resources>

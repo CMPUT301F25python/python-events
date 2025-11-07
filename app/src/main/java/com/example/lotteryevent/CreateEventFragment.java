@@ -46,6 +46,7 @@ public class CreateEventFragment extends Fragment {
     private EditText editTextRegistrationEndDate, editTextRegistrationEndTime;
     private EditText editTextEventPrice;
     private EditText editTextMaxAttendees;
+    private EditText editTextWaitingListLimit;
     private EditText editTextLotteryGuidelines;
     private CheckBox checkboxGeolocation;
     private Button buttonSave;
@@ -106,6 +107,7 @@ public class CreateEventFragment extends Fragment {
         editTextRegistrationEndTime = view.findViewById(R.id.edit_text_registration_end_time);
 
         editTextMaxAttendees = view.findViewById(R.id.edit_text_max_attendees);
+        editTextWaitingListLimit = view.findViewById(R.id.edit_text_waiting_list_limit);
 
         editTextLotteryGuidelines = view.findViewById(R.id.edit_text_lottery_guidelines);
 
@@ -215,6 +217,7 @@ public class CreateEventFragment extends Fragment {
         String location = editTextEventLocation.getText().toString().trim();
         String priceStr = editTextEventPrice.getText().toString().trim();
         String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
+        String waitingListLimitStr = editTextWaitingListLimit.getText().toString().trim();
         String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
         boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
 
@@ -224,6 +227,12 @@ public class CreateEventFragment extends Fragment {
 
         com.google.firebase.Timestamp registrationStartDateTime = getTimestampFromCalendars(registrationStartCalendar, editTextRegistrationStartDate, editTextRegistrationStartTime);
         com.google.firebase.Timestamp registrationEndDateTime = getTimestampFromCalendars(registrationEndCalendar, editTextRegistrationEndDate, editTextRegistrationEndTime);
+
+
+        // Convert price and capacity to Double and Integer, respectively
+        Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
+        Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
+        Integer waitingListLimit = waitingListLimitStr.isEmpty() ? null : Integer.parseInt(waitingListLimitStr);
 
         String validationError = validateEventInput(
                 eventName,
@@ -238,17 +247,15 @@ public class CreateEventFragment extends Fragment {
                 editTextRegistrationEndDate.getText().toString(),
                 editTextRegistrationEndTime.getText().toString(),
                 registrationStartDateTime,
-                registrationEndDateTime
+                registrationEndDateTime,
+                capacity,
+                waitingListLimit
         );
 
         if (validationError != null) {
             Toast.makeText(getContext(), validationError, Toast.LENGTH_SHORT).show();
             return; // Stop if validation fails
         }
-
-        // Convert price and capacity to Double and Integer, respectively
-        Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
-        Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
 
         // Obtain the organizer name
         db.collection("users").document(userId).get().addOnCompleteListener(task -> {
@@ -274,11 +281,12 @@ public class CreateEventFragment extends Fragment {
                 event.setEventStartDateTime(eventStartDateTime);
                 event.setEventEndDateTime(eventEndDateTime);
                 event.setCapacity(capacity);
+                event.setWaitinglistlimit(waitingListLimit);
                 event.setLotteryGuidelines(lotteryGuidelinesStr);
                 event.setIsgeolocationRequired(isGeoLocationRequired);
 
                 // Default values for new events
-                event.setStatus("upcoming");
+                event.setStatus("open");
                 event.setWaitinglistCount(0);
                 event.setAttendeeCount(0);
 
@@ -303,8 +311,7 @@ public class CreateEventFragment extends Fragment {
     }
 
     /**
-     * Validates the user input for the event form.
-     *
+     * Validates the user input for the event form.*
      * @param eventName The name of the event.
      * @param startDateText The text from the event start date field.
      * @param startTimeText The text from the event start time field.
@@ -318,6 +325,8 @@ public class CreateEventFragment extends Fragment {
      * @param regEndTimeText The text from the registration end time field.
      * @param regStartTimestamp The generated registration start timestamp.
      * @param regEndTimestamp The generated registration end timestamp.
+     * @param capacity The maximum number of attendees for the event.
+     * @param waitingListLimit The maximum number of users on the waiting list.
      * @return A String containing an error message if validation fails, otherwise null.
      */
     public String validateEventInput(String eventName, String startDateText, String startTimeText,
@@ -327,7 +336,8 @@ public class CreateEventFragment extends Fragment {
                                      String regStartDateText, String regStartTimeText,
                                      String regEndDateText, String regEndTimeText,
                                      com.google.firebase.Timestamp regStartTimestamp,
-                                     com.google.firebase.Timestamp regEndTimestamp) {
+                                     com.google.firebase.Timestamp regEndTimestamp,
+                                     Integer capacity, Integer waitingListLimit) {
 
         if (eventName.isEmpty()) {
             return "Event name is required.";
@@ -386,6 +396,10 @@ public class CreateEventFragment extends Fragment {
 
         if (eventStartTimestamp != null && eventStartTimestamp.compareTo(now) < 0) {
             return "Event start time cannot be in the past.";
+        }
+
+        if (waitingListLimit < capacity) {
+            return "Waiting list size must be greater than or equal to the number of attendees.";
         }
 
         return null; // Validation successful
