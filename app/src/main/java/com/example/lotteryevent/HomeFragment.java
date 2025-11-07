@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -31,6 +32,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -117,6 +120,7 @@ public class HomeFragment extends Fragment {
 
         // Trigger the initial data fetch from the ViewModel
         homeViewModel.fetchUserEvents();
+
     }
 
     /**

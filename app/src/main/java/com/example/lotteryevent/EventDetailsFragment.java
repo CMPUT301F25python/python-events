@@ -48,6 +48,8 @@ public class EventDetailsFragment extends Fragment {
     // --- Data ---
     private ArrayAdapter<String> listAdapter;
     private ArrayList<String> dataList;
+    private ListView detailsList;
+    private NotificationCustomManager notificationCustomManager;
     private String eventId;
     private Event event;
     private Entrant currentUserEntrant;
@@ -70,7 +72,15 @@ public class EventDetailsFragment extends Fragment {
         dataList = new ArrayList<>();
         listAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, dataList);
         detailsList.setAdapter(listAdapter);
-        eventId = (getArguments() != null) ? getArguments().getString("eventId") : null;
+
+        notificationCustomManager = new NotificationCustomManager(getContext());
+
+        String eventId = (getArguments() != null) ? getArguments().getString("eventId") : null;
+        String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
+        if (notificationId != null) {
+            notificationCustomManager.markNotificationAsSeen(notificationId);
+        }
+
         if (eventId == null || eventId.trim().isEmpty()) {
             Toast.makeText(requireContext(), R.string.error_missing_event_id, Toast.LENGTH_SHORT).show();
             return;
