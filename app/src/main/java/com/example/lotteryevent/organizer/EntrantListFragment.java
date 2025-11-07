@@ -1,10 +1,14 @@
 package com.example.lotteryevent.organizer;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EntrantListAdapter;
 import com.example.lotteryevent.data.Entrant;
@@ -23,6 +28,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A fragment that displays a list of entrants for a specific event, filtered by their status.
@@ -45,6 +51,9 @@ public class EntrantListFragment extends Fragment {
     private FirebaseFirestore db;
     private String eventId;
     private String status;
+    private List<Entrant> entrants;
+    private Button sendNotificationButton;
+    private NotificationCustomManager notifManager;
 
     /**
      * Required empty public constructor for fragment instantiation by the Android framework.
@@ -97,7 +106,7 @@ public class EntrantListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        initializeViews(view);
+        initializeViewsAndManager(view);
         setupRecyclerView();
 
         titleTextView.setText(capitalizeFirstLetter(status));
@@ -109,10 +118,12 @@ public class EntrantListFragment extends Fragment {
      *
      * @param view The root view of the fragment's layout.
      */
-    private void initializeViews(View view) {
+    private void initializeViewsAndManager(View view) {
         titleTextView = view.findViewById(R.id.entrant_list_title);
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress_bar);
+        sendNotificationButton = view.findViewById(R.id.send_notification_button);
+        notifManager = new NotificationCustomManager(getContext());
     }
 
     /**
@@ -144,7 +155,7 @@ public class EntrantListFragment extends Fragment {
                 .addOnCompleteListener(task -> {
                     progressBar.setVisibility(View.GONE);
                     if (task.isSuccessful() && task.getResult() != null) {
-                        List<Entrant> entrants = new ArrayList<>();
+                        entrants = new ArrayList<>();
                         for (DocumentSnapshot document : task.getResult()) {
                             Entrant entrant = document.toObject(Entrant.class);
                             if (entrant != null) {
@@ -153,6 +164,8 @@ public class EntrantListFragment extends Fragment {
                         }
                         adapter.updateEntrants(entrants);
                         Log.d(TAG, "Fetched " + entrants.size() + " entrants with status: " + status);
+                        // added here to ensure setup occurs after entrants have been retrieved
+                        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
                     } else {
                         Log.w(TAG, "Error getting documents: ", task.getException());
                         Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
@@ -172,5 +185,67 @@ public class EntrantListFragment extends Fragment {
             return "";
         }
         return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    /**
+     * Displays notification dialog for organizer to enter a message to send to all entrants
+     * in the shown list. When notify all button is pressed, a notif is sent to each entrant
+     */
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notification Message");
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter message...");
+        builder.setView(input);
+        builder.setPositiveButton("Notify All", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String organizerMessage = input.getText().toString().trim();
+                if (!organizerMessage.isEmpty()) {
+                    for (Entrant entrant : entrants) {
+                        notifyEntrant(entrant.getUserId(), organizerMessage);
+                    }
+                } else {
+                    Toast.makeText(getContext(), "No message entered to send", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    /**
+     * For each entrant, retrieves even information for notif records, composes message and
+     * sends notification
+     * @param uid recipient user's ID
+     * @param organizerMessage message from organizer
+     */
+    private void notifyEntrant(String uid, String organizerMessage) {
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(document -> {
+                    if (document != null && document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        String eventName = document.getString("name");
+                        String organizerId = document.getString("organizerId");
+                        String organizerName = document.getString("organizerName");
+                        String title = "Message From Organizer";
+                        String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
+                        String type = "custom_message";
+                        notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+                    } else {
+                        Log.d(TAG, "No such document");
+                        Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "get failed with ", e);
+                    Toast.makeText(getContext(), "Error sending notification to chosen entrant", Toast.LENGTH_SHORT).show();
+                });
     }
 }

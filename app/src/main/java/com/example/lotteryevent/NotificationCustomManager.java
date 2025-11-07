@@ -78,6 +78,14 @@ public class NotificationCustomManager {
     }
 
     /**
+     * Removes all notifications from the shade
+     */
+    public void clearNotifications() {
+        NotificationManager notificationManager = myContext.getSystemService(NotificationManager.class);
+        notificationManager.cancelAll();
+    }
+
+    /**
      * Sends notification to the specified user by creating a notification document under the user's notification collection.
      * @param uid User ID of the user the notif is directed to
      * @param title Title of the notification
