@@ -16,7 +16,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -27,11 +26,29 @@ public class EventDetailsFragment extends Fragment {
     private ArrayList<String> dataList;
     private ListView detailsList;
 
+    /**
+     * Creates view
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_event_details, container, false);
     }
 
+    /**
+     * Deals with view
+     * @param v The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -55,51 +72,57 @@ public class EventDetailsFragment extends Fragment {
                 );
     }
 
+    /**
+     * Goes through document to add certain fields to the details list
+     * @param doc
+     */
     private void bind(@NonNull DocumentSnapshot doc) {
-//        try {
-            if (!doc.exists()) {
-                Toast.makeText(requireContext(), "Event not found", Toast.LENGTH_SHORT).show();
-                return;
+        if (!doc.exists()) {
+            Toast.makeText(requireContext(), "Event not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        dataList.clear();
+
+        String capacity = "N/A";
+
+        if (doc.getLong("waitingListCount") != null && doc.getLong("waitingListLimit") != null) {
+            Long count = doc.getLong("waitingListCount");
+            Long lim = doc.getLong("waitingListLimit");
+            capacity = count + "/" + lim;
+        }
+
+        Map<String, Object> all = doc.getData();
+        if (all != null) {
+            // Prefer explicit fields first
+            addAny("Name", doc.getString("name"));
+            addAny("Organizer", doc.getString("organizerName"));
+            addAny("Location", doc.getString("location"));
+            try { // timestamps are dramatic and cannot deal if they are null or empty smh
+                addAny("Date and Time", Objects.requireNonNull(doc.getTimestamp("eventStartDateTime")).toDate().toString());
+            } catch (Throwable t) {
+                // never let binding crash the fragment
+                android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
+                Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
             }
-            dataList.clear();
+            addAny("Description", doc.getString("description"));
+            addAny("Lottery Guidelines", doc.getString("lotteryGuidelines"));
+            addAny("Waiting List Capacity", capacity);
+        }
 
-            String capacity = "N/A";
-
-            if (doc.getLong("waitingListCount") != null && doc.getLong("waitingListLimit") != null) {
-                Long count = doc.getLong("waitingListCount");
-                Long lim = doc.getLong("waitingListLimit");
-                capacity = count + "/" + lim;
-            }
-
-            Map<String, Object> all = doc.getData();
-            if (all != null) {
-                // Prefer explicit fields first
-                addAny("Name", doc.getString("name"));
-                addAny("Organizer", doc.getString("organizerName"));
-                addAny("Location", doc.getString("location"));
-                try { // Timestamps are dramatic and cannot deal if they are null or empty smh
-                    addAny("Date and Time", Objects.requireNonNull(doc.getTimestamp("eventStartDateTime")).toDate().toString());
-                } catch (Throwable t) {
-                    // never let binding crash the fragment
-                    android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
-                    Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
-                }
-                addAny("Description", doc.getString("description"));
-                addAny("Lottery Guidelines", doc.getString("lotteryGuidelines"));
-                addAny("Waiting List Capacity", capacity);
-            }
-
-            listAdapter.notifyDataSetChanged();
-//        } catch (Throwable t) {
-//            // last-resort guard: never let binding crash the fragment
-//            android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
-//            Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
-//        }
+        listAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * A simple date formatter.
+     */
     private final java.text.DateFormat DF =
             new java.text.SimpleDateFormat("EEE, MMM d yyyy • h:mm a", java.util.Locale.getDefault());
 
+    /**
+     * Adds a field to the list.
+     * @param label
+     * @param raw
+     */
     private void addAny(String label, @Nullable Object raw) {
         if (raw == null) return;
 
@@ -116,19 +139,4 @@ public class EventDetailsFragment extends Fragment {
         if (v.isEmpty() || "null".equalsIgnoreCase(v)) return;
         dataList.add(label + ": " + v);
     }
-
-
-
-    private void add(String label, @Nullable String value) {
-        if (value == null) return;
-        String v = value.trim();
-        if (v.isEmpty()) return;
-        if ("null".equalsIgnoreCase(v)) return;
-        try {
-            dataList.add(label + ": " + v);
-        } catch (Exception e) {
-            return;
-        }
-    }
-
 }

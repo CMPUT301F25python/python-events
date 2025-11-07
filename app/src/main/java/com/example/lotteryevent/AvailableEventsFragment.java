@@ -9,7 +9,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.example.lotteryevent.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +25,7 @@ import java.util.List;
 public class AvailableEventsFragment extends Fragment {
 
     private FirebaseFirestore db;
-    private FirebaseAuth auth;
+    private FirebaseAuth auth; // not highlighted for some reason, but it is being used
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
@@ -78,10 +76,10 @@ public class AvailableEventsFragment extends Fragment {
         adapter = new EventAdapter(R.layout.item_event);
         recyclerView.setAdapter(adapter);
 
-        // click handling
-        // adapter.setOnItemClickListener(event ->
-        //         Toast.makeText(requireContext(), "Clicked: " + event.getName(), Toast.LENGTH_SHORT).show()
-        // );
+//         click handling
+         adapter.setOnItemClickListener(event ->
+                 Toast.makeText(requireContext(), "Clicked: " + event.getName(), Toast.LENGTH_SHORT).show()
+         );
 
         // Firestore listener
         registration = db.collection("events")
@@ -131,7 +129,7 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     *
+     * Destroys view
      */
     @Override
     public void onDestroyView() {
