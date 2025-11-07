@@ -72,6 +72,7 @@
 
     <string name="info_finalized_organizer">Organizer has finalized event attendance. Better luck next time!</string>
     <string name="info_accepted">You have accepted your invitation to this event. Enjoy!</string>
+    <string name="info_declined">You have declined your invitation to this event.</string>
     <string name="info_invitation_cancelled">Your invitation has been cancelled.</string>
     <string name="success_invitation_declined">Invitation declined.</string>
     <string name="error_invitation_update_failed">Failed to update invitation status.</string>

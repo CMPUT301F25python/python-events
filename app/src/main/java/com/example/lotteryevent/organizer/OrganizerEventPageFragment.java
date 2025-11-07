@@ -254,13 +254,9 @@ public class OrganizerEventPageFragment extends Fragment {
         btnRunDraw.setEnabled(false);
         btnFinalize.setEnabled(false);
 
-
         // State 1: The event is permanently finalized. This overrides all other logic.
         if ("finalized".equals(dbStatus)) {
             buttonContainer.setVisibility(View.VISIBLE);
-            // Allow viewing everything, but no further actions.
-            btnRunDraw.setEnabled(true);
-            btnFinalize.setEnabled(true);
             btnFinalize.setVisibility(View.GONE);
             btnRunDraw.setVisibility(View.GONE);
         }

@@ -125,7 +125,7 @@ public class EventDetailsFragment extends Fragment {
     private void checkUserEntrantStatus(@Nullable Runnable onComplete) {
         if (currentUser == null) {
             updateDynamicBottomUI();
-            if (onComplete != null) onComplete.run(); // Also run here
+            if (onComplete != null) onComplete.run();
             return;
         }
 
@@ -175,7 +175,7 @@ public class EventDetailsFragment extends Fragment {
         }
 
         if (isEntrant && "declined".equals(entrantStatus)) {
-            showInfoText("You have declined the invitation to this event.");
+            showInfoText(getString(R.string.info_declined));
             return;
         }
 
@@ -270,10 +270,7 @@ public class EventDetailsFragment extends Fragment {
                     // Pass the "re-enable" logic as a callback
                     checkUserEntrantStatus(() -> setActionsEnabled(true));
                 })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), R.string.error_invitation_update_failed, Toast.LENGTH_SHORT).show();
-                    handleFailure(e); // handleFailure already re-enables buttons
-                });
+                .addOnFailureListener(this::handleFailure);
     }
 
     // --- Helper Methods ---
