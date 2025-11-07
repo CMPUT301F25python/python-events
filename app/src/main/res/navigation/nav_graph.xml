@@ -78,12 +78,6 @@
     </fragment>
 
     <fragment
-        android:id="@+id/runDrawFragment"
-        android:name="com.example.lotteryevent.organizer.RunDrawFragment"
-        android:label="Run Draw"
-        tools:layout="@layout/fragment_run_draw"/>
-
-    <fragment
         android:id="@+id/eventDetailsFragment"
         android:name="com.example.lotteryevent.EventDetailsFragment"
         android:label="Event Details"
@@ -92,7 +86,17 @@
             android:name="eventId"
             app:argType="string" />
     </fragment>
-        android:label="Events" />
+
+    <fragment
+        android:id="@+id/qrScannerFragment"
+        android:name="com.example.lotteryevent.QrScannerFragment"
+        android:label="Scan QR Code"
+        tools:layout="@layout/fragment_qr_scanner">
+        <action
+            android:id="@+id/action_qrScannerFragment_to_eventDetailsFragment"
+            app:destination="@id/eventDetailsFragment"
+            app:popUpTo="@id/homeFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/entrantListFragment"
