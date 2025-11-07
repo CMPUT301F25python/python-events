@@ -54,4 +54,5 @@
     <string name="cancelled_participants">Cancelled Participants</string>
     <string name="run_draw">Run Draw</string>
     <string name="finalize">Finalize</string>
+    <string name="max_waiting_list_size">Max Waiting List Size</string>
 </resources>

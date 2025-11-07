@@ -46,6 +46,7 @@ public class CreateEventFragment extends Fragment {
     private EditText editTextRegistrationEndDate, editTextRegistrationEndTime;
     private EditText editTextEventPrice;
     private EditText editTextMaxAttendees;
+    private EditText editTextWaitingListLimit;
     private EditText editTextLotteryGuidelines;
     private CheckBox checkboxGeolocation;
     private Button buttonSave;
@@ -106,6 +107,7 @@ public class CreateEventFragment extends Fragment {
         editTextRegistrationEndTime = view.findViewById(R.id.edit_text_registration_end_time);
 
         editTextMaxAttendees = view.findViewById(R.id.edit_text_max_attendees);
+        editTextWaitingListLimit = view.findViewById(R.id.edit_text_waiting_list_limit);
 
         editTextLotteryGuidelines = view.findViewById(R.id.edit_text_lottery_guidelines);
 
@@ -215,6 +217,7 @@ public class CreateEventFragment extends Fragment {
         String location = editTextEventLocation.getText().toString().trim();
         String priceStr = editTextEventPrice.getText().toString().trim();
         String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
+        String waitingListLimitStr = editTextWaitingListLimit.getText().toString().trim();
         String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
         boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
 
@@ -249,6 +252,7 @@ public class CreateEventFragment extends Fragment {
         // Convert price and capacity to Double and Integer, respectively
         Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
         Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
+        Integer waitingListLimit = waitingListLimitStr.isEmpty() ? null : Integer.parseInt(waitingListLimitStr);
 
         // Obtain the organizer name
         db.collection("users").document(userId).get().addOnCompleteListener(task -> {
@@ -274,6 +278,7 @@ public class CreateEventFragment extends Fragment {
                 event.setEventStartDateTime(eventStartDateTime);
                 event.setEventEndDateTime(eventEndDateTime);
                 event.setCapacity(capacity);
+                event.setWaitinglistlimit(waitingListLimit);
                 event.setLotteryGuidelines(lotteryGuidelinesStr);
                 event.setIsgeolocationRequired(isGeoLocationRequired);
 

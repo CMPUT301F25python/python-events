@@ -81,4 +81,13 @@ public class CreateEventFragmentUITest {
         onView(ViewMatchers.withId(R.id.button_save)).check(matches(isDisplayed()));
     }
 
+    @Test
+    public void testWaitingListLimitInputIsDisplayed() {
+        // Scroll to the waiting list limit field to ensure it is visible
+        onView(withId(R.id.edit_text_waiting_list_limit)).perform(ViewActions.scrollTo());
+
+        // Check that the "Waiting List Limit" input field is displayed on the screen
+        onView(withId(R.id.edit_text_waiting_list_limit)).check(matches(isDisplayed()));
+    }
+
 }

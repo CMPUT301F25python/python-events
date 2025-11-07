@@ -449,6 +449,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/edit_text_max_attendees" />
 
+        <!-- Waiting List Size -->
+        <TextView
+            android:id="@+id/waiting_list_limit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/max_waiting_list_size"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/header_waiting_list_info" />
+
+        <EditText
+            android:id="@+id/edit_text_waiting_list_limit"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/max_waiting_list_size"
+            android:inputType="number"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/waiting_list_limit"/>
+
         <!-- Geolocation Requirement -->
         <CheckBox
             android:id="@+id/checkbox_geolocation"
@@ -460,7 +486,7 @@
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/header_waiting_list_info" />
+            app:layout_constraintTop_toBottomOf="@id/edit_text_waiting_list_limit" />
 
         <!-- ==== SAVE BUTTON ==== -->
         <Button
