@@ -104,6 +104,10 @@ public class EventDetailsFragment extends Fragment {
                 android.util.Log.e("EventDetailsBind", "Bind failed for doc " + doc.getId(), t);
                 Toast.makeText(requireContext(), "Some fields couldn’t be shown.", Toast.LENGTH_SHORT).show();
             }
+            if (doc.getDouble("price") != null) {
+                java.text.NumberFormat nf = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.CANADA);
+                addAny("Price", nf.format(((Number) doc.get("price")).doubleValue()));
+            }
             addAny("Description", doc.getString("description"));
             addAny("Lottery Guidelines", doc.getString("lotteryGuidelines"));
             addAny("Waiting List Capacity", capacity);
