@@ -333,6 +333,13 @@ public class CreateEventFragment extends Fragment {
             return "Event name is required.";
         }
 
+        // If a registration start date is set, an end date must also be set
+        boolean isRegStartDateSet = !regStartDateText.isEmpty();
+        boolean isRegEndDateSet = !regEndDateText.isEmpty();
+        if (isRegStartDateSet && !isRegEndDateSet) {
+            return "A registration end date is required if a start date is set.";
+        }
+
         // All dates require a time or the Firestore timestamp will be null
         boolean isEventStartDateSet = !startDateText.isEmpty();
         boolean isEventStartTimeSet = !startTimeText.isEmpty();
@@ -346,13 +353,11 @@ public class CreateEventFragment extends Fragment {
             return "Please select an end time for the selected event end date.";
         }
 
-        boolean isRegStartDateSet = !regStartDateText.isEmpty();
         boolean isRegStartTimeSet = !regStartTimeText.isEmpty();
         if (isRegStartDateSet && !isRegStartTimeSet) {
             return "Please select a start time for the selected registration start date.";
         }
 
-        boolean isRegEndDateSet = !regEndDateText.isEmpty();
         boolean isRegEndTimeSet = !regEndTimeText.isEmpty();
         if (isRegEndDateSet && !isRegEndTimeSet) {
             return "Please select an end time for the selected registration end date.";

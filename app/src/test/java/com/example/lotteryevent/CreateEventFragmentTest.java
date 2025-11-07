@@ -8,6 +8,13 @@ import static org.junit.Assert.*;
 
 import java.util.Date;
 
+/**
+ * Unit tests for the validation logic within the {@link CreateEventFragment}.
+ * <p>
+ * This class tests the {@code validateEventInput} method to ensure all business rules
+ * for creating an event are correctly enforced. It covers scenarios such as empty fields,
+ * chronological order of dates, and the integrity of the registration period.
+ */
 public class CreateEventFragmentTest {
 
     private CreateEventFragment fragment;
@@ -162,11 +169,27 @@ public class CreateEventFragmentTest {
                 "Test Event",
                 "2024-01-01", "10:00", // Event started in the past
                 "2025-01-01", "12:00",
-                oneHourAgo, inThreeHours,
-                "2023-01-01", "08:00",
-                "2023-01-01", "09:00",
-                oneHourAgo, oneHourAgo
+                oneHourAgo, inThreeHours,  // The event start timestamp is in the past
+                "", "",                  // <-- No registration start date
+                "", "",                  // <-- No registration end date
+                null, null               // <-- Registration timestamps are null
         );
         assertEquals("Event start time cannot be in the past.", result);
+    }
+
+    // Validate registration period
+    @Test
+    public void testValidation_RegistrationStartDateSet_ButEndDateIsMissing() {
+        // Scenario: A user sets a registration start date, but forgets the end date.
+        String result = fragment.validateEventInput(
+                "Test Event",
+                "2025-01-01", "12:00",
+                "2025-01-01", "13:00",
+                inTwoHours, inThreeHours,
+                "2025-01-01", "10:00", // Registration Start is set
+                "", "",                  // Registration End is MISSING
+                now, null                // Timestamps reflect missing end date
+        );
+        assertEquals("A registration end date is required if a start date is set.", result);
     }
 }
