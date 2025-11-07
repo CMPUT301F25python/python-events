@@ -140,9 +140,8 @@ public class UserProfileFragment extends Fragment {
     /**
      * Validates user input fields and updates the user's profile information in Firestore.
      * <p>
-     * This method checks that the name and email fields are not empty, validates the email format,
-     * and verifies that the phone number (if provided) contains exactly 10 digits. If validation
-     * passes, the user's profile document is updated in the "users" collection with the provided
+     * This method, if validation for the input fields passes,
+     * the user's profile document is updated in the "users" collection with the provided
      * values. Default values are also set for "admin" (false) and "optOutNotifications" (true).
      * A Toast message is displayed to indicate success or failure, and the view navigates back
      * upon completion.
@@ -361,6 +360,14 @@ public class UserProfileFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * This method checks that the name and email fields are not empty, validates the email format,
+     * and verifies that the phone number (if provided) contains exactly 10 digits.
+     * @param name the name inputted by user
+     * @param email the email inputted by user
+     * @param phone the phone number inputte by user
+     * @return the string that is invalid, null if successful validation of all fields
+     */
     public String validateProfileInfo(String name, String email, String phone){
         // name and email mandatory (check)
         if (name.isEmpty()) {
