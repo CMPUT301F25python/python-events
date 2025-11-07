@@ -13,6 +13,14 @@
     <string name="event_start_date">Event Start Date</string>
     <string name="event_end_time">Event End Time</string>
     <string name="event_end_date">Event End Date</string>
+    <string name="registration_start_time">Registration Start Time</string>
+    <string name="registration_start_date">Registration Start Date</string>
+    <string name="registration_end_time">Registration End Time</string>
+    <string name="registration_end_date">Registration End Date</string>
+    <string name="start_time">Start Time</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_time">End Time</string>
+    <string name="end_date">End Date</string>
     <string name="event_name">Event Name</string>
     <string name="price">Price ($)</string>
     <string name="registration_information">Registration Information</string>
@@ -20,8 +28,6 @@
     <string name="event_information">Event Information</string>
     <string name="confirm_and_notify_button_text">Confirm and Notify</string>
     <string name="cancel_button">Cancel</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="user_profile_page">Profile</string>
     <string name="name_field">Name</string>
     <string name="mock_name">John Doe</string>
@@ -39,7 +45,7 @@
     <string name="save">Save</string>
     <string name="share">Share</string>
     <string name="close">Close</string>
-    <string name="lottery_guidelines">Lottery Guidelines</string>
+    <string name="event_guidelines">Event Guidelines</string>
     <string name="confirm_and_notify_button">Confirm and Notify</string>
     <string name="view_waiting_list">View Waiting List</string>
     <string name="view_entrant_map">View Entrant Map</string>
@@ -48,4 +54,16 @@
     <string name="cancelled_participants">Cancelled Participants</string>
     <string name="run_draw">Run Draw</string>
     <string name="finalize">Finalize</string>
+    <string name="join_waiting_list">Join Waiting List</string>
+    <string name="leave_waiting_list">Leave Waiting List</string>
+
+    <string name="info_cannot_join_closed">You can no longer join this event\'s waiting list.</string>
+    <string name="error_missing_event_id">Missing event id</string>
+    <string name="error_event_not_found">Event not found</string>
+
+    <string name="success_joined_waiting_list">Successfully joined waiting list!</string>
+    <string name="success_left_waiting_list">You have left the waiting list.</string>
+    <string name="error_failed_to_load">Failed to load: %1$s</string>
+    <string name="error_failed_to_join">Failed to join: %1$s</string>
+    <string name="error_failed_to_leave">Failed to leave: %1$s</string>
 </resources>
