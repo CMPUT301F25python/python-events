@@ -88,7 +88,7 @@
                 android:id="@+id/notifications_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"
+                android:checked="false"
                 android:paddingTop="8dp"
                 android:text="@string/notification_statement"
                 android:textColor="@color/grey" />
