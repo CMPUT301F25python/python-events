@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
  * - Phone: optional, but if provided must have exactly 10 digits
  * </p>
  */
-public class UserProfileFragmentFieldTest {
+public class UserProfileFragmentTest {
     /**
      * Checks if the given name is valid
      */

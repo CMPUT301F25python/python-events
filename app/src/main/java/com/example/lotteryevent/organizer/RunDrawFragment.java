@@ -93,9 +93,22 @@ public class RunDrawFragment extends Fragment {
                 return;
             }
 
-            int numToSelect = Integer.parseInt(inputText);
+            int numToSelect;
 
-            // Temp Debug block to confirm correct EventId
+            // In case input is ever changed from numerical Type
+            try {
+                numToSelect = Integer.parseInt(inputText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (numToSelect <= 0) {
+                Toast.makeText(getContext(), "Number of participants must be greater than zero.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+
             android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
 
             // Waitlist status
@@ -105,18 +118,9 @@ public class RunDrawFragment extends Fragment {
                     .get()
                     .addOnSuccessListener(query -> {
 
-
                         List<String> waitlist = new ArrayList<>();
                         for (DocumentSnapshot d : query.getDocuments()) {
                             waitlist.add(d.getId());
-                        }
-                        int waitlistCount = waitlist.size();
-
-                        // Prevent organizer from selecting more people than available
-                        if (numToSelect > waitlistCount) {
-                            Toast.makeText(getContext(), "You cannot select more participants than are on the wait list(" +waitlistCount + ").",
-                                    Toast.LENGTH_LONG).show();
-                            return;
                         }
 
                         if (waitlist.isEmpty()) {
@@ -124,29 +128,46 @@ public class RunDrawFragment extends Fragment {
                             return;
                         }
 
+                        // Prevent organizer from selecting more people than available
+                        if (numToSelect > waitlist.size()) {
+                            Toast.makeText(getContext(),
+                                    "You cannot select more participants than are on the wait list (" + waitlist.size() + ").",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
                         Collections.shuffle(waitlist);
                         List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Update selected user to "invited"
+                        com.google.firebase.firestore.WriteBatch batch = db.batch();
+
                         for (String uid : chosen) {
-                            db.collection("events").document(eventId)
+                            com.google.firebase.firestore.DocumentReference userRef = db.collection("events").document(eventId)
                                     .collection("entrants")
-                                    .document(uid)
-                                    .update("status", "invited");
+                                    .document(uid);
+                            batch.update(userRef, "status", "invited");
                         }
 
-                        Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
+                        // Commit the batch operation
+                        batch.commit()
+                                .addOnSuccessListener(aVoid -> {
+                                    // Toast message if all users have been successfully updated
+                                    Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
 
-                        Bundle bundle = new Bundle();
-                        bundle.putString("eventId", eventId);
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("eventId", eventId);
 
-                        Navigation.findNavController(view)
-                                .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                    Navigation.findNavController(view)
+                                            .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Error updating user statuses.", Toast.LENGTH_SHORT).show();
+                                    android.util.Log.e("RunDraw", "Batch update failed", e);
+                                });
                     })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
-                    );
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
+                    });
         });
     }
-
 }

@@ -54,7 +54,7 @@ public class CreateEventFragmentTest {
                 inTwoHours, inThreeHours,      // Event Timestamps
                 "2025-01-01", "08:00", // Reg Start
                 "2025-01-01", "09:00", // Reg End
-                now, inOneHour,                // Reg Timestamps
+                inOneHour, inTwoHours,                // Reg Timestamps
                 10, 15 // capacity and waiting list limit
         );
         assertNull("Validation should pass with all valid inputs", result);

@@ -117,8 +117,7 @@ public class ManageSelectedFragment extends Fragment {
                 .document(userId)
                 .update("status", "waiting")
                 .addOnSuccessListener(aVoid -> {
-                    this.selectedUsers.remove(userId);
-                    this.selectedAdapter.notifyDataSetChanged();
+                    this.loadSelectedEntrants();
 
                     Toast.makeText(this.getContext(), "User cancelled and returned to waitlist", Toast.LENGTH_SHORT).show();
                 })

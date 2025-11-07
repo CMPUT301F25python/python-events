@@ -34,7 +34,7 @@
     <string name="email_field">Email</string>
     <string name="mock_email">jdoe@gmail.com</string>
     <string name="number_field">Phone Number (optional)</string>
-    <string name="mock_number">XXX-XXX-XXXX</string>
+    <string name="mock_number">(XXX) XXX-XXXX</string>
     <string name="notification_field">Notification Preferences</string>
     <string name="notification_statement">I want to receive notifications from administrators and organizers</string>
     <string name="update_button">Update</string>
@@ -82,4 +82,8 @@
     <string name="dialog_leave_confirm">Leave</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="max_waiting_list_size">Max Waiting List Size</string>
+    <string name="scan_a_qr_code">Scan a QR Code</string>
+    <string name="notifications">Notifications</string>
+    <string name="events">Events</string>
+    <string name="point_camera_at_a_qr_code">Point camera at a QR code</string>
 </resources>
