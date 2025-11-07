@@ -41,6 +41,7 @@ public class NotificationsFragment extends Fragment {
     private RecyclerView recyclerView;
     private NotificationAdapter adapter;
     private ListenerRegistration registration;
+    private NotificationCustomManager notificationCustomManager;
 
     /**
      *
@@ -77,6 +78,12 @@ public class NotificationsFragment extends Fragment {
         // Use the adapter constructor that takes the row layout you want here
         adapter = new NotificationAdapter(R.layout.item_notification);
         recyclerView.setAdapter(adapter);
+
+        notificationCustomManager = new NotificationCustomManager(getContext());
+        String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
+        if (notificationId != null) {
+            notificationCustomManager.markNotificationAsSeen(notificationId);
+        }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 

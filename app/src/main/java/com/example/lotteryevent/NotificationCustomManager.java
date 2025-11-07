@@ -10,12 +10,14 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.navigation.NavDeepLinkBuilder;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentChange;
@@ -34,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,13 +121,30 @@ public class NotificationCustomManager {
     }
 
     @SuppressLint("MissingPermission")
-    public void generateNotification(String title, String message) {
+    public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this.myContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+
+        PendingIntent pendingIntent = null;
+        Bundle bundle = new Bundle();
+        bundle.putString("notificationId", notificationId);
+
+        if (notifType != null && Objects.equals(notifType, "lottery_win")) {
+            bundle.putString("eventId", eventId);
+
+            pendingIntent = new NavDeepLinkBuilder(this.myContext)
+                    .setGraph(R.navigation.nav_graph)
+                    .setDestination(R.id.eventDetailsFragment)
+                    .setArguments(bundle)
+                    .createPendingIntent();
+        } else {
+            pendingIntent = new NavDeepLinkBuilder(this.myContext)
+                    .setGraph(R.navigation.nav_graph)
+                    .setDestination(R.id.notificationsFragment)
+                    .setArguments(bundle)
+                    .createPendingIntent();
+        }
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this.myContext, channelID)
@@ -160,12 +180,12 @@ public class NotificationCustomManager {
 
                     String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
 
-                    generateNotification(title, fullMessage);
+                    generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
                 } else if (size > 1) {
                     String title = "You have " + String.valueOf(size) + " unread notifications";
                     String message = "Click here or go to the notifications section to see all messages you missed!";
 
-                    generateNotification(title, message);
+                    generateNotification(title, message, null, null, null);
                 }
             })
             .addOnFailureListener(e -> {
@@ -208,10 +228,23 @@ public class NotificationCustomManager {
 
                                 String fullMessage = message + "\n——————————————\nFrom organizer: " + organizerName + "\nEvent: " + eventName + "\n" + timestamp;
 
-                                generateNotification(title, fullMessage);
+                                generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
                             }
                         }
                     }
                 });
+    }
+
+    public void markNotificationAsSeen(String notificationId) {
+        db.collection("notifications")
+            .document(notificationId)
+            .update("seen", true)
+            .addOnSuccessListener(documentReference -> {
+                Log.d("FIRESTORE_SUCCESS", "Notification updated with ID: " + notificationId);
+            })
+            .addOnFailureListener(e -> {
+                Log.w("FIRESTORE_ERROR", "Error updating document", e);
+                Toast.makeText(myContext, "Error updating notification", Toast.LENGTH_LONG).show();
+            });
     }
 }
