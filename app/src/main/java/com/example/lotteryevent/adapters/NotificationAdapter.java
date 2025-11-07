@@ -129,6 +129,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         /**
          * Constructs a new {@link NotificationAdapter.NotificationViewHolder}.
+         *
          * @param itemView The view that represents a single notif card, inflated from a layout file.
          */
         public NotificationViewHolder(@NonNull View itemView) {
@@ -152,20 +153,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
          * Binds an {@link Notification} object's data to the views within the ViewHolder.
          * For this version, it sets the notif message and time stamp and background color depending
          * on if the notif has been seen by the user (clicked on).
+         *
          * @param notification The {@link Notification} object containing the data to display.
          */
         void bind(Notification notification) {
-            String message = null;
-
-            if (Objects.equals(notification.getType(), "lottery_win")) {
-                message = "\uD83C\uDF89 You've been selected for " + notification.getEventName() + "! Tap to accept or decline.";
-            } else if (Objects.equals(notification.getType(), "lottery_loss")) {
-                message = "❌ You weren't selected for " + notification.getEventName() + ".";
-            } else if (Objects.equals(notification.getType(), "event_update")) {
-                message = "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "! Join again for another chance.";
-            } else {
-                message = "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage();
-            }
+            String message = NotificationAdapter.messageConstructor(notification);
 
             Timestamp timestampRaw = notification.getTimestamp();
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
@@ -179,4 +171,25 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             this.timestamp.setText(timestamp);
         }
     }
+
+    /**
+     * Composes message based on type
+     * @param notification Notfication to get message for
+     * @return message
+     */
+    public static String messageConstructor(Notification notification) {
+        String message = null;
+        if (Objects.equals(notification.getType(), "lottery_win")) {
+            message = "\uD83C\uDF89 You've been selected for " + notification.getEventName() + "! Tap to accept or decline.";
+        } else if (Objects.equals(notification.getType(), "lottery_loss")) {
+            message = "❌ You weren't selected for " + notification.getEventName() + ".";
+        } else if (Objects.equals(notification.getType(), "event_update")) {
+            message = "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!";
+        } else {
+            message = "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage();
+        }
+
+        return message;
+    }
+
 }
