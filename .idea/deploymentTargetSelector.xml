@@ -16,6 +16,9 @@
       <SelectionState runConfigName="Tests in 'com.example.lotteryevent'">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+      <SelectionState runConfigName="UserProfileFragmentUITest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>
