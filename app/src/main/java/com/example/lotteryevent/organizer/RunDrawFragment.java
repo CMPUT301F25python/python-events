@@ -104,7 +104,7 @@ public class RunDrawFragment extends Fragment {
             }
 
             if (numToSelect <= 0) {
-                Toast.makeText(getContext(), "Number must be greater than 0", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Number of participants must be greater than zero.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -139,18 +139,19 @@ public class RunDrawFragment extends Fragment {
                         Collections.shuffle(waitlist);
                         List<String> chosen = waitlist.subList(0, numToSelect);
 
-                        // Update selected user status to "invited"
+                        com.google.firebase.firestore.WriteBatch batch = db.batch();
+
                         for (String uid : chosen) {
-                            db.collection("events").document(eventId)
+                            com.google.firebase.firestore.DocumentReference userRef = db.collection("events").document(eventId)
                                     .collection("entrants")
-                                    .document(uid)
-                                    .update("status", "invited");
+                                    .document(uid);
+                            batch.update(userRef, "status", "invited");
                         }
 
-                        // Change event status to drawing complete
-                        db.collection("events").document(eventId)
-                                .update("status", "drawing_complete")
+                        // Commit the batch operation
+                        batch.commit()
                                 .addOnSuccessListener(aVoid -> {
+                                    // Toast message if all users have been successfully updated
                                     Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
 
                                     Bundle bundle = new Bundle();
@@ -160,7 +161,8 @@ public class RunDrawFragment extends Fragment {
                                             .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
                                 })
                                 .addOnFailureListener(e -> {
-                                    Toast.makeText(getContext(), "Error updating event status", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "Error updating user statuses.", Toast.LENGTH_SHORT).show();
+                                    android.util.Log.e("RunDraw", "Batch update failed", e);
                                 });
                     })
                     .addOnFailureListener(e -> {
