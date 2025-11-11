@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import androidx.annotation.NonNull;
@@ -27,7 +28,7 @@ import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.viewmodels.HomeViewModelFactory;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -61,11 +62,13 @@ public class HomeFragment extends Fragment {
         this.viewModelFactory = viewModelFactory;
     }
 
+
     /**
      * Called by the system to have the fragment instantiate its user interface view.
      * <p>
-     * This method inflates the layout for this fragment ({@code R.layout.fragment_home})
-     * and initializes the {@link HomeViewModel}. The ViewModel is scoped to this fragment's lifecycle
+     * This method inflates the layout for this fragment ({@code R.layout.fragment_home}),
+     * initializes the {@link ViewModelProvider.Factory} if one was not injected for testing,
+     * and then creates the {@link HomeViewModel}. The ViewModel is scoped to this fragment's lifecycle
      * using a {@link ViewModelProvider}, ensuring data persistence across configuration changes.
      *
      * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
@@ -80,9 +83,10 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         if (viewModelFactory == null) {
-            // Production code path: create the repository and factory as before.
+            GenericViewModelFactory factory = new GenericViewModelFactory();
             IEventRepository eventRepository = new EventRepositoryImpl();
-            viewModelFactory = new HomeViewModelFactory(eventRepository);
+            factory.put(HomeViewModel.class, () -> new HomeViewModel(eventRepository));
+            viewModelFactory = factory;
         }
 
         // Use the factory (either from production or from the test) to create the ViewModel.
