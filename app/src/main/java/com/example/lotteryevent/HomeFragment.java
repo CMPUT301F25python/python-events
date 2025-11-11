@@ -1,8 +1,5 @@
 package com.example.lotteryevent;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -11,14 +8,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -31,9 +25,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.lotteryevent.repository.EventRepositoryImpl;
+import com.example.lotteryevent.repository.IEventRepository;
+import com.example.lotteryevent.viewmodels.HomeViewModelFactory;
 
 /**
  * A {@link Fragment} that serves as the main home screen of the application.
@@ -52,6 +46,8 @@ public class HomeFragment extends Fragment {
     private HomeViewModel homeViewModel;
     private EventAdapter eventAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private ViewModelProvider.Factory viewModelFactory;
+
 
 
     /**
@@ -61,25 +57,37 @@ public class HomeFragment extends Fragment {
      */
     public HomeFragment() { }
 
+    public HomeFragment(ViewModelProvider.Factory viewModelFactory) {
+        this.viewModelFactory = viewModelFactory;
+    }
+
     /**
-     * Called to have the fragment instantiate its user interface view.
+     * Called by the system to have the fragment instantiate its user interface view.
      * <p>
-     * This method inflates the layout for this fragment and initializes the {@link HomeViewModel}.
-     * The ViewModel is scoped to this fragment's lifecycle.
+     * This method inflates the layout for this fragment ({@code R.layout.fragment_home})
+     * and initializes the {@link HomeViewModel}. The ViewModel is scoped to this fragment's lifecycle
+     * using a {@link ViewModelProvider}, ensuring data persistence across configuration changes.
      *
-     * @param inflater           The LayoutInflater object that can be used to inflate any views in the fragment.
-     * @param container          If non-null, this is the parent view that the fragment's UI should be attached to.
-     *                           The fragment should not add the view itself, but this can be used to generate
-     *                           the LayoutParams of the view.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state
-     *                           as given here.
-     * @return The inflated {@link View} for the fragment's UI.
+     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
+     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
+     *                  The fragment should not add the view itself, but this can be used to generate
+     *                  the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous
+     *                           saved state as given here.
+     * @return The inflated {@link View} for the fragment's UI, which will be the root of the layout.
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Initialize the ViewModel using ViewModelProvider, which correctly scopes it to the fragment's lifecycle.
-        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        if (viewModelFactory == null) {
+            // Production code path: create the repository and factory as before.
+            IEventRepository eventRepository = new EventRepositoryImpl();
+            viewModelFactory = new HomeViewModelFactory(eventRepository);
+        }
+
+        // Use the factory (either from production or from the test) to create the ViewModel.
+        homeViewModel = new ViewModelProvider(this, viewModelFactory).get(HomeViewModel.class);
+
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
@@ -178,6 +186,13 @@ public class HomeFragment extends Fragment {
         homeViewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading != null) {
                 swipeRefreshLayout.setRefreshing(isLoading);
+            }
+        });
+
+        // Observe errors and display them as a Toast message.
+        homeViewModel.getError().observe(getViewLifecycleOwner(), error -> {
+            if (error != null && !error.isEmpty()) {
+                Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
             }
         });
     }
