@@ -1,6 +1,5 @@
 package com.example.lotteryevent.organizer;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,10 +16,10 @@ import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.utilities.FireStoreUtilities;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -90,75 +89,20 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
 
         notifManager = new NotificationCustomManager(getContext());
 
-        fillEntrantMetrics();
+        /*
+        Calls Helper class (FirestoreUtilities) to fill TextViews on the screen with entrant metrics including number of entrants in the waiting list,
+        number of spaces available in the event, and number of entrants chosen by the lottery.
+         */
+                FireStoreUtilities.fillEntrantMetrics(
+                db,
+                eventId,
+                waitingListCountText,
+                selectedUsersCountText,
+                availableSpaceCountText,
+                getContext()
+            );
         setupClickListeners(view);
 
-    }
-
-
-    /**
-     * Fills TextViews on the screen with entrant metrics including number of entrants in the waiting list,
-     * number of spaces available in the event, and number of entrants chosen by the lottery.
-     */
-    @SuppressLint("SetTextI18n")
-    private void fillEntrantMetrics() {
-        // Used to find the total number of entrants, adds from the waiting list and the selected list
-        AtomicInteger chosenEntrants = new AtomicInteger();
-
-        // Count invited entrants
-        db.collection("events").document(eventId)
-            .collection("entrants")
-            .whereEqualTo("status", "waiting")
-            .get()
-            .addOnSuccessListener(waitQuery -> {
-
-                // displays the number of entrants in the waiting list
-                waitingListCountText.setText(String.valueOf(waitQuery.size()));
-            })
-            .addOnFailureListener(e ->
-                    Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
-            );
-
-        // Count invited entrants
-        db.collection("events").document(eventId)
-            .collection("entrants")
-            .whereEqualTo("status", "invited")
-            .get()
-            .addOnSuccessListener(querySelected -> {
-                selectedUsersCountText.setText(String.valueOf(querySelected.size()));
-
-                // Load event capacity and show available spots
-                db.collection("events").document(eventId).get()
-                        .addOnSuccessListener(document -> {
-                            if (document != null && document.exists()) {
-                                Long capacityLong = document.getLong("capacity");
-
-                                if (capacityLong != null) {
-                                    int capacity = capacityLong.intValue();
-                                    // calculates and displays the capacity of the event left after the draw
-                                    int spacesLeft = capacity - querySelected.size();
-                                    if (spacesLeft > 0) {
-                                        availableSpaceCountText.setText(String.valueOf(spacesLeft));
-                                    } else {
-                                        availableSpaceCountText.setText("0");
-                                    }
-                                } else {
-                                    availableSpaceCountText.setText("No Limit");
-                                }
-                            } else {
-                                Log.d(TAG, "No such document");
-                                Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
-                            }
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.w(TAG, "get failed with ", e);
-                            Toast.makeText(getContext(), "Error loading event's number of spots available", Toast.LENGTH_SHORT).show();
-                        });
-
-            })
-            .addOnFailureListener(e ->
-                    Toast.makeText(getContext(), "Error loading entrant counts", Toast.LENGTH_SHORT).show()
-            );
     }
 
     /**

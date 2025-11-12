@@ -55,6 +55,9 @@ public class ManageSelectedFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
+        setHasOptionsMenu(true);
+        
         View view = inflater.inflate(R.layout.fragment_manage_selected, container, false);
 
         if (this.getArguments() != null) {

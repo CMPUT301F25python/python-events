@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import androidx.navigation.Navigation;
 import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
 
+import com.example.lotteryevent.utilities.FireStoreUtilities;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -37,7 +39,8 @@ public class RunDrawFragment extends Fragment {
     private LotteryManager lotteryManager;
     private EditText numSelectedEntrants;
     private String eventId = "temporary filler for event ID";
-
+    private TextView waitingListCountText;
+    private TextView availableSpaceCountText;
 
     /**
      *
@@ -85,6 +88,15 @@ public class RunDrawFragment extends Fragment {
         Button runDrawButton = view.findViewById(R.id.runDrawButton);
         Button cancelButton = view.findViewById(R.id.cancelButton);
 
+        FireStoreUtilities.fillEntrantMetrics(
+                db,
+                eventId,
+                waitingListCountText,
+                null,
+                availableSpaceCountText,
+                getContext()
+            );
+
         runDrawButton.setOnClickListener(v -> {
             String inputText = numSelectedEntrants.getText().toString().trim();
 
@@ -95,7 +107,7 @@ public class RunDrawFragment extends Fragment {
 
             int numToSelect;
 
-            // In case input is ever changed from numerical Type
+            // In case input is ever changed from numerical Type (Remove try block and only leave numToSelect <= 0)
             try {
                 numToSelect = Integer.parseInt(inputText);
             } catch (NumberFormatException e) {
