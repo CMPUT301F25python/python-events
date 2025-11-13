@@ -18,7 +18,7 @@ public class FakeEventRepository implements IEventRepository {
     // These are the LiveData objects the ViewModel will observe.
     private final MutableLiveData<List<Event>> events = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
-    private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<String> message = new MutableLiveData<>();
 
     // A flag to control whether this fake should return an error.
     private boolean shouldReturnError = false;
@@ -38,8 +38,8 @@ public class FakeEventRepository implements IEventRepository {
     }
 
     @Override
-    public LiveData<String> getError() {
-        return error;
+    public LiveData<String> getMessage() {
+        return message;
     }
 
     @Override
@@ -47,7 +47,7 @@ public class FakeEventRepository implements IEventRepository {
         isLoading.setValue(true);
 
         if (shouldReturnError) {
-            error.setValue("Test Error: Could not fetch events.");
+            message.setValue("Test Error: Could not fetch events.");
             events.setValue(new ArrayList<>()); // Post an empty list on error
         } else {
             // Create and post a hardcoded list of fake events.

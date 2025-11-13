@@ -28,13 +28,18 @@ public interface IEventRepository {
     LiveData<Boolean> isLoading();
 
     /**
-     Returns a LiveData object holding any error messages that occur during data fetching.
-     @return LiveData String containing an error message.
+     Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     @return LiveData String containing an message.
      */
-    LiveData<String> getError();
+    LiveData<String> getMessage();
 
     /**
      Triggers the process of fetching events from the data source for the currently logged-in user.
      */
     void fetchUserEvents();
+
+    /**
+     * Creates a new event in Firebase
+     * The result (success or failure) will be posted to the message LiveData
+     */
 }

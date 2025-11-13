@@ -27,7 +27,7 @@ public class EventRepositoryImpl implements IEventRepository {
     // Private MutableLiveData that will be updated by this repository
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
-    private final MutableLiveData<String> _error = new MutableLiveData<>();
+    private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
     // The ViewModel will observe these public, immutable LiveData objects
     @Override
@@ -41,8 +41,8 @@ public class EventRepositoryImpl implements IEventRepository {
     }
 
     @Override
-    public LiveData<String> getError() {
-        return _error;
+    public LiveData<String> getMessage() {
+        return _userMessage;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class EventRepositoryImpl implements IEventRepository {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             Log.w(TAG, "Cannot fetch events: user is not signed in.");
-            _error.setValue("You must be signed in to see your events.");
+            _userMessage.setValue("You must be signed in to see your events.");
             _events.setValue(new ArrayList<>()); // Post empty list
             return;
         }
@@ -74,7 +74,7 @@ public class EventRepositoryImpl implements IEventRepository {
                     } else {
                         Log.e(TAG, "Error getting documents: ", task.getException());
                         // Post an error message for the UI to display
-                        _error.setValue("Failed to load events. Please check your connection.");
+                        _userMessage.setValue("Failed to load events. Please check your connection.");
                         _events.setValue(new ArrayList<>()); // Post empty list on error
                     }
                 });

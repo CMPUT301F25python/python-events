@@ -45,7 +45,7 @@ public class FakeUserRepository implements IUserRepository {
     }
 
     @Override
-    public LiveData<String> getError() {
+    public LiveData<String> getMessage() {
         return _userMessage;
     }
 

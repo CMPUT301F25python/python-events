@@ -147,7 +147,7 @@ public class UserProfileFragment extends Fragment {
         });
 
         // Observe messages (for errors or success confirmations)
-        viewModel.getError().observe(getViewLifecycleOwner(), message -> {
+        viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
 
