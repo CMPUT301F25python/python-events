@@ -84,6 +84,7 @@ public class CreateEventViewModel extends ViewModel {
         newEvent.setEventEndDateTime(eventEndTimestamp);
         newEvent.setRegistrationStartDateTime(regStartTimestamp);
         newEvent.setRegistrationEndDateTime(regEndTimestamp);
+        newEvent.setStatus("open");
         // Set the creation timestamp for sorting purposes in the repository.
         newEvent.setCreatedAt(new Timestamp(new Date()));
 
