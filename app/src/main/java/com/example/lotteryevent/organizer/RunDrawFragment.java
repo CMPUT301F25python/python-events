@@ -89,7 +89,7 @@ public class RunDrawFragment extends Fragment {
         Button runDrawButton = view.findViewById(R.id.runDrawButton);
         Button cancelButton = view.findViewById(R.id.cancel_button);
 
-        // Firestore helper
+        // Firestore helper to populate waiting list and available spots
         FireStoreUtilities.fillEntrantMetrics(
                 db,
                 eventId,
@@ -99,6 +99,7 @@ public class RunDrawFragment extends Fragment {
                 getContext()
             );
 
+        // Run draw
         runDrawButton.setOnClickListener(v -> {
             String inputText = numSelectedEntrants.getText().toString().trim();
 
@@ -183,5 +184,10 @@ public class RunDrawFragment extends Fragment {
                         Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
                     });
         });
+
+        // Cancel button from Firestore utility helper class
+        cancelButton.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigateUp();
+    });
     }
 }

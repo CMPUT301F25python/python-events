@@ -111,7 +111,14 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      */
     private void setupClickListeners(@NonNull View view) {
         confirmAndNotifyButton.setOnClickListener(v -> confirmSelectedUsersAndNotify(view));
-        cancelButton.setOnClickListener(v -> cancelLottery(view));
+        cancelButton.setOnClickListener(v ->
+                FireStoreUtilities.cancelLottery(
+                        db,
+                        eventId,
+                        getContext(),
+                        () -> navigateBack(view)
+                )
+        );
     }
 
     /**
@@ -153,6 +160,20 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 );
     }
 
+    /**
+     * This is a helper function that navigates back to the organizer's event page after confirming the draw
+     * This uses the navigation component with Safe Args to pass event ID back to event page
+     * @param view
+     * View that triggers the navigation action
+     */
+    private void navigateBack(View view) {
+        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
+                ConfirmDrawAndNotifyFragmentDirections
+                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(eventId);
+
+        Navigation.findNavController(view).navigate(action);
+    }
+
     private void updateAfterNotification(AtomicInteger completed, int total, View view) {
         if (completed.incrementAndGet() == total) {
             navigateBack(view);
@@ -188,41 +209,4 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 });
     }
 
-    /**
-     * Cancels the lottery by bringing entrants back to the waiting list and switches fragment to the home fragment
-     * @param view Used to navigate to another fragment
-     */
-    private void cancelLottery(@NonNull View view) {
-        db.collection("events").document(eventId)
-            .collection("entrants")
-            .whereEqualTo("status", "invited")
-            .get()
-            .addOnSuccessListener(query -> {
-                if (!query.isEmpty()) {
-                    for (DocumentSnapshot entrantDoc : query.getDocuments()) {
-                        entrantDoc.getReference().update("status", "waiting");
-                    }
-                    Toast.makeText(getContext(), "Lottery Cancelled", Toast.LENGTH_SHORT).show();
-                    navigateBack(view);
-
-                }
-            })
-            .addOnFailureListener(e ->
-                    Toast.makeText(getContext(), "Error cancelling lottery", Toast.LENGTH_SHORT).show()
-            );
-        }
-
-    /**
-     * This is a helper function that navigates back to the organizer's event page after confirming the draw
-     * This uses the navigation component with Safe Args to pass event ID back to event page
-     * @param view
-     * View that triggers the navigation action
-     */
-    private void navigateBack(View view) {
-        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
-                ConfirmDrawAndNotifyFragmentDirections
-                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(eventId);
-
-        Navigation.findNavController(view).navigate(action);
-    }
 }
