@@ -1,11 +1,8 @@
 package com.example.lotteryevent.ui;
-import com.example.lotteryevent.R;
-import com.example.lotteryevent.data.Event;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,81 +10,151 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
-
+import com.example.lotteryevent.R;
+import com.example.lotteryevent.repository.EventRepositoryImpl;
+import com.example.lotteryevent.repository.IEventRepository;
+import com.example.lotteryevent.viewmodels.CreateEventViewModel;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
 /**
- * A {@link Fragment} subclass that provides a user interface for creating a new event.
- * Users can input event details such as name, location, date, time, and other settings.
- * The created event is then saved to a Firestore database.
+ * A {@link Fragment} that provides a UI for creating a new event.
+ * This class follows MVVM principles, delegating all business and data logic
+ * to the {@link CreateEventViewModel}. Its sole responsibility is to manage the UI
+ * and forward user events to the ViewModel.
  */
 public class CreateEventFragment extends Fragment {
 
-    private FirebaseFirestore db;
-    private FirebaseAuth auth;
-    private EditText editTextEventName, editTextEventDescription, editTextEventLocation;
-    private EditText editTextEventStartDate, editTextEventStartTime;
-    private EditText editTextEventEndDate, editTextEventEndTime;
-    private EditText editTextRegistrationStartDate, editTextRegistrationStartTime;
-    private EditText editTextRegistrationEndDate, editTextRegistrationEndTime;
-    private EditText editTextEventPrice;
-    private EditText editTextMaxAttendees;
-    private EditText editTextWaitingListLimit;
-    private EditText editTextLotteryGuidelines;
+    // --- UI Components ---
+    private EditText editTextEventName, editTextEventDescription, editTextEventLocation,
+            editTextEventStartDate, editTextEventStartTime, editTextEventEndDate,
+            editTextEventEndTime, editTextRegistrationStartDate, editTextRegistrationStartTime,
+            editTextRegistrationEndDate, editTextRegistrationEndTime, editTextEventPrice,
+            editTextMaxAttendees, editTextWaitingListLimit, editTextLotteryGuidelines;
     private CheckBox checkboxGeolocation;
     private Button buttonSave;
+
+    // --- Calendars for Date/Time Pickers (UI State) ---
     private final Calendar eventStartCalendar = Calendar.getInstance();
     private final Calendar eventEndCalendar = Calendar.getInstance();
     private final Calendar registrationStartCalendar = Calendar.getInstance();
     private final Calendar registrationEndCalendar = Calendar.getInstance();
 
-    /**
-     * Required empty public constructor for fragment instantiation.
-     */
-    public CreateEventFragment() {
-    }
+    // --- ViewModel ---
+    private CreateEventViewModel viewModel;
+    private ViewModelProvider.Factory viewModelFactory;
 
     /**
-     * Inflates the layout for this fragment.
-     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
-     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
-     * @return The View for the fragment's UI, or null.
+     * Default constructor for production use by the Android Framework.
      */
+    public CreateEventFragment() {}
+
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     * @param factory The factory to use for creating the ViewModel.
+     */
+    public CreateEventFragment(ViewModelProvider.Factory factory) {
+        this.viewModelFactory = factory;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_create_event, container, false);
     }
 
-    /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
-     * but before any saved state has been restored in to the view. This is where UI initialization and setup occurs.
-     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
-     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        // --- ViewModel Initialization ---
+        if (viewModelFactory == null) {
+            // This is the production path.
+            IEventRepository eventRepository = new EventRepositoryImpl();
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            factory.put(CreateEventViewModel.class, () -> new CreateEventViewModel(eventRepository));
+            viewModelFactory = factory;
+        }
+        viewModel = new ViewModelProvider(this, viewModelFactory).get(CreateEventViewModel.class);
+
+        // --- UI Setup ---
+        bindViews(view);
+        setupClickListeners();
+        setupObservers();
+    }
+
+    /**
+     * Sets up observers on the ViewModel's LiveData to react to state changes.
+     */
+    private void setupObservers() {
+        // Observe loading state to enable/disable the save button.
+        viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
+            buttonSave.setEnabled(!isLoading);
+        });
+
+        // Observe messages to show success/error toasts and handle navigation.
+        viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                // If the message indicates success, navigate back.
+                if (message.contains("successfully")) {
+                    Navigation.findNavController(requireView()).popBackStack();
+                }
+            }
+        });
+    }
+
+    /**
+     * Gathers all input from the UI and passes it to the ViewModel to attempt event creation.
+     */
+    private void handleSaveEvent() {
+        // Gather all raw string data from EditText fields.
+        String eventName = editTextEventName.getText().toString().trim();
+        String description = editTextEventDescription.getText().toString().trim();
+        String location = editTextEventLocation.getText().toString().trim();
+        String priceStr = editTextEventPrice.getText().toString().trim();
+        String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
+        String waitingListLimitStr = editTextWaitingListLimit.getText().toString().trim();
+        String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
+        boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
+
+        String startDateText = editTextEventStartDate.getText().toString();
+        String startTimeText = editTextEventStartTime.getText().toString();
+        String endDateText = editTextEventEndDate.getText().toString();
+        String endTimeText = editTextEventEndTime.getText().toString();
+        String regStartDateText = editTextRegistrationStartDate.getText().toString();
+        String regStartTimeText = editTextRegistrationStartTime.getText().toString();
+        String regEndDateText = editTextRegistrationEndDate.getText().toString();
+        String regEndTimeText = editTextRegistrationEndTime.getText().toString();
+
+        // Pass all the data to the ViewModel. The ViewModel will handle all validation and logic.
+        String validationError = viewModel.attemptToCreateEvent(
+                eventName, description, location, priceStr, maxAttendeesStr, waitingListLimitStr,
+                lotteryGuidelinesStr, isGeoLocationRequired,
+                eventStartCalendar, eventEndCalendar, registrationStartCalendar, registrationEndCalendar,
+                startDateText, startTimeText, endDateText, endTimeText,
+                regStartDateText, regStartTimeText, regEndDateText, regEndTimeText
+        );
+
+        // If the ViewModel returns an error, it means client-side validation failed. Show the error.
+        if (validationError != null) {
+            Toast.makeText(getContext(), validationError, Toast.LENGTH_LONG).show();
+        }
+        // If validationError is null, the creation process has started. The LiveData observers will handle the result.
+    }
 
 
-        // Find all UI elements by their ID
+    /**
+     * Finds and assigns all UI component instances from the inflated view.
+     * @param view The root view of the fragment.
+     */
+    private void bindViews(@NonNull View view) {
         editTextEventName = view.findViewById(R.id.edit_text_event_name);
         editTextEventDescription = view.findViewById(R.id.edit_text_event_description);
         editTextEventLocation = view.findViewById(R.id.edit_text_event_location);
@@ -112,9 +179,6 @@ public class CreateEventFragment extends Fragment {
 
         checkboxGeolocation = view.findViewById(R.id.checkbox_geolocation);
         buttonSave = view.findViewById(R.id.button_save);
-
-        // Set up click listeners for date/time pickers and the save button
-        setupClickListeners();
     }
 
     /**
@@ -122,7 +186,7 @@ public class CreateEventFragment extends Fragment {
      * such as date/time fields and the save button.
      */
     private void setupClickListeners() {
-        // Set up the picker dialogs
+        // Set up the picker dialogs for each date and time field
         editTextEventStartDate.setOnClickListener(v -> showDatePickerDialog(eventStartCalendar, editTextEventStartDate));
         editTextEventStartTime.setOnClickListener(v -> showTimePickerDialog(eventStartCalendar, editTextEventStartTime));
 
@@ -135,8 +199,8 @@ public class CreateEventFragment extends Fragment {
         editTextRegistrationEndDate.setOnClickListener(v -> showDatePickerDialog(registrationEndCalendar, editTextRegistrationEndDate));
         editTextRegistrationEndTime.setOnClickListener(v -> showTimePickerDialog(registrationEndCalendar, editTextRegistrationEndTime));
 
-        // Set a click listener on the save button
-        buttonSave.setOnClickListener(this::saveEventToFirestore);
+        // Set a click listener on the save button to trigger the ViewModel action
+        buttonSave.setOnClickListener(v -> handleSaveEvent());
     }
 
     /**
@@ -153,7 +217,7 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "yyyy-MM-dd");
         };
 
-        new DatePickerDialog(getContext(), dateSetListener, calendar.get(Calendar.YEAR),
+        new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
@@ -170,8 +234,8 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "HH:mm");
         };
 
-        new TimePickerDialog(getContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE), false).show(); // false for 12-hour view
+        new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE), false).show();
     }
 
     /**
@@ -184,251 +248,4 @@ public class CreateEventFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
         editText.setText(sdf.format(calendar.getTime()));
     }
-
-    /**
-     * Gathers and validates all user input from the form fields. If validation passes,
-     * it asynchronously fetches the organizer's name from the 'users' collection using the
-     * current user's ID. On success, it constructs an {@link Event} object and saves it
-     * as a new document in the 'events' collection in Firestore.
-     * <p>
-     * Validation checks include:
-     * <ul>
-     *     <li>Ensuring a user is logged in.</li>
-     *     <li>Verifying that if a date is selected, the corresponding time is also selected.</li>
-     *     <li>Confirming that the event start time is before the event end time.</li>
-     * </ul>
-     * Displays toast messages for validation errors or network failures. Navigates back
-     * to the previous screen on successful event creation.
-     *
-     * @param view The view that triggered the method call, used for navigation purposes.
-     */
-    private void saveEventToFirestore(View view) {
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String userId = currentUser.getUid();
-
-        // Get text from basic input fields
-        String eventName = editTextEventName.getText().toString().trim();
-        String description = editTextEventDescription.getText().toString().trim();
-        String location = editTextEventLocation.getText().toString().trim();
-        String priceStr = editTextEventPrice.getText().toString().trim();
-        String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
-        String waitingListLimitStr = editTextWaitingListLimit.getText().toString().trim();
-        String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
-        boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
-
-        // Combine Date and Time Calendars into Firestore Timestamps
-        com.google.firebase.Timestamp eventStartDateTime = getTimestampFromCalendars(eventStartCalendar, editTextEventStartDate, editTextEventStartTime);
-        com.google.firebase.Timestamp eventEndDateTime = getTimestampFromCalendars(eventEndCalendar, editTextEventEndDate, editTextEventEndTime);
-
-        com.google.firebase.Timestamp registrationStartDateTime = getTimestampFromCalendars(registrationStartCalendar, editTextRegistrationStartDate, editTextRegistrationStartTime);
-        com.google.firebase.Timestamp registrationEndDateTime = getTimestampFromCalendars(registrationEndCalendar, editTextRegistrationEndDate, editTextRegistrationEndTime);
-
-
-        // Convert price and capacity to Double and Integer, respectively
-        Double price = priceStr.isEmpty() ? null : Double.parseDouble(priceStr);
-        Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
-        Integer waitingListLimit = waitingListLimitStr.isEmpty() ? null : Integer.parseInt(waitingListLimitStr);
-
-        String validationError = validateEventInput(
-                eventName,
-                editTextEventStartDate.getText().toString(),
-                editTextEventStartTime.getText().toString(),
-                editTextEventEndDate.getText().toString(),
-                editTextEventEndTime.getText().toString(),
-                eventStartDateTime,
-                eventEndDateTime,
-                editTextRegistrationStartDate.getText().toString(),
-                editTextRegistrationStartTime.getText().toString(),
-                editTextRegistrationEndDate.getText().toString(),
-                editTextRegistrationEndTime.getText().toString(),
-                registrationStartDateTime,
-                registrationEndDateTime,
-                capacity,
-                waitingListLimit
-        );
-
-        if (validationError != null) {
-            Toast.makeText(getContext(), validationError, Toast.LENGTH_SHORT).show();
-            return; // Stop if validation fails
-        }
-
-        // Obtain the organizer name
-        db.collection("users").document(userId).get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DocumentSnapshot document = task.getResult();
-                String organizerName = "Default Organizer"; // Fallback name
-                if (document != null && document.exists()) {
-                    // Extract organizer name if the document exists
-                    organizerName = document.getString("name");
-                } else {
-                    Log.d("CreateEventFragment", "User document does not exist, using fallback name.");
-                }
-
-                Event event = new Event();
-                event.setName(eventName);
-                event.setDescription(description);
-                event.setOrganizerId(userId);
-                event.setOrganizerName(organizerName);
-                event.setLocation(location);
-                event.setPrice(price);
-                event.setRegistrationStartDateTime(registrationStartDateTime);
-                event.setRegistrationEndDateTime(registrationEndDateTime);
-                event.setEventStartDateTime(eventStartDateTime);
-                event.setEventEndDateTime(eventEndDateTime);
-                event.setCapacity(capacity);
-                event.setWaitinglistlimit(waitingListLimit);
-                event.setLotteryGuidelines(lotteryGuidelinesStr);
-                event.setIsgeolocationRequired(isGeoLocationRequired);
-
-                // Default values for new events
-                event.setStatus("open");
-                event.setWaitinglistCount(0);
-                event.setAttendeeCount(0);
-
-                // Add the new event to the "events" collection
-                db.collection("events")
-                        .add(event)
-                        .addOnSuccessListener(documentReference -> {
-                            Log.d("FIRESTORE_SUCCESS", "Event saved with ID: " + documentReference.getId());
-                            Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
-                            Navigation.findNavController(view).popBackStack(); // Go back to home
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.w("FIRESTORE_ERROR", "Error adding document", e);
-                            Toast.makeText(getContext(), "Error creating event. Please try again.", Toast.LENGTH_LONG).show();
-                        });
-            }
-            else {
-                Log.w("CreateEventFragment", "Failed to fetch user data.", task.getException());
-                Toast.makeText(getContext(), "Could not retrieve user info. Please try again.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    /**
-     * Validates the user input for the event form.*
-     * @param eventName The name of the event.
-     * @param startDateText The text from the event start date field.
-     * @param startTimeText The text from the event start time field.
-     * @param endDateText The text from the event end date field.
-     * @param endTimeText The text from the event end time field.
-     * @param eventStartTimestamp The generated event start timestamp.
-     * @param eventEndTimestamp The generated event end timestamp.
-     * @param regStartDateText The text from the registration start date field.
-     * @param regStartTimeText The text from the registration start time field.
-     * @param regEndDateText The text from the registration end date field.
-     * @param regEndTimeText The text from the registration end time field.
-     * @param regStartTimestamp The generated registration start timestamp.
-     * @param regEndTimestamp The generated registration end timestamp.
-     * @param capacity The maximum number of attendees for the event.
-     * @param waitingListLimit The maximum number of users on the waiting list.
-     * @return A String containing an error message if validation fails, otherwise null.
-     */
-    public String validateEventInput(String eventName, String startDateText, String startTimeText,
-                                     String endDateText, String endTimeText,
-                                     com.google.firebase.Timestamp eventStartTimestamp,
-                                     com.google.firebase.Timestamp eventEndTimestamp,
-                                     String regStartDateText, String regStartTimeText,
-                                     String regEndDateText, String regEndTimeText,
-                                     com.google.firebase.Timestamp regStartTimestamp,
-                                     com.google.firebase.Timestamp regEndTimestamp,
-                                     Integer capacity, Integer waitingListLimit) {
-
-        if (eventName.isEmpty()) {
-            return "Event name is required.";
-        }
-
-        // If a registration start date is set, an end date must also be set
-        boolean isRegStartDateSet = !regStartDateText.isEmpty();
-        boolean isRegEndDateSet = !regEndDateText.isEmpty();
-        if (isRegStartDateSet && !isRegEndDateSet) {
-            return "A registration end date is required if a start date is set.";
-        }
-
-        // All dates require a time or the Firestore timestamp will be null
-        boolean isEventStartDateSet = !startDateText.isEmpty();
-        boolean isEventStartTimeSet = !startTimeText.isEmpty();
-        if (isEventStartDateSet && !isEventStartTimeSet) {
-            return "Please select a start time for the selected event start date.";
-        }
-
-        boolean isEventEndDateSet = !endDateText.isEmpty();
-        boolean isEventEndTimeSet = !endTimeText.isEmpty();
-        if (isEventEndDateSet && !isEventEndTimeSet) {
-            return "Please select an end time for the selected event end date.";
-        }
-
-        boolean isRegStartTimeSet = !regStartTimeText.isEmpty();
-        if (isRegStartDateSet && !isRegStartTimeSet) {
-            return "Please select a start time for the selected registration start date.";
-        }
-
-        boolean isRegEndTimeSet = !regEndTimeText.isEmpty();
-        if (isRegEndDateSet && !isRegEndTimeSet) {
-            return "Please select an end time for the selected registration end date.";
-        }
-
-        // Start before end checks:
-        if (eventStartTimestamp != null && eventEndTimestamp != null && eventStartTimestamp.compareTo(eventEndTimestamp) >= 0) {
-            return "Event start time must be before event end time.";
-        }
-
-        if (regStartTimestamp != null && regEndTimestamp != null && regStartTimestamp.compareTo(regEndTimestamp) >= 0) {
-            return "Registration start time must be before registration end time.";
-        }
-
-        // Check that registration period is before the event starts
-        if (regEndTimestamp != null && eventStartTimestamp != null && regEndTimestamp.compareTo(eventStartTimestamp) > 0) {
-            return "Registration must end before the event starts.";
-        }
-
-        // Date/time is in the future checks:
-        com.google.firebase.Timestamp now = com.google.firebase.Timestamp.now();
-
-        if (regStartTimestamp != null && regStartTimestamp.compareTo(now) < 0) {
-            return "Registration start time cannot be in the past.";
-        }
-
-        if (eventStartTimestamp != null && eventStartTimestamp.compareTo(now) < 0) {
-            return "Event start time cannot be in the past.";
-        }
-
-        if (waitingListLimit != null && capacity == null) {
-            return "A capacity is required to set a waiting list limit.";
-        }
-
-        if (capacity != null && capacity < 0) {
-            return "Capacity cannot be negative.";
-        }
-
-        if (waitingListLimit != null && waitingListLimit < 1) {
-            return "Waiting list limit cannot be smaller than one.";
-        }
-
-        if (waitingListLimit != null && capacity != null && waitingListLimit < capacity) {
-            return "Waiting list size must be greater than or equal to the number of attendees.";
-        }
-
-        return null; // Validation successful
-    }
-
-    /**
-     * Creates a Firestore {@link com.google.firebase.Timestamp} from a Calendar object.
-     * Returns null if the date or time fields have not been filled out by the user.
-     * @param calendar The Calendar instance holding the selected date and time.
-     * @param dateText The EditText for the date.
-     * @param timeText The EditText for the time.
-     * @return A Firestore Timestamp object, or null if the date/time is incomplete.
-     */
-    private com.google.firebase.Timestamp getTimestampFromCalendars(Calendar calendar, EditText dateText, EditText timeText) {
-        if (dateText.getText().toString().isEmpty() || timeText.getText().toString().isEmpty()) {
-            return null; // Return null if either date or time hasn't been picked
-        }
-        return new com.google.firebase.Timestamp(calendar.getTime());
-    }
 }
-
