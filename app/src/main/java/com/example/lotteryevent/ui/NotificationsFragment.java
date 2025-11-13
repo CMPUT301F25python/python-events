@@ -1,148 +1,125 @@
 package com.example.lotteryevent.ui;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.NotificationAdapter;
-import com.example.lotteryevent.data.Notification;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.example.lotteryevent.repository.INotificationRepository;
+import com.example.lotteryevent.repository.NotificationRepositoryImpl;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.example.lotteryevent.viewmodels.NotificationsViewModel;
 
 /**
- * This fragment is used to view all notifications, included those already seen. If a notification
- * indicates a lottery win, the user can click on it to go to the even details page to accept or
- * decline the invitation. To mark a notif as seen, need to click on it.
+ * A Fragment that displays a list of notifications for the user.
+ * This class follows MVVM principles, delegating all business and data logic
+ * to the {@link NotificationsViewModel}.
  */
 public class NotificationsFragment extends Fragment {
-    private static final String TAG = "NotificationsFragment";
-    private FirebaseFirestore db;
+
+    // --- UI Components ---
     private RecyclerView recyclerView;
     private NotificationAdapter adapter;
-    private ListenerRegistration registration;
-    private NotificationCustomManager notificationCustomManager;
+
+    // --- ViewModel ---
+    private NotificationsViewModel viewModel;
+    private ViewModelProvider.Factory viewModelFactory;
 
     /**
-     * Inflates layout
-     * @param inflater The LayoutInflater object that can be used to inflate
-     * any views in the fragment,
-     * @param container If non-null, this is the parent view that the fragment's
-     * UI should be attached to.  The fragment should not add the view itself,
-     * but this can be used to generate the LayoutParams of the view.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
-     *
-     * @return Return the View for the fragment's UI, or null.
+     * Default constructor for production use by the Android Framework.
      */
+    public NotificationsFragment() {}
+
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     * @param factory The factory to use for creating the ViewModel.
+     */
+    public NotificationsFragment(ViewModelProvider.Factory factory) {
+        this.viewModelFactory = factory;
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_notifications, container, false);
     }
 
-    /**
-     * Sets up recycler view and adapter, gets notifications to show
-     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
-     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
+        // --- ViewModel Initialization ---
+        if (viewModelFactory == null) {
+            // Production path: create dependencies manually.
+            INotificationRepository repository = new NotificationRepositoryImpl();
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            factory.put(NotificationsViewModel.class, () -> new NotificationsViewModel(repository));
+            viewModelFactory = factory;
+        }
+        viewModel = new ViewModelProvider(this, viewModelFactory).get(NotificationsViewModel.class);
 
-        recyclerView = view.findViewById(R.id.notifications_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        // --- UI Setup ---
+        setupRecyclerView(view);
+        setupObservers(view);
 
-        // Use the adapter constructor that takes the row layout you want here
-        adapter = new NotificationAdapter(R.layout.item_notification);
-        recyclerView.setAdapter(adapter);
-
-        notificationCustomManager = new NotificationCustomManager(getContext());
+        // --- Initial Action ---
+        // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        if (notificationId != null) { // set notif as seen
-            notificationCustomManager.markNotificationAsSeen(notificationId);
-        }
-
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (user != null) {
-            String uid = user.getUid();
-            db.collection("notifications").whereEqualTo("recipientId", uid)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot value,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (!isAdded()) return;
-                        if (e != null) {
-                            Log.w(TAG, "Load failed with an error", e);
-                            return;
-                        }
-                        if (value == null) {
-                            Log.w(TAG, "No snapshot found");
-                            return;
-                        }
-
-                        List<Notification> list = new ArrayList<>();
-                        for (DocumentSnapshot doc : value.getDocuments()) {
-                            Notification notification = doc.toObject(Notification.class);
-                            list.add(notification);
-                        }
-                        adapter.setNotifications(list);
-                        adapter.setOnItemClickListener(n -> redirectOnNotificationClick(n, view));
-                    }
-                });
-        }
+        viewModel.processInitialNotification(notificationId);
     }
 
     /**
-     * Marks notif as seen and if a lottery success notif, redirects to event page
-     * @param notification notification clicked on
-     * @param view view of fragment
+     * Initializes the RecyclerView and its Adapter. The item click listener now
+     * delegates the event directly to the ViewModel.
      */
-    private void redirectOnNotificationClick(Notification notification, View view) {
-        if (notification.getSeen() != true) {
-            notification.setSeen(true);
-            db.collection("notifications")
-                    .document(notification.getNotificationId())
-                    .update("seen", true)
-                    .addOnSuccessListener(documentReference -> {
-                        Log.d("FIRESTORE_SUCCESS", "Notification updated with ID: " + notification.getNotificationId());
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.w("FIRESTORE_ERROR", "Error updating document", e);
-                        Toast.makeText(getContext(), "Error updating notification", Toast.LENGTH_LONG).show();
-                    });
-        }
-        if (Objects.equals(notification.getType(), "lottery_win")) {
-            Bundle bundle = new Bundle();
-            bundle.putString("eventId", notification.getEventId());
-            Navigation.findNavController(view)
-                    .navigate(R.id.action_notificationsFragment_to_eventDetailsFragment, bundle);
-        }
+    private void setupRecyclerView(@NonNull View view) {
+        recyclerView = view.findViewById(R.id.notifications_recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new NotificationAdapter(R.layout.item_notification);
+        recyclerView.setAdapter(adapter);
+
+        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification));
+    }
+
+    /**
+     * Sets up observers on the ViewModel's LiveData to react to data and state changes.
+     */
+    private void setupObservers(@NonNull View view) {
+        // Observe the list of notifications and submit it to the adapter when it changes.
+        viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
+            if (notifications != null) {
+                adapter.setNotifications(notifications);
+            }
+        });
+
+        // Observe for user-facing messages (errors, etc.) and show them in a Toast.
+        viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Observe the navigation event.
+        viewModel.getNavigateToEventDetails().observe(getViewLifecycleOwner(), eventId -> {
+            if (eventId != null) {
+                // An eventId was posted, so we need to navigate.
+                Bundle bundle = new Bundle();
+                bundle.putString("eventId", eventId);
+                Navigation.findNavController(view)
+                        .navigate(R.id.action_notificationsFragment_to_eventDetailsFragment, bundle);
+
+                // Tell the ViewModel that we have handled the navigation event.
+                // This prevents the navigation from re-triggering on screen rotation.
+                viewModel.onNavigationComplete();
+            }
+        });
     }
 }
