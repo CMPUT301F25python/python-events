@@ -1,4 +1,4 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.ui;
 
 import android.os.Bundle;
 import android.telephony.PhoneNumberFormattingTextWatcher;
@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.example.lotteryevent.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;

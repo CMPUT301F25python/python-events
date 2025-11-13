@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.lotteryevent.AvailableEventsFragment;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
 

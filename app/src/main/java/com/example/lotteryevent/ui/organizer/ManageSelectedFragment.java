@@ -1,4 +1,4 @@
-package com.example.lotteryevent.organizer;
+package com.example.lotteryevent.ui.organizer;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,12 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.SelectedAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**

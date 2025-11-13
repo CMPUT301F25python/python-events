@@ -1,4 +1,5 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.ui;
+import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
 
 import android.app.DatePickerDialog;
@@ -26,9 +27,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * A {@link Fragment} subclass that provides a user interface for creating a new event.
