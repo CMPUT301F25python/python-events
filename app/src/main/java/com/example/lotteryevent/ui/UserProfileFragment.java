@@ -42,11 +42,19 @@ public class UserProfileFragment extends Fragment {
 
     // --- ViewModel ---
     private UserProfileViewModel viewModel;
+    private ViewModelProvider.Factory viewModelFactory;
 
     /**
      * Required empty public constructor.
      */
-    public UserProfileFragment() {
+    public UserProfileFragment() {}
+
+    /**
+     * Constructor for testing. Alows us to inject a custom ViewModelFactory
+     * @param factory The factory to use for creating the ViewModel.
+     */
+    public UserProfileFragment(GenericViewModelFactory factory) {
+        this.viewModelFactory = factory;
     }
 
     /**
@@ -63,27 +71,34 @@ public class UserProfileFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_user_profile, container, false);
     }
 
+    /**
+     * Called after the view has been created. This is where the fragment's UI is initialized.
+     * This method sets up the ViewModel, binds UI components, and configures observers and
+     * click listeners.
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // --- ViewModel Initialization ---
-        // 1. Create the dependency (the repository)
-        IUserRepository userRepository = new UserRepositoryImpl();
-        // 2. Create the generic factory
-        GenericViewModelFactory factory = new GenericViewModelFactory();
-        // 3. Add the "recipe" for creating the ViewModel
-        factory.put(UserProfileViewModel.class, () -> new UserProfileViewModel(userRepository));
-        // 4. Get the ViewModel instance
-        viewModel = new ViewModelProvider(this, factory).get(UserProfileViewModel.class);
+        // If a factory was not injected (production), create the default one.
+        if (viewModelFactory == null) {
+            IUserRepository userRepository = new UserRepositoryImpl();
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            factory.put(UserProfileViewModel.class, () -> new UserProfileViewModel(userRepository));
+            viewModelFactory = factory;
+        }
 
-        // --- Bind UI Components ---
+        // Get the ViewModel instance using the determined factory.
+        viewModel = new ViewModelProvider(this, viewModelFactory).get(UserProfileViewModel.class);
+
+        // --- The rest of the method is the same ---
         bindViews(view);
-
-        // --- Setup Observers to react to data changes ---
         setupObservers();
-
-        // --- Setup Listeners for user actions ---
         setupClickListeners();
     }
 
