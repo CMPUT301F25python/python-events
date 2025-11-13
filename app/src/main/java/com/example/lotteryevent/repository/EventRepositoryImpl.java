@@ -79,4 +79,47 @@ public class EventRepositoryImpl implements IEventRepository {
                     }
                 });
     }
+
+    @Override
+    public void createEvent(Event event) {
+        _isLoading.setValue(true);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            Log.w(TAG, "Cannot create event: user is not signed in.");
+            _userMessage.setValue("You must be signed in to create an event.");
+            _isLoading.setValue(false);
+            return;
+        }
+        String userId = currentUser.getUid();
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String organizerName = "Unknown Organizer";
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        organizerName = documentSnapshot.getString("name");
+                    }
+
+                    // Step 2: Set the final details on the event object.
+                    event.setOrganizerId(userId);
+                    event.setOrganizerName(organizerName);
+
+                    // Step 3: Add the fully formed event to the "events" collection.
+                    db.collection("events").add(event)
+                            .addOnSuccessListener(documentReference -> {
+                                _isLoading.setValue(false);
+                                _userMessage.setValue("Event created successfully!");
+                                Log.d(TAG, "Event created with ID: " + documentReference.getId());
+                            })
+                            .addOnFailureListener(e -> {
+                                _isLoading.setValue(false);
+                                _userMessage.setValue("Error: Could not save event.");
+                                Log.e(TAG, "Error creating event", e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    // This listener catches failures in fetching the user's name.
+                    _isLoading.setValue(false);
+                    _userMessage.setValue("Error: Could not fetch user details.");
+                    Log.e(TAG, "Error fetching organizer name", e);
+                });
+    }
 }

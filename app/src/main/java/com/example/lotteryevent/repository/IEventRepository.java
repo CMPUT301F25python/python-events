@@ -42,4 +42,5 @@ public interface IEventRepository {
      * Creates a new event in Firebase
      * The result (success or failure) will be posted to the message LiveData
      */
+    void createEvent(Event event);
 }
