@@ -29,7 +29,7 @@
         tools:ignore="HardcodedText"/>
 
     <TextView
-        android:id="@+id/availableSpace"
+        android:id="@+id/available_space"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Spots Available:"
@@ -39,7 +39,7 @@
         tools:ignore="HardcodedText" />
 
     <TextView
-        android:id="@+id/availableSpaceCount"
+        android:id="@+id/available_space_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="# of spots available for registration"

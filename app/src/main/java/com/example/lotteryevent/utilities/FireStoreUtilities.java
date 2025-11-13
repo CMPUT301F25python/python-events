@@ -29,6 +29,10 @@ public class FireStoreUtilities {
         if (db == null || eventId == null || context == null) {
             Log.e(TAG, "Invalid parameters in fillEntrantMetrics");
         }
+        if (waitingListCountText == null) {
+            Log.e(TAG, "WaitingListCountText is null. Ensure correct xml ID");
+            return;
+        }
         // Count invited entrants
         db.collection("events").document(eventId)
                 .collection("entrants")

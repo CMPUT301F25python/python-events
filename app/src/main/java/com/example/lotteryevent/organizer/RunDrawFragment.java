@@ -81,13 +81,15 @@ public class RunDrawFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        this.db = FirebaseFirestore.getInstance();
-        this.lotteryManager = new LotteryManager();
-        this.numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
-
+        db = FirebaseFirestore.getInstance();
+        lotteryManager = new LotteryManager();
+        numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
+        waitingListCountText = view.findViewById(R.id.waiting_list_count);
+        availableSpaceCountText = view.findViewById(R.id.available_space_count);
         Button runDrawButton = view.findViewById(R.id.runDrawButton);
-        Button cancelButton = view.findViewById(R.id.cancelButton);
+        Button cancelButton = view.findViewById(R.id.cancel_button);
 
+        // Firestore helper
         FireStoreUtilities.fillEntrantMetrics(
                 db,
                 eventId,
