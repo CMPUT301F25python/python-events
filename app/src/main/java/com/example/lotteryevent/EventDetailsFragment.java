@@ -34,6 +34,27 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Fragment responsible for displaying detailed information about a specific event
+ * to the user. This fragment also handles all user action related to joining, leaving,
+ * accepting, or declining invites for the event.
+ *
+ * <p>
+ *     This screen is used by participants that then switch to organizers when the event status changes to open
+ *     It shows event details, dynamic UI updates and controls depending on the user's status in the event:
+ *     waiting,invited, accepted, declined, cancelled.
+ *
+ *     Interacts with firestore to manage entrant participation and invites
+ * </p>
+ *
+ * <p>Behaviour</p>
+ * <ul>
+ *     <li>Fetching event detials and rendering them in a list</li>
+ *     <li>Check and display current entrant's status</li>
+ *     <li>Allow users to join or leave waitlist</li>
+ *     <li>Allow user to accept or decline participation in event</li>
+ * </ul>
+ */
 public class EventDetailsFragment extends Fragment {
 
     private static final String TAG = "EventDetailsFragment";
@@ -57,11 +78,29 @@ public class EventDetailsFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
 
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     *
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_event_details, container, false);
     }
 
+    /**
+     *
+     * @param v The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -90,6 +129,10 @@ public class EventDetailsFragment extends Fragment {
         fetchEventDetails();
     }
 
+    /**
+     * Initializes and binds UI components from the layout
+     * @param v
+     */
     private void initializeViews(View v) {
         detailsList = v.findViewById(R.id.details_list);
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
@@ -99,6 +142,10 @@ public class EventDetailsFragment extends Fragment {
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
     }
 
+    /**
+     * Fetches event data from firestore using the event ID passed using nav args.
+     * Populates UI and checks the current user's entrant status
+     */
     private void fetchEventDetails() {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -120,6 +167,10 @@ public class EventDetailsFragment extends Fragment {
                 });
     }
 
+    /**
+     * Populates the event details ListView with formatted event attributes
+     * Display is non-null
+     */
     private void bindEventDetails() {
         if (event == null) return;
         dataList.clear();
@@ -134,6 +185,11 @@ public class EventDetailsFragment extends Fragment {
         listAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Retrieve current user's entrant status and updates UI.
+     * Executes callback after completion
+     * @param onComplete
+     */
     private void checkUserEntrantStatus(@Nullable Runnable onComplete) {
         if (currentUser == null) {
             updateDynamicBottomUI();
@@ -231,6 +287,10 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Adds the current user to the event waitlist in firestore
+     * sets entrant status to "waiting" and refreshes UI
+     */
     private void joinWaitingList() {
         if (currentUser == null) return;
         setActionsEnabled(false);
@@ -246,6 +306,10 @@ public class EventDetailsFragment extends Fragment {
                 .addOnFailureListener(this::handleFailure);
     }
 
+    /**
+     * Allows a user to leave the waitlist. If registration is closed
+     * shows confirmation dialog before removing entrant record
+     */
     private void leaveWaitingList() {
         Timestamp regEnd = event.getRegistrationEndDateTime();
         Timestamp now = Timestamp.now();
@@ -262,6 +326,10 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Removes the current user's entrant record from Firestore and refreshes UI
+     * Called directly or after confirmation
+     */
     private void performLeave() {
         setActionsEnabled(false);
         getEntrantDocRef().delete()
@@ -273,6 +341,11 @@ public class EventDetailsFragment extends Fragment {
                 .addOnFailureListener(this::handleFailure);
     }
 
+    /**
+     * Update the user's invitation status to "accepted" or "declined" in firestore
+     * @param newStatus
+     * The new status value ("accepted" or "declined")
+     */
     private void updateInvitationStatus(String newStatus) {
         setActionsEnabled(false);
         getEntrantDocRef().update("status", newStatus)
@@ -285,18 +358,30 @@ public class EventDetailsFragment extends Fragment {
                 .addOnFailureListener(this::handleFailure);
     }
 
+    /**
+     * Utility method to hide all bottom UI actions
+     */
     // --- Helper Methods ---
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);
         textInfoMessage.setVisibility(View.GONE);
     }
 
+    /**
+     * Show info text message to user
+     * @param message
+     */
     private void showInfoText(String message) {
         hideAllBottomActions();
         textInfoMessage.setText(message);
         textInfoMessage.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show single button to join or leave
+     * @param text
+     * @param listener
+     */
     private void showOneButton(String text, View.OnClickListener listener) {
         hideAllBottomActions();
         btnActionNegative.setVisibility(View.GONE);
@@ -305,6 +390,13 @@ public class EventDetailsFragment extends Fragment {
         buttonActionsContainer.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show accept or decline button
+     * @param positiveText
+     * @param negativeText
+     * @param positiveListener
+     * @param negativeListener
+     */
     private void showTwoButtons(String positiveText, String negativeText, View.OnClickListener positiveListener, View.OnClickListener negativeListener) {
         hideAllBottomActions();
         btnActionPositive.setText(positiveText);
@@ -315,23 +407,46 @@ public class EventDetailsFragment extends Fragment {
         buttonActionsContainer.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Enable or disable action buttons
+     * @param enabled
+     * whether user action buttons should be enabled
+     */
     private void setActionsEnabled(boolean enabled) {
         bottomProgressBar.setVisibility(enabled ? View.GONE : View.VISIBLE);
         btnActionPositive.setEnabled(enabled);
         btnActionNegative.setEnabled(enabled);
     }
 
+    /**
+     *
+     * @return
+     * reference for the current user's entrant doc
+     */
     private DocumentReference getEntrantDocRef() {
         return db.collection("events").document(eventId).collection("entrants").document(currentUser.getUid());
     }
 
+    /**
+     * Logs firestore error and re-enables UI actions
+     * @param e
+     * Exception thrown during firestore operation
+     */
     private void handleFailure(@NonNull Exception e) {
         Log.w(TAG, "Firestore operation failed", e);
         setActionsEnabled(true);
     }
 
+
     private final DateFormat DF = new SimpleDateFormat("EEE, MMM d yyyy • h:mm a", Locale.getDefault());
 
+    /**
+     * Helper to safely append formatted event details into the list adapter
+     * @param label
+     * Display label
+     * @param raw
+     * raw value returned from firestore
+     */
     private void addAny(String label, @Nullable Object raw) {
         if (raw == null) return;
         String v;

@@ -26,13 +26,12 @@ import java.util.List;
  * </p>
  */
 public class SelectedAdapter extends RecyclerView.Adapter<SelectedAdapter.ViewHolder> {
+    private List<String> selectedUsers;
+    private OnCancelClickListener cancelListener;
 
     public interface OnCancelClickListener {
         void onCancelClicked(String userId);
     }
-
-    private List<String> selectedUsers;
-    private OnCancelClickListener cancelListener;
 
     /**
      * Constructor for SelectedAdapter

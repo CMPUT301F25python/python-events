@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import androidx.navigation.Navigation;
 import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
 
+import com.example.lotteryevent.utilities.FireStoreUtilities;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -37,7 +39,8 @@ public class RunDrawFragment extends Fragment {
     private LotteryManager lotteryManager;
     private EditText numSelectedEntrants;
     private String eventId = "temporary filler for event ID";
-
+    private TextView waitingListCountText;
+    private TextView availableSpaceCountText;
 
     /**
      *
@@ -78,13 +81,25 @@ public class RunDrawFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        this.db = FirebaseFirestore.getInstance();
-        this.lotteryManager = new LotteryManager();
-        this.numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
-
+        db = FirebaseFirestore.getInstance();
+        lotteryManager = new LotteryManager();
+        numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
+        waitingListCountText = view.findViewById(R.id.waiting_list_count);
+        availableSpaceCountText = view.findViewById(R.id.available_space_count);
         Button runDrawButton = view.findViewById(R.id.runDrawButton);
-        Button cancelButton = view.findViewById(R.id.cancelButton);
+        Button cancelButton = view.findViewById(R.id.cancel_button);
 
+        // Firestore helper to populate waiting list and available spots
+        FireStoreUtilities.fillEntrantMetrics(
+                db,
+                eventId,
+                waitingListCountText,
+                null,
+                availableSpaceCountText,
+                getContext()
+            );
+
+        // Run draw
         runDrawButton.setOnClickListener(v -> {
             String inputText = numSelectedEntrants.getText().toString().trim();
 
@@ -95,7 +110,7 @@ public class RunDrawFragment extends Fragment {
 
             int numToSelect;
 
-            // In case input is ever changed from numerical Type
+            // In case input is ever changed from numerical Type (Remove try block and only leave numToSelect <= 0)
             try {
                 numToSelect = Integer.parseInt(inputText);
             } catch (NumberFormatException e) {
@@ -169,5 +184,10 @@ public class RunDrawFragment extends Fragment {
                         Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
                     });
         });
+
+        // Cancel button from Firestore utility helper class
+        cancelButton.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigateUp();
+    });
     }
 }
