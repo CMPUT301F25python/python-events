@@ -62,7 +62,9 @@
 
         <action
             android:id="@+id/action_confirmDrawAndNotifyFragment_to_organizerEventPageFragment"
-            app:destination="@id/organizerEventPageFragment" />
+            app:destination="@id/organizerEventPageFragment"
+            app:popUpTo="@id/organizerEventPageFragment"
+            app:popUpToInclusive="true"/>
 
     </fragment>
 
