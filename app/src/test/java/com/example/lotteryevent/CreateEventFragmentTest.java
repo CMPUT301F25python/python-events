@@ -1,5 +1,6 @@
 package com.example.lotteryevent;
 
+import com.example.lotteryevent.ui.CreateEventFragment;
 import com.google.firebase.Timestamp;
 
 import org.junit.Before;

@@ -1,4 +1,4 @@
-package com.example.lotteryevent.organizer;
+package com.example.lotteryevent.ui.organizer;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -28,7 +28,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A fragment that displays a list of entrants for a specific event, filtered by their status.

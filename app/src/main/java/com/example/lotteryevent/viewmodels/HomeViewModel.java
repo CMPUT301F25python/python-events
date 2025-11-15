@@ -4,12 +4,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventRepository;
+import com.example.lotteryevent.ui.HomeFragment;
+
 import java.util.List;
 
 /**
  * ViewModel for the Home screen, responsible for preparing and managing the data for the UI.
  * <p>
- * This ViewModel provides the {@link com.example.lotteryevent.HomeFragment} with the necessary data,
+ * This ViewModel provides the {@link HomeFragment} with the necessary data,
  * such as a list of lottery events, loading status, and error messages. It acts as an intermediary
  * between the UI and the data layer (represented by {@link IEventRepository}).
  * <p>

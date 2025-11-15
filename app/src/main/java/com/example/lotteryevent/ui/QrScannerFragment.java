@@ -1,4 +1,4 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.ui;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -22,7 +22,9 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
-import com.google.common.util.concurrent.ListenableFuture; // CORRECT import
+
+import com.example.lotteryevent.R;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
 import com.google.mlkit.vision.barcode.BarcodeScanning;

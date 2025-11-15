@@ -1,4 +1,4 @@
-package com.example.lotteryevent.organizer;
+package com.example.lotteryevent.ui.organizer;
 
 import android.content.ContentValues;
 import android.content.Intent;

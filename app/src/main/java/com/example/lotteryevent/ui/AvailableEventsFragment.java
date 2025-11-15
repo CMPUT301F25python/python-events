@@ -1,4 +1,4 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,7 +26,6 @@ import java.util.List;
 public class AvailableEventsFragment extends Fragment {
 
     private FirebaseFirestore db;
-    private FirebaseAuth auth; // not highlighted for some reason, but it is being used
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
@@ -58,7 +58,7 @@ public class AvailableEventsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         db   = FirebaseFirestore.getInstance();
-        auth = FirebaseAuth.getInstance();
+        FirebaseAuth auth = FirebaseAuth.getInstance();
 
         // Use ONE RecyclerView reference
         recyclerView = view.findViewById(R.id.events_recycler_view);
