@@ -140,7 +140,10 @@ public class ManageSelectedFragment extends Fragment {
                                 .document(eventId)
                                 .collection("entrants")
                                 .document(finalReplacementUserId)
-                                .update("status", "invited");
+                                .update("status", "invited")
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(getContext(), "New user was not moved to invtied list",Toast.LENGTH_SHORT).show()
+                                );
                     }
 
                     // After replacing return cancelled user to waiting list
@@ -162,7 +165,7 @@ public class ManageSelectedFragment extends Fragment {
 
                                 selectedAdapter.notifyDataSetChanged();
                             })
-                            .addOnSuccessListener(e ->
+                            .addOnFailureListener(e ->
                                     Toast.makeText(getContext(),"Unable to update cancelled user", Toast.LENGTH_SHORT).show()
                             );
                 })
