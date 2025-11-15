@@ -35,14 +35,12 @@ public class EventTest {
         assertNull("registrationEndDateTime should be null", event.getRegistrationEndDateTime());
         assertNull("capacity should be null", event.getCapacity());
         assertNull("lotteryGuidelines should be null", event.getLotteryGuidelines());
-        assertNull("waitinglistlimit should be null", event.getWaitinglistlimit());
+        assertNull("waitinglistlimit should be null", event.getWaitingListLimit());
         assertNull("status should be null", event.getStatus());
         assertNull("createdAt should be null", event.getCreatedAt());
 
         // Verify primitive types are their default values
-        assertEquals("waitinglistCount should be 0", 0, event.getWaitinglistCount());
-        assertEquals("attendeeCount should be 0", 0, event.getAttendeeCount());
-        assertFalse("isgeolocationRequired should be false", event.isIsgeolocationRequired());
+        assertFalse("isgeolocationRequired should be false", event.isGeoLocationRequired());
     }
 
     /**
@@ -126,20 +124,12 @@ public class EventTest {
         assertEquals(capacity, event.getCapacity());
 
         Integer waitinglistlimit = 50;
-        event.setWaitinglistlimit(waitinglistlimit);
-        assertEquals(waitinglistlimit, event.getWaitinglistlimit());
-
-        int waitinglistCount = 12;
-        event.setWaitinglistCount(waitinglistCount);
-        assertEquals(waitinglistCount, event.getWaitinglistCount());
-
-        int attendeeCount = 350;
-        event.setAttendeeCount(attendeeCount);
-        assertEquals(attendeeCount, event.getAttendeeCount());
+        event.setWaitingListLimit(waitinglistlimit);
+        assertEquals(waitinglistlimit, event.getWaitingListLimit());
 
         // Test Boolean property
-        event.setIsgeolocationRequired(true);
-        assertTrue(event.isIsgeolocationRequired());
+        event.setIsGeoLocationRequired(true);
+        assertTrue(event.isGeoLocationRequired());
 
         // Test Timestamp properties
         Timestamp now = new Timestamp(new Date());
