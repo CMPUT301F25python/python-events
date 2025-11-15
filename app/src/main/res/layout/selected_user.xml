@@ -3,9 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
-    android:padding="12dp"
-    android:layout_gravity="center_vertical">
+    android:padding="12dp">
 
     <TextView
         android:id="@+id/userNameText"
@@ -16,7 +16,11 @@
         android:textSize="18sp"
         android:textColor="#000000"
         android:padding="8dp"
-        tools:ignore="HardcodedText"/>
+        tools:ignore="HardcodedText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/cancelButton"/>
 
     <Button
         android:id="@+id/cancelButton"
@@ -26,7 +30,10 @@
         android:textSize="15sp"
         android:background="@drawable/rounded_button_red"
         android:textColor="#FFFFFF"
-        tools:ignore="HardcodedText" />
+        tools:ignore="HardcodedText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
