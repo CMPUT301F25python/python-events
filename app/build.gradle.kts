@@ -44,21 +44,27 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation(platform(libs.firebase.bom))
-    implementation("com.google.firebase:firebase-firestore")
 
     // --- Navigation Dependencies ---
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
 
     // --- Other Dependencies ---
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    implementation("com.google.guava:guava:33.5.0-android")
-    implementation("com.google.zxing:core:3.5.3")
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.google.guava)
+    implementation(libs.zxing.core)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
+    testImplementation(libs.arch.core.testing)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.fragment.testing)
+    debugImplementation(libs.fragment.testing.manifest)
 
     // --- Camera Dependencies ---
     implementation(libs.camera.core)
