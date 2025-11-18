@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".organizer.EntrantListFragment">
+    tools:context=".ui.organizer.EntrantListFragment">
 
     <TextView
         android:id="@+id/entrant_list_title"

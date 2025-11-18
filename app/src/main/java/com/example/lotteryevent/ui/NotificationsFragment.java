@@ -1,6 +1,4 @@
-package com.example.lotteryevent;
-
-import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+package com.example.lotteryevent.ui;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -16,13 +14,12 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.lotteryevent.adapters.EventAdapter;
+import com.example.lotteryevent.NotificationCustomManager;
+import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.NotificationAdapter;
-import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.data.Notification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -58,7 +55,7 @@ public class NotificationsFragment extends Fragment {
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
      *
-     * @return
+     * @return Return the View for the fragment's UI, or null.
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

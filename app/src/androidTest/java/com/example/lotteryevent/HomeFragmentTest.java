@@ -4,6 +4,7 @@ import androidx.fragment.app.testing.FragmentScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.lotteryevent.repository.FakeEventRepository;
+import com.example.lotteryevent.ui.HomeFragment;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.HomeViewModel;
 

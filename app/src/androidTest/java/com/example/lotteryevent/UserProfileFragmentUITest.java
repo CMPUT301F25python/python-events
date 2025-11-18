@@ -10,6 +10,8 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
+import com.example.lotteryevent.ui.UserProfileFragment;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
