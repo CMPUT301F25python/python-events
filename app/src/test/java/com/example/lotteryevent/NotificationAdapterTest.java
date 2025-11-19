@@ -10,11 +10,10 @@ import org.junit.Test;
 
 
 /**
- * Unit tests for the validation logic within the {@link CreateEventFragment}.
+ * Unit tests for the message composition logic within the {@link NotificationAdapter}.
  * <p>
- * This class tests the {@code validateEventInput} method to ensure all business rules
- * for creating an event are correctly enforced. It covers scenarios such as empty fields,
- * chronological order of dates, and the integrity of the registration period.
+ * This class tests the {@code messageConstructor} method to ensure messages constructed properly
+ * based on message type for notifs.
  */
 public class NotificationAdapterTest {
 
@@ -29,6 +28,9 @@ public class NotificationAdapterTest {
     private String organizerId;
     private String organizerName;
 
+    /**
+     * Sets up notif record and fields
+     */
     @Before
     public void setUp() {
         uid = "Wa54uQ98ykOHpRq0IbZtMJoHAkU2";
@@ -42,7 +44,9 @@ public class NotificationAdapterTest {
         notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
     }
 
-    // All Valid Scenarios
+    /**
+     * Tests lottery win message construction
+     */
     @Test
     public void testMessageConstructorLotteryWin() {
         notification.setType("lottery_win");
@@ -50,6 +54,9 @@ public class NotificationAdapterTest {
         assertEquals(message, "\uD83C\uDF89 You've been selected for " + notification.getEventName() + "! Tap to accept or decline.");
     }
 
+    /**
+     * Tests lottery loss message construction
+     */
     @Test
     public void testMessageConstructorLotteryLoss() {
         notification.setType("lottery_loss");
@@ -57,6 +64,9 @@ public class NotificationAdapterTest {
         assertEquals(message, "❌ You weren't selected for " + notification.getEventName() + ".");
     }
 
+    /**
+     * Tests event update message construction
+     */
     @Test
     public void testMessageConstructorEventUpdate() {
         notification.setType("event_update");
@@ -64,6 +74,9 @@ public class NotificationAdapterTest {
         assertEquals(message, "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!");
     }
 
+    /**
+     * Tests custom message construction
+     */
     @Test
     public void testMessageConstructorCustomMessage() {
         notification.setType("custom_message");

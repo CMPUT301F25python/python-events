@@ -1,4 +1,4 @@
-package com.example.lotteryevent.organizer;
+package com.example.lotteryevent.ui.organizer;
 
 import android.os.Bundle;
 import android.util.Log;

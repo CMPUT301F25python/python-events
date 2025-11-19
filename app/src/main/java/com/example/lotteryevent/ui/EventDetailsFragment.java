@@ -1,4 +1,4 @@
-package com.example.lotteryevent;
+package com.example.lotteryevent.ui;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +18,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
+import com.example.lotteryevent.NotificationCustomManager;
+import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.Timestamp;
