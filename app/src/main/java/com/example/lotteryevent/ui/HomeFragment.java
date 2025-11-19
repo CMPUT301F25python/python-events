@@ -195,10 +195,10 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Observe errors and display them as a Toast message.
-        homeViewModel.getError().observe(getViewLifecycleOwner(), error -> {
-            if (error != null && !error.isEmpty()) {
-                Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
+        // Observe messages and display them as a Toast message.
+        homeViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             }
         });
     }

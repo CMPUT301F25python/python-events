@@ -66,7 +66,7 @@ public class HomeViewModelTest {
 
         // --- Assert ---
         // Get the values from the LiveData objects.
-        String errorMessage = viewModel.getError().getValue();
+        String errorMessage = viewModel.getMessage().getValue();
         List<Event> events = viewModel.getEvents().getValue();
 
         // Verify that the error LiveData was set with the error message.
