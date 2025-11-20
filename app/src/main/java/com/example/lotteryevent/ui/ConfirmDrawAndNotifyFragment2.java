@@ -1,4 +1,4 @@
-package com.example.lotteryevent.ui.organizer;
+package com.example.lotteryevent.ui;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -42,9 +42,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  *     notification documents for the user in Firebase. Organizer can also press "Cancel" which moves all entrants back to the waiting list.
  * </p>
  */
-public class ConfirmDrawAndNotifyFragment extends Fragment {
+public class ConfirmDrawAndNotifyFragment2 extends Fragment {
     private static final String TAG = "ConfirmDrawAndNotifyFragment";
-    //    private FirebaseFirestore db;
+//    private FirebaseFirestore db;
 //    private NotificationCustomManager notifManager;
     private Button btnActionPositive;
     private Button btnActionNegative;
@@ -65,7 +65,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     /**
      * Default constructor for production use by the Android Framework.
      */
-    public ConfirmDrawAndNotifyFragment() {
+    public ConfirmDrawAndNotifyFragment2() {
     }
 
     /**
@@ -73,7 +73,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      *
      * @param factory The factory to use for creating the ViewModel.
      */
-    public ConfirmDrawAndNotifyFragment(ViewModelProvider.Factory factory) {
+    public ConfirmDrawAndNotifyFragment2(ViewModelProvider.Factory factory) {
         this.viewModelFactory = factory;
     }
 

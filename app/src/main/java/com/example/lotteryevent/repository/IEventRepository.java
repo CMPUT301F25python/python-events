@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import java.util.List;
 
@@ -20,6 +22,9 @@ public interface IEventRepository {
      */
     LiveData<List<Event>> getUserEvents();
 
+    LiveData<Event> getUserEvent();
+    LiveData<List<Entrant>> getEventEntrants();
+
     /**
 
      Returns a LiveData object holding the current loading state (true if loading, false otherwise).
@@ -32,6 +37,17 @@ public interface IEventRepository {
      @return LiveData String containing an message.
      */
     LiveData<String> getMessage();
+
+    LiveData<Integer> getWaitingListCount();
+    LiveData<Integer> getSelectedUsersCount();
+
+    /**
+     * Kicks off the process of fetching both the event's main details and the
+     * current user's entrant status from the data source.
+     *
+     * @param eventId The unique identifier of the event to load.
+     */
+    void fetchEventAndEntrants(String eventId);
 
     /**
      Triggers the process of fetching events from the data source for the currently logged-in user.
