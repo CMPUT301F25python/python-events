@@ -1,8 +1,6 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

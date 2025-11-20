@@ -1,7 +1,7 @@
 package com.example.lotteryevent.repository;
 
+import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -28,9 +28,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
 
     private ListenerRegistration listenerRegistration; // To manage the real-time listener
 
-    private NotificationCustomManager notifManager;
+    private final NotificationCustomManager notifManager;
 
-    public NotificationRepositoryImpl() {
+    public NotificationRepositoryImpl(Context context) {
+        this.notifManager = new NotificationCustomManager(context);
         attachListener();
     }
 
@@ -103,14 +104,15 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                         String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
                         String type = "custom_message";
                         notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+                        _message.postValue("Notification sent successfully to " + uid);
                     } else {
                         Log.d(TAG, "No such document");
-                        Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
+                        _message.postValue("Event not found for notification.");
                     }
                 })
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "get failed with ", e);
-                    Toast.makeText(getContext(), "Error sending notification to chosen entrant", Toast.LENGTH_SHORT).show();
+                    _message.postValue("Error sending notification: " + e.getMessage());
                 });
     }
 

@@ -20,21 +20,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EntrantListAdapter;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.repository.INotificationRepository;
-import com.example.lotteryevent.repository.IUserRepository;
 import com.example.lotteryevent.repository.NotificationRepositoryImpl;
-import com.example.lotteryevent.repository.UserRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
-import com.example.lotteryevent.viewmodels.UserProfileViewModel;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +54,6 @@ public class EntrantListFragment extends Fragment {
     // --- Data ---
     private String eventId;
     private String status;
-    private List<Entrant> entrants;
 
     // --- ViewModel ---
     private EntrantListViewModel viewModel;
@@ -116,11 +109,13 @@ public class EntrantListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        setupRecyclerView();
+
         // --- ViewModel Initialization ---
         // If a factory was not injected (production), create the default one.
         if (viewModelFactory == null) {
             IEventRepository eventRepository = new EventRepositoryImpl();
-            INotificationRepository notificationRepository = new NotificationRepositoryImpl();
+            INotificationRepository notificationRepository = new NotificationRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
             factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(eventRepository, notificationRepository));
             viewModelFactory = factory;
@@ -133,7 +128,7 @@ public class EntrantListFragment extends Fragment {
 
         // --- The rest of the method is the same ---
         setupObservers();
-        setupClickListeners();
+        initializeViews(view);
     }
 
     /**
@@ -186,10 +181,9 @@ public class EntrantListFragment extends Fragment {
         viewModel.getEntrants(eventId, status).observe(getViewLifecycleOwner(), list -> {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
-                entrants = list;
                 adapter.updateEntrants(list);
                 Log.d(TAG, "Fetched " + list.size() + " entrants with status: " + status);
-                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
+                sendNotificationButton.setOnClickListener(v -> showNotificationDialog(list));
             } else {
                 Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
             }
@@ -200,7 +194,7 @@ public class EntrantListFragment extends Fragment {
      * Displays notification dialog for organizer to enter a message to send to all entrants
      * in the shown list. When notify all button is pressed, a notif is sent to each entrant
      */
-    private void showNotificationDialog() {
+    private void showNotificationDialog(List<Entrant> currentEntrantsList) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Notification Message");
         final EditText input = new EditText(getContext());
@@ -211,9 +205,7 @@ public class EntrantListFragment extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 String organizerMessage = input.getText().toString().trim();
                 if (!organizerMessage.isEmpty()) {
-                    for (Entrant entrant : entrants) {
-                        viewModel.notifyAllEntrants(entrants, eventId, organizerMessage);
-                    }
+                    viewModel.notifyAllEntrants(currentEntrantsList, eventId, organizerMessage);
                 } else {
                     Toast.makeText(getContext(), "No message entered to send", Toast.LENGTH_SHORT).show();
                 }
