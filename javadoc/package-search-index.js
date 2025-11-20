@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.example.lotteryevent"},{"l":"com.example.lotteryevent.adapters"},{"l":"com.example.lotteryevent.data"},{"l":"com.example.lotteryevent.repository"},{"l":"com.example.lotteryevent.ui"},{"l":"com.example.lotteryevent.ui.organizer"},{"l":"com.example.lotteryevent.viewmodels"}];updateSearchResults();
