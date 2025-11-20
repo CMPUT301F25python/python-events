@@ -73,6 +73,40 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                 });
     }
 
+    /**
+     * For each entrant, retrieves even information for notif records, composes message and
+     * sends notification
+     * @param uid recipient user's ID
+     * @param organizerMessage message from organizer
+     */
+    private void notifyEntrant(String uid, String eventId, String organizerMessage) {
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(document -> {
+                    if (document != null && document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        String eventName = document.getString("name");
+                        String organizerId = document.getString("organizerId");
+                        String organizerName = document.getString("organizerName");
+                        String title = "Message From Organizer";
+                        String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
+                        String type = "custom_message";
+                        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+
+                        db.collection("notifications").add(notification)
+                                .addOnSuccessListener(w ->
+                                        Log.w(TAG, "Notification sent to " + uid))
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Failed to send notification", e);
+                                    _message.postValue("Failed to send one or more notifications");
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching event info", e);
+                    _message.postValue("Event does not exist, notification not sent.");
+                });
+    }
+
     @Override
     public void markNotificationAsSeen(String notificationId) {
         if (notificationId == null || notificationId.isEmpty()) return;
