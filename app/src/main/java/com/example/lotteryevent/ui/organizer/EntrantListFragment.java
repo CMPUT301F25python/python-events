@@ -108,7 +108,7 @@ public class EntrantListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        initializeViews(view);
         setupRecyclerView();
 
         // --- ViewModel Initialization ---
@@ -128,7 +128,6 @@ public class EntrantListFragment extends Fragment {
 
         // --- The rest of the method is the same ---
         setupObservers();
-        initializeViews(view);
     }
 
     /**
