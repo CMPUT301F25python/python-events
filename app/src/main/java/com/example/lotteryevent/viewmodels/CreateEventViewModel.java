@@ -77,9 +77,9 @@ public class CreateEventViewModel extends ViewModel {
         newEvent.setLocation(location);
         newEvent.setPrice(price);
         newEvent.setCapacity(capacity);
-        newEvent.setWaitinglistlimit(waitingListLimit);
+        newEvent.setWaitingListLimit(waitingListLimit);
         newEvent.setLotteryGuidelines(lotteryGuidelinesStr);
-        newEvent.setIsgeolocationRequired(isGeoLocationRequired);
+        newEvent.setIsGeoLocationRequired(isGeoLocationRequired);
         newEvent.setEventStartDateTime(eventStartTimestamp);
         newEvent.setEventEndDateTime(eventEndTimestamp);
         newEvent.setRegistrationStartDateTime(regStartTimestamp);
