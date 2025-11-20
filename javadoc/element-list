@@ -1,0 +1,7 @@
+com.example.lotteryevent
+com.example.lotteryevent.adapters
+com.example.lotteryevent.data
+com.example.lotteryevent.repository
+com.example.lotteryevent.ui
+com.example.lotteryevent.ui.organizer
+com.example.lotteryevent.viewmodels
