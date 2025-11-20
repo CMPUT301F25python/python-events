@@ -159,8 +159,8 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-//        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
-//        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
+        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
+        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
     }
 
     private void setupObservers() {

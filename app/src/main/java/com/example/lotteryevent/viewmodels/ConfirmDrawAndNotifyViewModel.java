@@ -85,19 +85,16 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         this.message = repository.getMessage();
 
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
-        _waitingListCount.addSource(repository.isLoading(), event -> calculateEntrantCounts());
-
         _selectedUsersCount.addSource(repository.getSelectedUsersCount(), event -> calculateEntrantCounts());
-        _selectedUsersCount.addSource(repository.isLoading(), event -> calculateEntrantCounts());
-
         _availableSpaceCount.addSource(repository.getEventEntrants(), event -> calculateEntrantCounts());
-        _selectedUsersCount.addSource(repository.getSelectedUsersCount(), event -> calculateEntrantCounts());
-        _availableSpaceCount.addSource(repository.isLoading(), event -> calculateEntrantCounts());
 
 
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
         _bottomUiState.addSource(repository.getEventEntrants(), event -> calculateUiState());
-        _bottomUiState.addSource(repository.isLoading(), isLoading -> calculateUiState());
+        _bottomUiState.addSource(repository.isLoading(), isLoading -> {
+            calculateEntrantCounts();
+            calculateUiState();
+        });
         _bottomUiState.addSource(repository.getSelectedUsersCount(), count -> calculateUiState());
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
@@ -161,7 +158,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     }
 
     public void onPositiveButtonClicked() {
-        String eventId = eventDetails.getValue().getEventId();
+        String eventId = Objects.requireNonNull(eventDetails.getValue()).getEventId();
         ArrayList<Task<DocumentReference>> tasks = new ArrayList<>();
         for (Entrant entrant : Objects.requireNonNull(eventEntrants.getValue())) {
             String eventName = Objects.requireNonNull(eventDetails.getValue()).getName();
@@ -176,21 +173,20 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
-                ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
-                        ConfirmDrawAndNotifyFragmentDirections
-                                .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(eventId);
-
-                Navigation.findNavController(view).navigate(action);
+                navigateBack();
             });
     }
 
-//    public void onNegativeButtonClicked() {
-//        EventDetailsViewModel.BottomUiState currentState = _bottomUiState.getValue();
-//        if (currentState == null || currentState.negativeButtonText == null) return;
-//
-//        String action = currentState.negativeButtonText;
-//        if (action.equals("Decline Invitation")) {
-//            repository.updateInvitationStatus(eventId, "declined");
-//        }
-//    }
+    public void onNegativeButtonClicked() {
+        repository.updateEntrantsAttributes(Objects.requireNonNull(eventDetails.getValue()).getEventId(), "status", "invited", "waiting");
+        navigateBack();
+    }
+
+    private void navigateBack() {
+        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
+                ConfirmDrawAndNotifyFragmentDirections
+                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(Objects.requireNonNull(eventDetails.getValue()).getEventId());
+
+        Navigation.findNavController(view).navigate(action);
+    }
 }

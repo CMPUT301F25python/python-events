@@ -59,4 +59,6 @@ public interface IEventRepository {
      * The result (success or failure) will be posted to the message LiveData
      */
     void createEvent(Event event);
+
+    void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue);
 }

@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
+import android.widget.Toast;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -106,6 +108,22 @@ public class EventRepositoryImpl implements IEventRepository {
                         _events.setValue(new ArrayList<>()); // Post empty list on error
                     }
                 });
+    }
+
+    @Override
+    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
+        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
+        entrantsRef.whereEqualTo(fieldName, oldValue)
+            .get()
+            .addOnSuccessListener(query -> {
+                if (!query.isEmpty()) {
+                    for (DocumentSnapshot entrantDoc : query.getDocuments()) {
+                        entrantDoc.getReference().update(fieldName, newValue);
+                    }
+                    _userMessage.postValue("LotteryCancelled");
+                }
+            })
+            .addOnFailureListener(e -> _userMessage.postValue("Error cancelling lottery"));
     }
 
     @Override
