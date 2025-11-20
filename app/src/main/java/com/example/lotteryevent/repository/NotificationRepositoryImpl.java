@@ -1,8 +1,12 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
+import android.widget.Toast;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -23,6 +27,8 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
     private ListenerRegistration listenerRegistration; // To manage the real-time listener
+
+    private NotificationCustomManager notifManager;
 
     public NotificationRepositoryImpl() {
         attachListener();
@@ -79,7 +85,13 @@ public class NotificationRepositoryImpl implements INotificationRepository {
      * @param uid recipient user's ID
      * @param organizerMessage message from organizer
      */
-    private void notifyEntrant(String uid, String eventId, String organizerMessage) {
+    @Override
+    public void notifyEntrant(String uid, String eventId, String organizerMessage) {
+        if(uid == null || eventId == null){
+            _message.postValue("Invalid notification request.");
+            return;
+        }
+
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(document -> {
                     if (document != null && document.exists()) {
@@ -90,20 +102,15 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                         String title = "Message From Organizer";
                         String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
                         String type = "custom_message";
-                        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
-
-                        db.collection("notifications").add(notification)
-                                .addOnSuccessListener(w ->
-                                        Log.w(TAG, "Notification sent to " + uid))
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Failed to send notification", e);
-                                    _message.postValue("Failed to send one or more notifications");
-                                });
+                        notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+                    } else {
+                        Log.d(TAG, "No such document");
+                        Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error fetching event info", e);
-                    _message.postValue("Event does not exist, notification not sent.");
+                    Log.w(TAG, "get failed with ", e);
+                    Toast.makeText(getContext(), "Error sending notification to chosen entrant", Toast.LENGTH_SHORT).show();
                 });
     }
 

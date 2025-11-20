@@ -135,6 +135,11 @@ public class EventRepositoryImpl implements IEventRepository {
      * matches the status passed as an argument to this fragment.
      */
     public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
+        if (eventId == null || status == null) {
+            _userMessage.postValue("Error: Missing event data.");
+            _entrants.setValue(new ArrayList<>());
+            return _entrants;
+        }
 
         db.collection("events").document(eventId).collection("entrants")
                 .whereEqualTo("status", status)
