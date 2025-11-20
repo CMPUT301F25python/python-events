@@ -135,42 +135,42 @@ public class EntrantListFragment extends Fragment {
         recyclerView.setAdapter(adapter);
     }
 
-    /**
-     * Fetches entrants from the Firestore subcollection where their 'status' field
-     * matches the status passed as an argument to this fragment. It updates the
-     * RecyclerView's adapter upon successful completion.
-     */
-    private void fetchEntrantsByStatus() {
-        if (eventId == null || status == null) {
-            Toast.makeText(getContext(), "Error: Missing event data.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        progressBar.setVisibility(View.VISIBLE);
-
-        db.collection("events").document(eventId).collection("entrants")
-                .whereEqualTo("status", status)
-                .get()
-                .addOnCompleteListener(task -> {
-                    progressBar.setVisibility(View.GONE);
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        entrants = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult()) {
-                            Entrant entrant = document.toObject(Entrant.class);
-                            if (entrant != null) {
-                                entrants.add(entrant);
-                            }
-                        }
-                        adapter.updateEntrants(entrants);
-                        Log.d(TAG, "Fetched " + entrants.size() + " entrants with status: " + status);
-                        // added here to ensure setup occurs after entrants have been retrieved
-                        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
-                    } else {
-                        Log.w(TAG, "Error getting documents: ", task.getException());
-                        Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
+//    /**
+//     * Fetches entrants from the Firestore subcollection where their 'status' field
+//     * matches the status passed as an argument to this fragment. It updates the
+//     * RecyclerView's adapter upon successful completion.
+//     */
+//    private void fetchEntrantsByStatus() {
+//        if (eventId == null || status == null) {
+//            Toast.makeText(getContext(), "Error: Missing event data.", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        progressBar.setVisibility(View.VISIBLE);
+//
+//        db.collection("events").document(eventId).collection("entrants")
+//                .whereEqualTo("status", status)
+//                .get()
+//                .addOnCompleteListener(task -> {
+//                    progressBar.setVisibility(View.GONE);
+//                    if (task.isSuccessful() && task.getResult() != null) {
+//                        entrants = new ArrayList<>();
+//                        for (DocumentSnapshot document : task.getResult()) {
+//                            Entrant entrant = document.toObject(Entrant.class);
+//                            if (entrant != null) {
+//                                entrants.add(entrant);
+//                            }
+//                        }
+//                        adapter.updateEntrants(entrants);
+//                        Log.d(TAG, "Fetched " + entrants.size() + " entrants with status: " + status);
+//                        // added here to ensure setup occurs after entrants have been retrieved
+//                        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
+//                    } else {
+//                        Log.w(TAG, "Error getting documents: ", task.getException());
+//                        Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//    }
 
     /**
      * A utility method to capitalize the first letter of a given string.

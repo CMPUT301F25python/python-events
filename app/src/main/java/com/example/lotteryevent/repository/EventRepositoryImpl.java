@@ -1,11 +1,17 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -28,6 +34,7 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
+    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
 
     // The ViewModel will observe these public, immutable LiveData objects
     @Override
@@ -121,5 +128,31 @@ public class EventRepositoryImpl implements IEventRepository {
                     _userMessage.setValue("Error: Could not fetch user details.");
                     Log.e(TAG, "Error fetching organizer name", e);
                 });
+    }
+
+    /**
+     * Fetches entrants from the Firestore subcollection where their 'status' field
+     * matches the status passed as an argument to this fragment.
+     */
+    public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
+
+        db.collection("events").document(eventId).collection("entrants")
+                .whereEqualTo("status", status)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Entrant> list = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Entrant entrant = document.toObject(Entrant.class);
+                        if (entrant != null) {
+                            list.add(entrant);
+                        }
+                    }
+                    _entrants.setValue(list);
+                })
+                .addOnFailureListener(e ->{
+                    Log.e(TAG, "Failed to load entrants", e);
+                    _entrants.setValue(new ArrayList<>());
+                });
+        return _entrants;
     }
 }
