@@ -80,7 +80,7 @@ public class OrganizerEventFragment extends Fragment {
 
         // Retrieve the eventId from navigation arguments
         if (getArguments() != null) {
-            eventId = OrganizerEventPageFragmentArgs.fromBundle(getArguments()).getEventId();
+            eventId = OrganizerEventFragmentArgs.fromBundle(getArguments()).getEventId();
         }
     }
 
@@ -167,7 +167,7 @@ public class OrganizerEventFragment extends Fragment {
             } else if (id == R.id.btnInvitedParticipants) {
                 // Navigate to ManageSelected Fragment
                 Navigation.findNavController(v).navigate(
-                        OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
+                        OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
                 );
                 return;
             } else if (id == R.id.btnCancelledParticipants) {
@@ -176,8 +176,8 @@ public class OrganizerEventFragment extends Fragment {
                 return;
             }
 
-            OrganizerEventPageFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
-                    OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
+            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
+                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
 
             Navigation.findNavController(v).navigate(action);
         };
