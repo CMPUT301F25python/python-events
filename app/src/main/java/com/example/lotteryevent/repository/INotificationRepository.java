@@ -32,12 +32,4 @@ public interface INotificationRepository {
      * This must be called when the data is no longer needed.
      */
     void detachListener();
-
-    /**
-     * Fetches event data to write notification
-     * @param uid id of the entrant being notified
-     * @param eventId id of the event for which entrant is being notified
-     * @param organizerMessage contents of the notification
-     */
-    void notifyEntrant(String uid, String eventId, String organizerMessage);
 }

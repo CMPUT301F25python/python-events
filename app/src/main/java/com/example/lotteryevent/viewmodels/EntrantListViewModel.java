@@ -4,18 +4,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.Entrant;
-import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.repository.INotificationRepository;
+import com.example.lotteryevent.repository.EntrantListRepository;
 
 import java.util.List;
 public class EntrantListViewModel extends ViewModel {
 
-    private final IEventRepository eventRepository;
-    private final INotificationRepository notificationRepository;
-
-    public EntrantListViewModel(IEventRepository eventRepository, INotificationRepository notificationRepository) {
-        this.eventRepository = eventRepository;
-        this.notificationRepository = notificationRepository;
+    private final EntrantListRepository entrantListRepo;
+    public EntrantListViewModel(EntrantListRepository entrantListRepo) {
+        this.entrantListRepo = entrantListRepo;
     }
 
     /**
@@ -23,7 +19,7 @@ public class EntrantListViewModel extends ViewModel {
      * The repository handles Firestore fetch and _entrants LiveData posting.
      */
     public LiveData<List<Entrant>> getEntrants(String eventId, String status) {
-        return eventRepository.fetchEntrantsByStatus(eventId, status);
+        return entrantListRepo.fetchEntrantsByStatus(eventId, status);
     }
 
     /**
@@ -33,7 +29,7 @@ public class EntrantListViewModel extends ViewModel {
         if (entrants == null || entrants.isEmpty()) return;
         for (Entrant e : entrants) {
             if (e != null && e.getUserId() != null) {
-                notificationRepository.notifyEntrant(e.getUserId(), eventId, organizerMessage);
+                entrantListRepo.notifyEntrant(e.getUserId(), eventId, organizerMessage);
             }
         }
     }

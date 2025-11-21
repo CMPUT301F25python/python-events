@@ -6,7 +6,6 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,10 +27,8 @@ public class NotificationRepositoryImpl implements INotificationRepository {
 
     private ListenerRegistration listenerRegistration; // To manage the real-time listener
 
-    private final NotificationCustomManager notifManager;
 
     public NotificationRepositoryImpl(Context context) {
-        this.notifManager = new NotificationCustomManager(context);
         attachListener();
     }
 
@@ -77,42 +74,6 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                         }
                         _notifications.postValue(notificationList);
                     }
-                });
-    }
-
-    /**
-     * For each entrant, retrieves even information for notif records, composes message and
-     * sends notification
-     * @param uid recipient user's ID
-     * @param organizerMessage message from organizer
-     */
-    @Override
-    public void notifyEntrant(String uid, String eventId, String organizerMessage) {
-        if(uid == null || eventId == null){
-            _message.postValue("Invalid notification request.");
-            return;
-        }
-
-        db.collection("events").document(eventId).get()
-                .addOnSuccessListener(document -> {
-                    if (document != null && document.exists()) {
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                        String eventName = document.getString("name");
-                        String organizerId = document.getString("organizerId");
-                        String organizerName = document.getString("organizerName");
-                        String title = "Message From Organizer";
-                        String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
-                        String type = "custom_message";
-                        notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
-                        _message.postValue("Notification sent successfully to " + uid);
-                    } else {
-                        Log.d(TAG, "No such document");
-                        _message.postValue("Event not found for notification.");
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "get failed with ", e);
-                    _message.postValue("Error sending notification: " + e.getMessage());
                 });
     }
 
