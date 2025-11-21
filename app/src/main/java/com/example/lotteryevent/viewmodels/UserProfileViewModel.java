@@ -33,8 +33,8 @@ public class UserProfileViewModel extends ViewModel {
         return userRepository.isLoading();
     }
 
-    public LiveData<String> getError() {
-        return userRepository.getError();
+    public LiveData<String> getMessage() {
+        return userRepository.getMessage();
     }
 
     // --- User Actions ---

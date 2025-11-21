@@ -56,13 +56,13 @@ public class HomeViewModel extends ViewModel {
     }
 
     /**
-     * Exposes error messages from the repository.
-     * The UI can observe this to display error messages to the user.
+     * Exposes  messages from the repository.
+     * The UI can observe this to display error/success messages to the user.
      *
-     * @return A LiveData object containing an error message string.
+     * @return A LiveData object containing a message string.
      */
-    public LiveData<String> getError() {
-        return eventRepository.getError();
+    public LiveData<String> getMessage() {
+        return eventRepository.getMessage();
     }
 
     /**

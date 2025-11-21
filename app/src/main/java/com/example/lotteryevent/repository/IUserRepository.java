@@ -6,7 +6,7 @@ import com.example.lotteryevent.data.User;
 public interface IUserRepository {
 
     LiveData<Boolean> isLoading();
-    LiveData<String> getError();
+    LiveData<String> getMessage();
     LiveData<User> getCurrentUser();
 
     /**
