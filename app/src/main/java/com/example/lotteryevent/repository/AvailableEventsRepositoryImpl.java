@@ -9,6 +9,7 @@ import com.example.lotteryevent.data.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -26,6 +27,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
+    private ListenerRegistration registration;
 
     // The ViewModel will observe these public, immutable LiveData objects
     @Override
@@ -55,26 +57,39 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
 
         _isLoading.setValue(true);
 
-        db.collection("events")
+        registration = db.collection("events")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .addOnCompleteListener(task -> {
+                .addSnapshotListener((querySnapshot, e) -> {
                     _isLoading.setValue(false);
-                    if (task.isSuccessful()) {
+
+                    if (e != null) {
+                        Log.e(TAG, "Error listening for events: ", e);
+                        _userMessage.setValue("Failed to load events. Please check your connection.");
+                        _events.setValue(new ArrayList<>()); // Post empty list on error
+                        return;
+                    }
+
+                    if (querySnapshot != null) {
                         List<Event> userEvents = new ArrayList<>();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
+                        for (QueryDocumentSnapshot document : querySnapshot) {
                             Event event = document.toObject(Event.class);
                             userEvents.add(event);
                         }
                         _events.setValue(userEvents);
                     } else {
-                        Log.e(TAG, "Error getting documents: ", task.getException());
-                        // Post an error message for the UI to display
-                        _userMessage.setValue("Failed to load events. Please check your connection.");
-                        _events.setValue(new ArrayList<>()); // Post empty list on error
+                        // Snapshot is null for some reason, treat as empty
+                        _events.setValue(new ArrayList<>());
                     }
                 });
 
+    }
+
+    @Override
+    public void removeListener() {
+        if (registration != null) {
+            registration.remove();
+            registration = null;
+        }
     }
 
 }
