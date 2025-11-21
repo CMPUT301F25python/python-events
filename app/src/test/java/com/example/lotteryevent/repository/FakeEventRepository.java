@@ -43,6 +43,7 @@ public class FakeEventRepository implements IEventRepository {
         Event event1 = new Event();
         event1.setName("Event 1");
         event1.setCreatedAt(Timestamp.now());
+        event1.setEventId("fake-event-id");
         inMemoryEvents.add(event1);
 
         Event event2 = new Event();
@@ -57,9 +58,9 @@ public class FakeEventRepository implements IEventRepository {
         inMemoryEntrants.add(entrant1);
 
         Entrant entrant2 = new Entrant();
-        entrant1.setUserId("2");
-        entrant1.setUserName("Joe");
-        entrant1.setStatus("waiting");
+        entrant2.setUserId("2");
+        entrant2.setUserName("Joe");
+        entrant2.setStatus("waiting");
         inMemoryEntrants.add(entrant2);
 
         // Post the initial state to the LiveData.
@@ -91,6 +92,36 @@ public class FakeEventRepository implements IEventRepository {
     @Override
     public LiveData<String> getMessage() {
         return _message;
+    }
+
+    /**
+     * Helper method for testing
+     * @param value value to set loading to
+     */
+    public void setIsLoading(boolean value) {
+        _isLoading.setValue(value);
+    }
+
+    public void setWaitingListCount(int value) {
+        _waitingListCount.postValue(value);
+    }
+
+    public void setSelectedUsersCount(int value) {
+        _selectedUsersCount.setValue(value);
+    }
+
+    public void setEntrants(List<Entrant> entrants) {
+        inMemoryEntrants.clear();
+        if (entrants == null) {
+            _entrants.postValue(null);
+            return;
+        }
+        inMemoryEntrants.addAll(entrants);
+        _entrants.postValue(new ArrayList<>(entrants));
+    }
+
+    public void setEvent(Event event) {
+        _event.setValue(event);
     }
 
     /**

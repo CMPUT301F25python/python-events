@@ -43,6 +43,7 @@ public class FakeEventRepository implements IEventRepository {
         Event event1 = new Event();
         event1.setName("Event 1");
         event1.setCreatedAt(Timestamp.now());
+        event1.setEventId("fake-event-id");
         inMemoryEvents.add(event1);
 
         Event event2 = new Event();
@@ -57,9 +58,9 @@ public class FakeEventRepository implements IEventRepository {
         inMemoryEntrants.add(entrant1);
 
         Entrant entrant2 = new Entrant();
-        entrant1.setUserId("2");
-        entrant1.setUserName("Joe");
-        entrant1.setStatus("waiting");
+        entrant2.setUserId("2");
+        entrant2.setUserName("Joe");
+        entrant2.setStatus("waiting");
         inMemoryEntrants.add(entrant2);
 
         // Post the initial state to the LiveData.

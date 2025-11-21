@@ -14,13 +14,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.BottomUiState;
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+
+import java.util.Objects;
 
 /**
  * This fragment allows the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
@@ -96,7 +100,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         if (viewModelFactory == null) {
             IEventRepository repository = new EventRepositoryImpl();
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(ConfirmDrawAndNotifyViewModel.class, () -> new ConfirmDrawAndNotifyViewModel(repository, getContext(), getView()));
+            factory.put(ConfirmDrawAndNotifyViewModel.class, () -> new ConfirmDrawAndNotifyViewModel(repository, new NotificationCustomManager(getContext())));
             viewModelFactory = factory;
         }
         viewModel = new ViewModelProvider(this, viewModelFactory).get(ConfirmDrawAndNotifyViewModel.class);
@@ -171,6 +175,17 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
                 renderBottomUi(uiState);
             }
         });
+
+        viewModel.navigateBack.observe(getViewLifecycleOwner(), navigateBack -> {
+            if (navigateBack != null && navigateBack) {
+                ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
+                        ConfirmDrawAndNotifyFragmentDirections
+                                .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(Objects.requireNonNull(viewModel.event.getValue()).getEventId());
+
+                Navigation.findNavController(requireView()).navigate(action);
+            }
+        });
+
     }
 
     /**

@@ -1,20 +1,17 @@
 package com.example.lotteryevent.viewmodels;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.view.View;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.ui.ConfirmDrawAndNotifyFragmentDirections;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;
@@ -28,18 +25,18 @@ import java.util.Objects;
  * This class handles the logic behind allowing the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
  */
 public class ConfirmDrawAndNotifyViewModel extends ViewModel {
-    @SuppressLint("StaticFieldLeak")
-    private View view;
     private final NotificationCustomManager notifManager;
     private final IEventRepository repository;
-    public LiveData<Event> eventDetails;
+    public LiveData<Event> event;
     public LiveData<List<Entrant>> eventEntrants;
     public LiveData<String> message;
 
     private final MediatorLiveData<String> _waitingListCount = new MediatorLiveData<>();
     private final MediatorLiveData<String> _selectedUsersCount = new MediatorLiveData<>();
     private final MediatorLiveData<String> _availableSpaceCount = new MediatorLiveData<>();
+    private final MutableLiveData<Boolean> _navigateBack = new MutableLiveData<>();
 
+    public LiveData<Boolean> navigateBack = _navigateBack;
     public LiveData<String> waitingListCount = _waitingListCount;
     public LiveData<String> selectedUsersCount = _selectedUsersCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
@@ -60,15 +57,14 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     /**
      * Sets up view model, initializing repository, live data, mediator live data's observers
      * @param repository repository for fetching and setting data
-     * @param context context from fragment
-     * @param view view from fragment
+     * @param notificationCustomManager notificationCustomManager created in fragment needed bc
+     *                                  fragment should take care of providing context
      */
-    public ConfirmDrawAndNotifyViewModel(IEventRepository repository, Context context, View view) {
-        this.view = view;
-        notifManager = new NotificationCustomManager(context);
+    public ConfirmDrawAndNotifyViewModel(IEventRepository repository, NotificationCustomManager notificationCustomManager) {
+        notifManager = notificationCustomManager;
 
         this.repository = repository;
-        this.eventDetails = repository.getUserEvent();
+        this.event = repository.getUserEvent();
         this.eventEntrants = repository.getEventEntrants();
         this.message = repository.getMessage();
 
@@ -155,12 +151,16 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
      * Notifies selected entrants to accept, navigates back to event details screen
      */
     public void onPositiveButtonClicked() {
-        String eventId = Objects.requireNonNull(eventDetails.getValue()).getEventId();
+        if (notifManager == null) {
+            _bottomUiState.setValue(BottomUiState.infoText("Error: Notifications not set up."));
+            return;
+        }
+        String eventId = Objects.requireNonNull(event.getValue()).getEventId();
         ArrayList<Task<DocumentReference>> tasks = new ArrayList<>();
         for (Entrant entrant : Objects.requireNonNull(eventEntrants.getValue())) {
-            String eventName = Objects.requireNonNull(eventDetails.getValue()).getName();
-            String organizerId = eventDetails.getValue().getOrganizerId();
-            String organizerName = eventDetails.getValue().getOrganizerName();
+            String eventName = Objects.requireNonNull(event.getValue()).getName();
+            String organizerId = event.getValue().getOrganizerId();
+            String organizerName = event.getValue().getOrganizerName();
             String title = "Congratulations!";
             String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
             String type = "lottery_win";
@@ -170,7 +170,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
-                navigateBack();
+                _navigateBack.postValue(true);
             });
     }
 
@@ -178,18 +178,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
      * Moves invited entrants back to waiting list and navigates back to event details screen
      */
     public void onNegativeButtonClicked() {
-        repository.updateEntrantsAttributes(Objects.requireNonNull(eventDetails.getValue()).getEventId(), "status", "invited", "waiting");
-        navigateBack();
-    }
-
-    /**
-     * Navigate back to evetn details screen
-     */
-    private void navigateBack() {
-        ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
-                ConfirmDrawAndNotifyFragmentDirections
-                        .actionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment(Objects.requireNonNull(eventDetails.getValue()).getEventId());
-
-        Navigation.findNavController(view).navigate(action);
+        repository.updateEntrantsAttributes(Objects.requireNonNull(event.getValue()).getEventId(), "status", "invited", "waiting");
+        _navigateBack.postValue(true);
     }
 }

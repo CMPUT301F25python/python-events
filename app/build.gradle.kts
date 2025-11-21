@@ -66,7 +66,10 @@ dependencies {
     androidTestImplementation(libs.fragment.testing)
     debugImplementation(libs.fragment.testing.manifest)
     androidTestImplementation(libs.androidx.navigation.testing)
-    androidTestImplementation(libs.androidx.espresso.contrib)
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") {
+        exclude(group = "com.google.protobuf", module = "protobuf-lite")
+    }
+
 
 
     // --- Camera Dependencies ---
