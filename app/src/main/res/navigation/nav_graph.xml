@@ -52,7 +52,7 @@
 
     <fragment
         android:id="@+id/confirmDrawAndNotifyFragment"
-        android:name="com.example.lotteryevent.ui.ConfirmDrawAndNotifyFragment"
+        android:name="com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragment"
         android:label="Confirm Draw and Notify"
         tools:layout="@layout/fragment_confirm_draw_and_notify">
 

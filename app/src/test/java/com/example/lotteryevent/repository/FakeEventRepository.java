@@ -102,26 +102,12 @@ public class FakeEventRepository implements IEventRepository {
         _isLoading.setValue(value);
     }
 
+    /**
+     * Helper method for testing
+     * @param value value to set waiting list to
+     */
     public void setWaitingListCount(int value) {
         _waitingListCount.postValue(value);
-    }
-
-    public void setSelectedUsersCount(int value) {
-        _selectedUsersCount.setValue(value);
-    }
-
-    public void setEntrants(List<Entrant> entrants) {
-        inMemoryEntrants.clear();
-        if (entrants == null) {
-            _entrants.postValue(null);
-            return;
-        }
-        inMemoryEntrants.addAll(entrants);
-        _entrants.postValue(new ArrayList<>(entrants));
-    }
-
-    public void setEvent(Event event) {
-        _event.setValue(event);
     }
 
     /**

@@ -15,7 +15,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.lotteryevent.repository.FakeEventRepository;
-import com.example.lotteryevent.ui.ConfirmDrawAndNotifyFragment;
+import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragment;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 

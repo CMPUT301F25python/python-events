@@ -1,4 +1,4 @@
-package com.example.lotteryevent.ui;
+package com.example.lotteryevent.ui.organizer;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,6 +21,7 @@ import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
+import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
