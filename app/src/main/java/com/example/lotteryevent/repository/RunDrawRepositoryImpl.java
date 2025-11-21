@@ -10,6 +10,7 @@ import com.example.lotteryevent.utilities.FireStoreUtilities;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,8 +24,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final Context context;
 
+    // LiveData outputs shown to ViewModel
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _selectedCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> _message = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _drawSuccess = new MutableLiveData<>(false);
@@ -38,6 +41,9 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
 
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
+
+    @Override
+    public LiveData<Integer> getSelectedCount() { return _selectedCount; }
 
     @Override
     public LiveData<Boolean> isLoading() { return _isLoading; }
@@ -54,10 +60,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
         FireStoreUtilities.fillEntrantMetrics(
                 db,
                 eventId,
-                null,
                 count -> _waitingListCount.postValue(count),
+                count -> _selectedCount.postValue(count),
                 count -> _availableSpaceCount.postValue(count),
-                context
+                msg -> _message.postValue(msg)
         );
     }
 
@@ -88,9 +94,9 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     }
 
                     Collections.shuffle(waitlist);
-                    List<String> chosen = waitlist.sublist(0, numToSelect);
+                    List<String> chosen = waitlist.subList(0, numToSelect);
 
-                    writeBatch batch = db.batch();
+                    WriteBatch batch = db.batch();
 
                     for (String uid : chosen) {
                         DocumentReference userRef = db.collection("events")
