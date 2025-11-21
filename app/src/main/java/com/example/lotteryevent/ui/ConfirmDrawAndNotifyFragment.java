@@ -15,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
@@ -199,7 +200,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     /**
      * Renders the state that the ViewModel has already calculated.
      */
-    private void renderBottomUi(ConfirmDrawAndNotifyViewModel.BottomUiState uiState) {
+    private void renderBottomUi(BottomUiState uiState) {
         hideAllBottomActions(); // Start by hiding everything.
 
         System.out.println("State: " + uiState.type);

@@ -9,6 +9,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.navigation.Navigation;
 
+import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
@@ -27,50 +28,6 @@ import java.util.Objects;
  * This class handles the logic behind allowing the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
  */
 public class ConfirmDrawAndNotifyViewModel extends ViewModel {
-
-    /**
-     * A helper class to represent possible states of the screen, depending on how fetching data performs.
-     */
-    public static class BottomUiState {
-        public enum StateType { LOADING, SHOW_INFO_TEXT, SHOW_TWO_BUTTONS }
-        public final ConfirmDrawAndNotifyViewModel.BottomUiState.StateType type;
-        public final String infoText;
-        public final String positiveButtonText;
-        public final String negativeButtonText;
-
-        /**
-         * Private constructor to force creation via static methods
-         * @param type state type
-         * @param infoText text to display as info
-         * @param positiveButtonText text for the positive button
-         * @param negativeButtonText text for the negative button
-         */
-        private BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType type, String infoText, String positiveButtonText, String negativeButtonText) {
-            this.type = type;
-            this.infoText = infoText;
-            this.positiveButtonText = positiveButtonText;
-            this.negativeButtonText = negativeButtonText;
-        }
-
-        /**
-         * Static factory method for creating loading state
-         * @return UI state
-         */
-        public static BottomUiState loading() { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.LOADING, null, null, null); }
-
-        /**
-         * Static factory method for creating infoText state
-         * @return UI state
-         */
-        public static BottomUiState infoText(String text) { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.SHOW_INFO_TEXT, text, null, null); }
-
-        /**
-         * Static factory method for creating two buttons state
-         * @return UI state
-         */
-        public static BottomUiState twoButtons(String pos, String neg) { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.SHOW_TWO_BUTTONS, null, pos, neg); }
-    }
-
     @SuppressLint("StaticFieldLeak")
     private View view;
     private final NotificationCustomManager notifManager;
@@ -97,8 +54,8 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
     // This MediatorLiveData observes other LiveData objects
     // and calculates a new UI state whenever one of them changes.
-    private final MediatorLiveData<ConfirmDrawAndNotifyViewModel.BottomUiState> _bottomUiState = new MediatorLiveData<>();
-    public LiveData<ConfirmDrawAndNotifyViewModel.BottomUiState> bottomUiState = _bottomUiState;
+    private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
+    public LiveData<BottomUiState> bottomUiState = _bottomUiState;
 
     /**
      * Sets up view model, initializing repository, live data, mediator live data's observers
@@ -185,7 +142,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         List<Entrant> entrants = repository.getEventEntrants().getValue();
         Boolean isLoading = repository.isLoading().getValue();
         if (isLoading != null && isLoading) {
-            _bottomUiState.setValue(ConfirmDrawAndNotifyViewModel.BottomUiState.loading());
+            _bottomUiState.setValue(BottomUiState.loading());
             return;
         }
         if (event == null || entrants == null) {
