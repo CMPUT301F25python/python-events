@@ -44,8 +44,8 @@ public class OrganizerEventViewModel extends ViewModel {
 
     // --- Exposed LiveData ---
     public LiveData<Event> getEvent() { return event; }
-    public LiveData<Boolean> getIsRunDrawButtonEnabled() { return isRunDrawButtonEnabled; }
-    public LiveData<Boolean> getIsLoading() { return isLoading; }
+    public LiveData<Boolean> isRunDrawButtonEnabled() { return isRunDrawButtonEnabled; }
+    public LiveData<Boolean> isLoading() { return isLoading; }
     public LiveData<String> getMessage() { return message; }
     public LiveData<UiState> getUiState() { return _uiState; }
     public LiveData<Bitmap> getQrCodeBitmap() { return _qrCodeBitmap; }
