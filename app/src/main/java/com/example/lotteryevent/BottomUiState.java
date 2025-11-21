@@ -1,7 +1,5 @@
 package com.example.lotteryevent;
 
-import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
-
 /**
  * A helper class to represent possible states of the screen, depending on how fetching data performs.
  */
@@ -13,20 +11,19 @@ public class BottomUiState {
     public final String negativeButtonText;
 
     /**
-     * Constructor allowing for instance creation via static methods
+     * Private constructor allowing for instance creation via static methods
      * @param type state type
      * @param infoText text to display as info
      * @param positiveButtonText text for the positive button
      * @param negativeButtonText text for the negative button
      */
-    public BottomUiState(BottomUiState.StateType type, String infoText, String positiveButtonText, String negativeButtonText) {
+    private BottomUiState(BottomUiState.StateType type, String infoText, String positiveButtonText, String negativeButtonText) {
         this.type = type;
         this.infoText = infoText;
         this.positiveButtonText = positiveButtonText;
         this.negativeButtonText = negativeButtonText;
     }
 
-    // Static factory methods for creating states
     /**
      * Static factory method for creating loading state
      * @return UI state
