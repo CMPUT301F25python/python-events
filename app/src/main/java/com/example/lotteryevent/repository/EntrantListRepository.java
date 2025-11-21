@@ -22,6 +22,8 @@ import java.util.List;
  * <p>This repository implements {@link IEntrantListRepository} and exposes
  * LiveData streams so that UI layers can observe entrant list updates.</p>
  * @see IEntrantListRepository
+ * @author Sanaa Bhaidani
+ * @version 1.0
  */
 public class EntrantListRepository implements IEntrantListRepository{
 
@@ -59,7 +61,7 @@ public class EntrantListRepository implements IEntrantListRepository{
      * </ul>
      * @param eventId the Firestore event document ID for which entrants should be
      *                fetched
-     * @param status the status filter (e.g., "open", "finalized") used to match
+     * @param status the status filter (accepted, waiting, cancelled, invited) used to match
      *               entrants in the event's subcollection
      * @return a LiveData stream containing the list of entrants matching the given
      *         status

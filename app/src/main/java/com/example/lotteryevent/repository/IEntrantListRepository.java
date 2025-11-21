@@ -5,25 +5,40 @@ import com.example.lotteryevent.data.Entrant;
 import java.util.List;
 
 /**
- * Repository interface for fetching entrants and sending notifications.
+ * This class defines the contract for repositories responsible for retrieving entrant data
+ * and sending notifications related to events. Implementations of this
+ * interface provide asynchronous access to entrant lists via LiveData as well
+ * as methods to notify individual entrants with organizer-generated messages.
+ * @author Sanaa Bhaidani
+ * @version 1.0
  */
 public interface IEntrantListRepository {
 
     /**
-     * Fetches entrants for an event with a given status.
-     *
-     * @param eventId id of the event
-     * @param status status of the entrant / event (open, finalized, accepted, etc.)
-     * @return LiveData list of entrants
+     * Retrieves a list of entrants belonging to a specific event whose status
+     * matches the provided value. The results are delivered asynchronously through
+     * a LiveData stream so UI components can observe changes without manually
+     * accessing the data source.
+     * @param eventId the unique identifier of the event for which entrants are
+     *                being fetched
+     * @param status the status filter used to determine which entrants should be
+     *               returned (accepted, waiting, cancelled, invited)
+     * @return a LiveData object containing a list of entrants that match the
+     *         requested status
      */
+
     LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status);
 
     /**
-     * Sends a notification to a single entrant.
-     *
-     * @param uid id of the entrant
-     * @param eventId event id
-     * @param organizerMessage content of the notification
+     * Sends a single entrant a notification message associated with a specific
+     * event. The underlying implementation is responsible for preparing the
+     * message, retrieving any required metadata, and dispatching the notification
+     * through the appropriate notification system.
+     * @param uid the unique identifier of the entrant to notify
+     * @param eventId the unique identifier of the event associated with the
+     *                notification
+     * @param organizerMessage the custom text content that the event organizer wishes to
+     *                         send to the entrant
      */
     void notifyEntrant(String uid, String eventId, String organizerMessage);
 }
