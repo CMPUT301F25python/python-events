@@ -66,6 +66,7 @@ dependencies {
     androidTestImplementation(libs.fragment.testing)
     debugImplementation(libs.fragment.testing.manifest)
     androidTestImplementation(libs.androidx.navigation.testing)
+    androidTestImplementation(libs.androidx.espresso.contrib)
 
 
     // --- Camera Dependencies ---
