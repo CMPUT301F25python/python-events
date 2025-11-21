@@ -11,7 +11,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
-import com.example.lotteryevent.repository.EntrantListRepository;
+import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 
 import org.junit.Before;
@@ -44,17 +44,17 @@ public class EntrantListViewModelTest {
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
-    private EntrantListRepository repository;
+    private EntrantListRepositoryImpl repository;
     private EntrantListViewModel viewModel;
 
     /**
-     * Creates a mocked {@link EntrantListRepository} and injects it into a new
+     * Creates a mocked {@link EntrantListRepositoryImpl} and injects it into a new
      * {@link EntrantListViewModel} instance before each test. Ensures each test
      * starts with a clean and isolated environment.
      */
     @Before
     public void setUp() {
-        repository = mock(EntrantListRepository.class);
+        repository = mock(EntrantListRepositoryImpl.class);
         viewModel = new EntrantListViewModel(repository);
     }
 
@@ -103,7 +103,7 @@ public class EntrantListViewModelTest {
 
     /**
      * Ensures that an empty entrant list does not trigger any calls to
-     * {@link EntrantListRepository#notifyEntrant(String, String, String)}.
+     * {@link EntrantListRepositoryImpl#notifyEntrant(String, String, String)}.
      * Prevents unnecessary iteration or operations on empty datasets.
      */
     @Test

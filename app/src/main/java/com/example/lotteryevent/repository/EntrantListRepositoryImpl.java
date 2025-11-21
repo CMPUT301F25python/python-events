@@ -25,7 +25,7 @@ import java.util.List;
  * @author Sanaa Bhaidani
  * @version 1.0
  */
-public class EntrantListRepository implements IEntrantListRepository{
+public class EntrantListRepositoryImpl implements IEntrantListRepository{
 
     private static final String TAG = "EntrantNotifRepo";
 
@@ -40,7 +40,7 @@ public class EntrantListRepository implements IEntrantListRepository{
      * @param context the application or activity context required for initializing
      *                the NotificationCustomManager
      */
-    public EntrantListRepository(Context context) {
+    public EntrantListRepositoryImpl(Context context) {
         notifManager = new NotificationCustomManager(context);
     }
 

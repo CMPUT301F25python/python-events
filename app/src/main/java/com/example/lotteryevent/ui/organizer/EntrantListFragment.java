@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EntrantListAdapter;
 import com.example.lotteryevent.data.Entrant;
-import com.example.lotteryevent.repository.EntrantListRepository;
+import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
@@ -125,7 +125,7 @@ public class EntrantListFragment extends Fragment {
         // --- ViewModel Initialization ---
         // If a factory was not injected (production), create the default one.
         if (viewModelFactory == null) {
-            EntrantListRepository entrantListRepo = new EntrantListRepository(getContext());
+            EntrantListRepositoryImpl entrantListRepo = new EntrantListRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
             factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo));
             viewModelFactory = factory;

@@ -1,7 +1,6 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
-
 import com.example.lotteryevent.data.Event;
 import java.util.List;
 
