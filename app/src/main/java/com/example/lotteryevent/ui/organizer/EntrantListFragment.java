@@ -31,12 +31,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A fragment that displays a list of entrants for a specific event, filtered by their status.
- * <p>
- * This fragment receives an {@code eventId} and a {@code status} (e.g., "accepted", "waiting")
- * as navigation arguments. It then queries the corresponding Firestore subcollection and displays
- * the results in a {@link RecyclerView}.
+ * Fragment responsible for displaying a list of entrants for a specific event,
+ * filtered by their status. The fragment receives an event ID and status through
+ * navigation arguments, queries Firestore via the ViewModel, and displays results
+ * in a RecyclerView. It also allows the organizer to send notifications to all
+ * entrants currently displayed.
+ * @author Jacob Mellick, Sanaa Bhaidani
+ * @version 2.0
  */
+
 public class EntrantListFragment extends Fragment {
 
     private static final String TAG = "EntrantListFragment";
@@ -64,7 +67,11 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     * Constructor used primarily for testing, allowing injection of a custom
+     * ViewModelProvider.Factory instance. This makes it possible to supply mock
+     * or fake ViewModels during unit or instrumentation tests.
+     * @param factory a custom ViewModel factory to be used when instantiating
+     *                the fragment's ViewModel
      */
     public EntrantListFragment(GenericViewModelFactory factory) {
         this.viewModelFactory = factory;
@@ -104,7 +111,7 @@ public class EntrantListFragment extends Fragment {
     /**
      * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
      * but before any saved state has been restored in to the view. This is where we finalize the
-     * fragment's UI by initializing views and fetching data.
+     * fragment's UI by initializing views and fetching data by attaching LiveData observers.
      *
      * @param view               The View returned by {@link #onCreateView}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state.
@@ -180,6 +187,13 @@ public class EntrantListFragment extends Fragment {
 
         progressBar.setVisibility(View.VISIBLE);
 
+        /**
+         * Callback triggered whenever the LiveData containing entrant lists updates.
+         * Hides the loading indicator, updates the adapter with the new list, logs
+         * diagnostic information, and configures the notification button to open the
+         * dialog for notifying all entrants.
+         * @param list the updated list of entrants retrieved from the ViewModel
+         */
         viewModel.getEntrants(eventId, status).observe(getViewLifecycleOwner(), list -> {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
@@ -193,8 +207,12 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Displays notification dialog for organizer to enter a message to send to all entrants
-     * in the shown list. When notify all button is pressed, a notif is sent to each entrant
+     * Displays a dialog allowing the organizer to input a message that will be
+     * sent as a notification to all entrants currently shown in the list.
+     * Provides input validation and triggers the ViewModel's bulk notification
+     * method when confirmed.
+     * @param currentEntrantsList the list of entrants currently displayed that
+     *                            will receive the notification
      */
     private void showNotificationDialog(List<Entrant> currentEntrantsList) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -203,6 +221,13 @@ public class EntrantListFragment extends Fragment {
         input.setHint("Enter message...");
         builder.setView(input);
         builder.setPositiveButton("Notify All", new DialogInterface.OnClickListener() {
+            /**
+             * Callback triggered when the "Notify All" button in the dialog is pressed.
+             * Retrieves and validates the organizer's message. If a non-empty message is
+             * provided, invokes the ViewModel to send notifications to all entrants.
+             * @param dialog the dialog in which the button was clicked
+             * @param which the identifier of the clicked button
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String organizerMessage = input.getText().toString().trim();
@@ -214,6 +239,12 @@ public class EntrantListFragment extends Fragment {
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            /**
+             * Callback triggered when the "Cancel" button in the notification dialog is
+             * pressed. Simply dismisses the dialog without performing any actions.
+             * @param dialog the dialog that triggered the callback
+             * @param which the identifier of the clicked button
+             */
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.cancel();
@@ -223,7 +254,11 @@ public class EntrantListFragment extends Fragment {
         builder.show();
     }
 
-    // used in testing
+    /**
+     * Sets a custom ViewModelProvider.Factory instance. Primarily intended for
+     * testing scenarios where a mock or injected ViewModel is required.
+     * @param factory the ViewModel factory to be used by the fragment
+     */
     public void setViewModelFactory(ViewModelProvider.Factory factory) {
         this.viewModelFactory = factory;
     }
