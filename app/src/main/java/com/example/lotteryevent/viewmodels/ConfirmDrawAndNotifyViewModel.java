@@ -15,7 +15,7 @@ import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.repository.INotificationRepository;
 import com.example.lotteryevent.repository.NotificationRepositoryImpl;
-import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
+import com.example.lotteryevent.ui.ConfirmDrawAndNotifyFragmentDirections;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;

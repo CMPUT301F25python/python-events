@@ -1,8 +1,6 @@
-package com.example.lotteryevent.ui.organizer;
+package com.example.lotteryevent.ui;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,23 +14,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 
-import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
-import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
-import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragment;
-import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
-import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This fragment allows the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
