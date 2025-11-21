@@ -41,5 +41,18 @@ public interface IEntrantListRepository {
      *                         send to the entrant
      */
     void notifyEntrant(String uid, String eventId, String organizerMessage);
+
+    /**
+     * LiveData for user-facing messages
+     * @return String with message
+     */
+    LiveData<String> getUserMessage();
+
+    /**
+     * Allows organizer to set a custom message
+     * @param message set by the organizer
+     */
+    void setUserMessage(String message);
+
 }
 

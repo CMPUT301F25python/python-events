@@ -26,6 +26,9 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     // In-memory list of entrants to return
     private List<Entrant> inMemoryEntrants = new ArrayList<>();
 
+    // user-facing message
+    private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
+
     /**
      * In-memory list of notifications recorded during tests.
      * Uses the shared {@link Notification} POJO instead of a custom helper class.
@@ -45,6 +48,24 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     }
 
     /**
+     * Displays the live message to users
+     * @return string, _userMessage
+     */
+    @Override
+    public LiveData<String> getUserMessage() {
+        return _userMessage;
+    }
+
+    /**
+     * Allows organizer to write a custom message
+     * @param message set by the organizer
+     */
+    @Override
+    public void setUserMessage(String message) {
+        _userMessage.postValue(message);
+    }
+
+    /**
      * Simulates fetching entrants by status for a given event. Returns the
      * in-memory list of entrants unless {@code shouldReturnError} is enabled, in
      * which case {@code null} is posted to simulate a loading failure.
@@ -56,6 +77,7 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
         if (shouldReturnError) {
             _entrants.postValue(null); // Fragment treats null as "failed to load"
+            _userMessage.postValue("Failed to load entrants.");
         } else {
             _entrants.postValue(inMemoryEntrants);
         }
@@ -72,12 +94,18 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
      */
     @Override
     public void notifyEntrant(String uid, String eventId, String organizerMessage) {
-        // *** CHANGED: create a Notification POJO instead of a NotificationCall
+        if (uid == null || eventId == null) {
+            _userMessage.postValue("Failed to send notification.");
+            return;
+        }
+
         Notification notification = new Notification();
         notification.setRecipientId(uid);
         notification.setEventId(eventId);
         notification.setMessage(organizerMessage);
         notificationCalls.add(notification);
+
+        _userMessage.postValue(null);
     }
 
     /**
@@ -89,6 +117,7 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     public void setEntrants(List<Entrant> entrants) {
         this.inMemoryEntrants = entrants != null ? entrants : new ArrayList<>();
         this._entrants.postValue(this.inMemoryEntrants);
+        _userMessage.postValue(null); // clear any messages/errors
     }
 
     /**

@@ -133,8 +133,7 @@ public class EntrantListFragment extends Fragment {
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
-
-        titleTextView.setText(capitalizeFirstLetter(status));
+        titleTextView.setText(viewModel.getCapitalizedStatus(status));
 
         // --- The rest of the method is the same ---
         setupObservers();
@@ -163,19 +162,6 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * A utility method to capitalize the first letter of a given string.
-     * Used for formatting the title of the page.
-     *
-     * @param str The string to capitalize.
-     * @return The capitalized string, or an empty string if the input is null or empty.
-     */
-    private String capitalizeFirstLetter(String str) {
-        if (str == null || str.isEmpty()) {
-            return "";
-        }
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
-    }
-    /**
      * Sets up observers on the ViewModel's LiveData.
      * This is the core of the reactive UI.
      */
@@ -201,7 +187,13 @@ public class EntrantListFragment extends Fragment {
                 Log.d(TAG, "Fetched " + list.size() + " entrants with status: " + status);
                 sendNotificationButton.setOnClickListener(v -> showNotificationDialog(list));
             } else {
-                Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Entrant list is null.");
+            }
+        });
+        // observe user message LiveData and display it as a Toast
+        viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -231,11 +223,7 @@ public class EntrantListFragment extends Fragment {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String organizerMessage = input.getText().toString().trim();
-                if (!organizerMessage.isEmpty()) {
-                    viewModel.notifyAllEntrants(currentEntrantsList, eventId, organizerMessage);
-                } else {
-                    Toast.makeText(getContext(), "No message entered to send", Toast.LENGTH_SHORT).show();
-                }
+                viewModel.notifyAllEntrants(currentEntrantsList, eventId, organizerMessage);
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

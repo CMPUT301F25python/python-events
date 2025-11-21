@@ -33,6 +33,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
 
     protected final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final NotificationCustomManager notifManager;
+    private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
     /**
      * Creates a new instance of EntrantListRepository and initializes the custom
@@ -42,6 +43,24 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
      */
     public EntrantListRepositoryImpl(Context context) {
         notifManager = new NotificationCustomManager(context);
+    }
+
+    /**
+     * Retrieves the message to display to the user
+     * @return _userMessage, the message to the user
+     */
+    @Override
+    public LiveData<String> getUserMessage() {
+        return _userMessage;
+    }
+
+    /**
+     * Allows organizer to write a custom message
+     * @param message set by the organizer
+     */
+    @Override
+    public void setUserMessage(String message) {
+        _userMessage.postValue(message);
     }
 
     /**
@@ -70,6 +89,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
     public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
         if (eventId == null || status == null) {
             _entrants.postValue(new ArrayList<>());
+            _userMessage.postValue("Error: Event data not available.");
             return _entrants;
         }
 
@@ -92,6 +112,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                         }
                     }
                     _entrants.postValue(list);
+                    _userMessage.postValue(null); // clearing any previous messages/errors
                 })
                 /**
                  * Callback triggered when a Firestore error occurs while attempting to fetch
@@ -102,6 +123,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                 .addOnFailureListener(e ->{
                     Log.e(TAG, "Failed to load entrants", e);
                     _entrants.postValue(new ArrayList<>());
+                    _userMessage.postValue("Failed to load entrants.");
                 });
         return _entrants;
     }
@@ -152,6 +174,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                         String type = "custom_message";
                         notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
                         Log.d(TAG, "Notification sent successfully to " + uid);
+                        _userMessage.postValue("Notification successfully sent.");
                     } else {
                         Log.e(TAG,"Event not found for notification.");
                     }
@@ -164,6 +187,7 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                  */
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error sending notification", e);
+                    _userMessage.postValue("Failed to send notification.");
                 });
     }
 }
