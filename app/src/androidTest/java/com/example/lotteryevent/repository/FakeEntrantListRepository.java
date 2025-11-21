@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.data.Notification;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,28 +27,10 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     private List<Entrant> inMemoryEntrants = new ArrayList<>();
 
     /**
-     * Data structure representing a single notification dispatched during a test.
-     * Used to record and inspect calls to so tests can verify correct behavior.
+     * In-memory list of notifications recorded during tests.
+     * Uses the shared {@link Notification} POJO instead of a custom helper class.
      */
-    public static class NotificationCall {
-        public final String uid;
-        public final String eventId;
-        public final String message;
-
-        /**
-         * Creates a record of a notification operation performed by the fake repository.
-         * @param uid the unique identifier of the entrant who would have received the notification
-         * @param eventId the event identifier associated with the notification
-         * @param message the message content passed to the repository
-         */
-        public NotificationCall(String uid, String eventId, String message) {
-            this.uid = uid;
-            this.eventId = eventId;
-            this.message = message;
-        }
-    }
-
-    private final List<NotificationCall> notificationCalls = new ArrayList<>();
+    private final List<Notification> notificationCalls = new ArrayList<>();
 
     // Test control flag
     private boolean shouldReturnError = false;
@@ -89,7 +72,12 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
      */
     @Override
     public void notifyEntrant(String uid, String eventId, String organizerMessage) {
-        notificationCalls.add(new NotificationCall(uid, eventId, organizerMessage));
+        // *** CHANGED: create a Notification POJO instead of a NotificationCall
+        Notification notification = new Notification();
+        notification.setRecipientId(uid);
+        notification.setEventId(eventId);
+        notification.setMessage(organizerMessage);
+        notificationCalls.add(notification);
     }
 
     /**
@@ -107,9 +95,9 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
      * Returns all recorded notification calls since repository creation or since
      * the last test reset. Useful for verifying that the correct users were notified
      * with the correct message content.
-     * @return a list of {@link NotificationCall} objects representing dispatched notifications
+     * @return a list of {@link Notification} objects representing dispatched notifications
      */
-    public List<NotificationCall> getNotificationCalls() {
+    public List<Notification> getNotificationCalls() {
         return notificationCalls;
     }
 }

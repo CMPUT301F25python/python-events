@@ -253,14 +253,4 @@ public class EntrantListFragment extends Fragment {
 
         builder.show();
     }
-
-    /**
-     * Sets a custom ViewModelProvider.Factory instance. Primarily intended for
-     * testing scenarios where a mock or injected ViewModel is required.
-     * @param factory the ViewModel factory to be used by the fragment
-     */
-    public void setViewModelFactory(ViewModelProvider.Factory factory) {
-        this.viewModelFactory = factory;
-    }
-
 }

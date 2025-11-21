@@ -4,6 +4,7 @@ import androidx.fragment.app.testing.FragmentScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.data.Notification;
 import com.example.lotteryevent.repository.FakeEntrantListRepository;
 import com.example.lotteryevent.ui.organizer.EntrantListFragment;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
@@ -175,16 +176,18 @@ public class EntrantListFragmentTest {
          */
         onView(withText("Notify All")).perform(click());
 
+
         // Verify repository received correct calls
-        List<FakeEntrantListRepository.NotificationCall> calls = fakeRepository.getNotificationCalls();
+        List<Notification> calls = fakeRepository.getNotificationCalls();
         assertEquals(2, calls.size());
 
-        assertEquals("user1", calls.get(0).uid);
-        assertEquals(eventId, calls.get(0).eventId);
-        assertEquals(message, calls.get(0).message);
+        assertEquals("user1", calls.get(0).getRecipientId());
+        assertEquals(eventId, calls.get(0).getEventId());
+        assertEquals(message, calls.get(0).getMessage());
 
-        assertEquals("user2", calls.get(1).uid);
-        assertEquals(eventId, calls.get(1).eventId);
-        assertEquals(message, calls.get(1).message);
+        assertEquals("user2", calls.get(1).getRecipientId());
+        assertEquals(eventId, calls.get(1).getEventId());
+        assertEquals(message, calls.get(1).getMessage());
+
     }
 }
