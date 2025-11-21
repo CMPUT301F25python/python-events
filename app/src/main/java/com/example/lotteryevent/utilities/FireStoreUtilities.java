@@ -2,18 +2,13 @@ package com.example.lotteryevent.utilities;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.navigation.Navigation;
 
-import com.example.lotteryevent.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class FireStoreUtilities {
     private static final String TAG = "FireStoreUtilities";
