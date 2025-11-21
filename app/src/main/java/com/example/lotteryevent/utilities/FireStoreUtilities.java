@@ -10,88 +10,100 @@ import androidx.annotation.Nullable;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.function.Consumer;
+
 public class FireStoreUtilities {
-    private static final String TAG = "FireStoreUtilities";
+        private static final String TAG = "FireStoreUtilities";
 
-    /**
-     * Fills Textviews with entrant metrics:
-     * - Waiting list count
-     * - Selected users count
-     * - Available space count
-     */
-    public static void fillEntrantMetrics(
-            FirebaseFirestore db,
-            String eventId,
-            TextView waitingListCountText,
-            TextView selectedUsersCountText,
-            TextView availableSpaceCountText,
-            Context context
-    ) {
-        // Null catcher
-        if (db == null || eventId == null || context == null) {
-            Log.e(TAG, "Invalid parameters in fillEntrantMetrics");
-        }
-        if (waitingListCountText == null) {
-            Log.e(TAG, "WaitingListCountText is null. Ensure correct xml ID");
-            return;
-        }
-        // Count invited entrants
-        db.collection("events").document(eventId)
-                .collection("entrants")
-                .whereEqualTo("status", "waiting")
-                .get()
-                .addOnSuccessListener(waitQuery -> {
+        /**
+         * MVVM version of entrant metrics loader.
+         *
+         * This returns metrics through callbacks instead of updating UI elements.
+         * This makes the method safe for Repository + ViewModel usage.
+         *
+         * @param db Firestore instance
+         * @param eventId the event ID
+         * @param waitingListCallback receives waiting list count (Integer)
+         * @param selectedCallback receives selected ("invited") count (Integer)
+         * @param availableSpacesCallback receives available spots count (Integer or null for No Limit)
+         * @param errorCallback receives any error message
+         */
+        public static void fillEntrantMetrics(
+                FirebaseFirestore db,
+                String eventId,
+                Consumer<Integer> waitingListCallback,
+                Consumer<Integer> selectedCallback,
+                Consumer<Integer> availableSpacesCallback,
+                Consumer<String> errorCallback
+        ) {
 
-                    // Displays the number of entrants in the waiting list
-                    waitingListCountText.setText(String.valueOf(waitQuery.size()));
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(context, "Error loading entrant counts", Toast.LENGTH_SHORT).show()
-                );
+            if (db == null || eventId == null) {
+                if (errorCallback != null) errorCallback.accept("Invalid parameters");
+                return;
+            }
 
-        // Count invited entrants
-        db.collection("events").document(eventId)
-                .collection("entrants")
-                .whereEqualTo("status", "invited")
-                .get()
-                .addOnSuccessListener(querySelected -> {
-                    if (selectedUsersCountText != null) {
-                        selectedUsersCountText.setText(String.valueOf(querySelected.size()));
-                    }
+            // Waitlist count
+            db.collection("events").document(eventId)
+                    .collection("entrants")
+                    .whereEqualTo("status", "waiting")
+                    .get()
+                    .addOnSuccessListener(waitQuery -> {
+                        if (waitingListCallback != null) {
+                            waitingListCallback.accept(waitQuery.size());
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Error loading waiting list", e);
+                        if (errorCallback != null) errorCallback.accept("Error loading waiting list");
+                    });
 
-                    // Load event capacity and show available spots
-                    db.collection("events").document(eventId).get()
-                            .addOnSuccessListener(document -> {
-                                if (document != null && document.exists()) {
+            // Get invited count
+            db.collection("events").document(eventId)
+                    .collection("entrants")
+                    .whereEqualTo("status", "invited")
+                    .get()
+                    .addOnSuccessListener(selectedQuery -> {
+
+                        int selectedCount = selectedQuery.size();
+
+                        if (selectedCallback != null) {
+                            selectedCallback.accept(selectedCount);
+                        }
+
+                        // Get event capacity
+                        db.collection("events").document(eventId)
+                                .get()
+                                .addOnSuccessListener(document -> {
+
                                     Long capacityLong = document.getLong("capacity");
 
                                     if (capacityLong != null) {
                                         int capacity = capacityLong.intValue();
-                                        // calculates and displays the capacity of the event left after the draw
-                                        int spacesLeft = capacity - querySelected.size();
-                                        if (spacesLeft > 0) {
-                                            availableSpaceCountText.setText(String.valueOf(spacesLeft));
-                                        } else {
-                                            availableSpaceCountText.setText("0");
-                                        }
-                                    } else {
-                                        availableSpaceCountText.setText("No Limit");
-                                    }
-                                } else {
-                                    Log.d(TAG, "No such document");
-                                    Toast.makeText(context, "Event not found.", Toast.LENGTH_SHORT).show();
-                                }
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.w(TAG, "get failed with ", e);
-                                Toast.makeText(context, "Error loading event's number of spots available", Toast.LENGTH_SHORT).show();
-                            });
+                                        int spacesLeft = Math.max(0, capacity - selectedCount);
 
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(context, "Error loading entrant counts", Toast.LENGTH_SHORT).show()
-                );
-    }
+                                        if (availableSpacesCallback != null) {
+                                            availableSpacesCallback.accept(spacesLeft);
+                                        }
+
+                                    } else {
+                                        // No capacity limit
+                                        if (availableSpacesCallback != null) {
+                                            availableSpacesCallback.accept(null);
+                                        }
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.w(TAG, "Error loading capacity", e);
+                                    if (errorCallback != null) errorCallback.accept("Error loading event capacity");
+                                });
+
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Error loading selected count", e);
+                        if (errorCallback != null) errorCallback.accept("Error loading selected count");
+                    });
+        }
+
 
     /**
      * Cancels the lottery by bringing entrants back to the waiting list and switches fragment to the home fragment
