@@ -22,7 +22,20 @@ public interface IEventRepository {
      */
     LiveData<List<Event>> getUserEvents();
 
+    /**
+
+     Returns a LiveData object holding a specific event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     LiveData<Event> getUserEvent();
+
+    /**
+
+     Returns a LiveData object holding a list of entrants of a specific event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData list of Entrants.
+     */
     LiveData<List<Entrant>> getEventEntrants();
 
     /**
@@ -38,13 +51,26 @@ public interface IEventRepository {
      */
     LiveData<String> getMessage();
 
+    /**
+
+     Returns a LiveData object holding the count of the number of entrants in the waiting list of a
+     specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     LiveData<Integer> getWaitingListCount();
+
+    /**
+
+     Returns a LiveData object holding the count of the number of selected entrants invited from the
+     waiting list of a specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     LiveData<Integer> getSelectedUsersCount();
 
     /**
-     * Kicks off the process of fetching both the event's main details and the
-     * current user's entrant status from the data source.
-     *
+     * Fetches an specified event and its entrants.
      * @param eventId The unique identifier of the event to load.
      */
     void fetchEventAndEntrants(String eventId);
@@ -60,5 +86,12 @@ public interface IEventRepository {
      */
     void createEvent(Event event);
 
+    /**
+     * Updates an attribute of the entrants of an event
+     * @param eventId event to access its entrants
+     * @param fieldName attribute of entrants to modify
+     * @param oldValue old value for only updating specific entrants
+     * @param newValue new value to set
+     */
     void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue);
 }

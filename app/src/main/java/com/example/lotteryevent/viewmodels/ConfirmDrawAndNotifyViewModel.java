@@ -1,7 +1,7 @@
 package com.example.lotteryevent.viewmodels;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 
 import androidx.lifecycle.LiveData;
@@ -13,8 +13,6 @@ import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.repository.INotificationRepository;
-import com.example.lotteryevent.repository.NotificationRepositoryImpl;
 import com.example.lotteryevent.ui.ConfirmDrawAndNotifyFragmentDirections;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -24,15 +22,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * ViewModel for ConfirmDrawAndNotifyFragment
+ * This class handles the logic behind allowing the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
+ */
 public class ConfirmDrawAndNotifyViewModel extends ViewModel {
+
+    /**
+     * A helper class to represent possible states of the screen, depending on how fetching data performs.
+     */
     public static class BottomUiState {
-        public enum StateType { LOADING, SHOW_INFO_TEXT, SHOW_ONE_BUTTON, SHOW_TWO_BUTTONS }
+        public enum StateType { LOADING, SHOW_INFO_TEXT, SHOW_TWO_BUTTONS }
         public final ConfirmDrawAndNotifyViewModel.BottomUiState.StateType type;
         public final String infoText;
         public final String positiveButtonText;
         public final String negativeButtonText;
 
-        // Private constructor to force creation via static methods
+        /**
+         * Private constructor to force creation via static methods
+         * @param type state type
+         * @param infoText text to display as info
+         * @param positiveButtonText text for the positive button
+         * @param negativeButtonText text for the negative button
+         */
         private BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType type, String infoText, String positiveButtonText, String negativeButtonText) {
             this.type = type;
             this.infoText = infoText;
@@ -40,15 +52,28 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             this.negativeButtonText = negativeButtonText;
         }
 
-        // Static factory methods for creating states
+        /**
+         * Static factory method for creating loading state
+         * @return UI state
+         */
         public static BottomUiState loading() { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.LOADING, null, null, null); }
+
+        /**
+         * Static factory method for creating infoText state
+         * @return UI state
+         */
         public static BottomUiState infoText(String text) { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.SHOW_INFO_TEXT, text, null, null); }
-        public static BottomUiState oneButton(String text) { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.SHOW_ONE_BUTTON, null, text, null); }
+
+        /**
+         * Static factory method for creating two buttons state
+         * @return UI state
+         */
         public static BottomUiState twoButtons(String pos, String neg) { return new BottomUiState(ConfirmDrawAndNotifyViewModel.BottomUiState.StateType.SHOW_TWO_BUTTONS, null, pos, neg); }
     }
 
+    @SuppressLint("StaticFieldLeak")
     private View view;
-    private NotificationCustomManager notifManager;
+    private final NotificationCustomManager notifManager;
     private final IEventRepository repository;
     public LiveData<Event> eventDetails;
     public LiveData<List<Entrant>> eventEntrants;
@@ -75,6 +100,12 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private final MediatorLiveData<ConfirmDrawAndNotifyViewModel.BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<ConfirmDrawAndNotifyViewModel.BottomUiState> bottomUiState = _bottomUiState;
 
+    /**
+     * Sets up view model, initializing repository, live data, mediator live data's observers
+     * @param repository repository for fetching and setting data
+     * @param context context from fragment
+     * @param view view from fragment
+     */
     public ConfirmDrawAndNotifyViewModel(IEventRepository repository, Context context, View view) {
         this.view = view;
         notifManager = new NotificationCustomManager(context);
@@ -100,9 +131,9 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     }
 
     /**
-     * The entry point for the Fragment to start loading data.
+     * The entry point for the Fragment to start loading event and entrants
      */
-    public void loadEventAndEntrantsStatus(String eventId) {
+    public void loadEventAndEntrants(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
             _bottomUiState.setValue(BottomUiState.infoText("Error: Missing Event ID."));
             return;
@@ -110,6 +141,9 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         repository.fetchEventAndEntrants(eventId);
     }
 
+    /**
+     * Calculates and updates the waiting list, selected users list, and available space left list
+     */
     private void calculateEntrantCounts() {
         Boolean isLoading = repository.isLoading().getValue();
         Event event = repository.getUserEvent().getValue();
@@ -143,6 +177,9 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Determines the UI state on screen depending on fetching data performance
+     */
     private void calculateUiState() {
         Event event = repository.getUserEvent().getValue();
         List<Entrant> entrants = repository.getEventEntrants().getValue();
@@ -157,6 +194,9 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         _bottomUiState.postValue(BottomUiState.twoButtons("Confirm and Notify", "Cancel"));
     }
 
+    /**
+     * Notifies selected entrants to accept, navigates back to event details screen
+     */
     public void onPositiveButtonClicked() {
         String eventId = Objects.requireNonNull(eventDetails.getValue()).getEventId();
         ArrayList<Task<DocumentReference>> tasks = new ArrayList<>();
@@ -177,11 +217,17 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             });
     }
 
+    /**
+     * Moves invited entrants back to waiting list and navigates back to event details screen
+     */
     public void onNegativeButtonClicked() {
         repository.updateEntrantsAttributes(Objects.requireNonNull(eventDetails.getValue()).getEventId(), "status", "invited", "waiting");
         navigateBack();
     }
 
+    /**
+     * Navigate back to evetn details screen
+     */
     private void navigateBack() {
         ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =
                 ConfirmDrawAndNotifyFragmentDirections

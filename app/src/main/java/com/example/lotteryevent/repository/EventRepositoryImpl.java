@@ -1,10 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
@@ -16,7 +14,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -44,7 +41,6 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
-
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -53,7 +49,6 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<List<Event>> getUserEvents() {
         return _events;
     }
-
     @Override
     public LiveData<Event> getUserEvent() {
         return _event;
@@ -64,12 +59,10 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
     @Override
     public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
-
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
-
     @Override
     public LiveData<String> getMessage() {
         return _userMessage;
@@ -108,22 +101,6 @@ public class EventRepositoryImpl implements IEventRepository {
                         _events.setValue(new ArrayList<>()); // Post empty list on error
                     }
                 });
-    }
-
-    @Override
-    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
-        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
-        entrantsRef.whereEqualTo(fieldName, oldValue)
-            .get()
-            .addOnSuccessListener(query -> {
-                if (!query.isEmpty()) {
-                    for (DocumentSnapshot entrantDoc : query.getDocuments()) {
-                        entrantDoc.getReference().update(fieldName, newValue);
-                    }
-                    _userMessage.postValue("LotteryCancelled");
-                }
-            })
-            .addOnFailureListener(e -> _userMessage.postValue("Error cancelling lottery"));
     }
 
     @Override
@@ -178,7 +155,7 @@ public class EventRepositoryImpl implements IEventRepository {
             }
         });
 
-        // Query 1: Count of "accepted" entrants
+        // Query 1: Count of "invited" entrants
         AggregateQuery acceptedCountQuery = entrantsRef.whereEqualTo("status", "invited").count();
         Task<Long> acceptedTask = acceptedCountQuery.get(AggregateSource.SERVER).onSuccessTask(snapshot -> Tasks.forResult(snapshot.getCount())).addOnFailureListener(e -> Log.e("COUNTS", "COUNT FAILED", e));
 
@@ -197,6 +174,22 @@ public class EventRepositoryImpl implements IEventRepository {
                     _selectedUsersCount.postValue((int) selected);
                     _waitingListCount.postValue((int) waiting);
                 });
+    }
+
+    @Override
+    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
+        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
+        entrantsRef.whereEqualTo(fieldName, oldValue)
+                .get()
+                .addOnSuccessListener(query -> {
+                    if (!query.isEmpty()) {
+                        for (DocumentSnapshot entrantDoc : query.getDocuments()) {
+                            entrantDoc.getReference().update(fieldName, newValue);
+                        }
+                        _userMessage.postValue("LotteryCancelled");
+                    }
+                })
+                .addOnFailureListener(e -> _userMessage.postValue("Error cancelling lottery"));
     }
 
     @Override
