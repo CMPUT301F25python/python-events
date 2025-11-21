@@ -119,7 +119,6 @@ public class EventRepositoryImpl implements IEventRepository {
 
                         Tasks.whenAllComplete(entrantsTask, entrantsCountsTask)
                                 .addOnCompleteListener(allTasks -> {
-                                    System.out.println("COMPLETEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
                                     _isLoading.postValue(false); // All loading is now finished.
                                 });
 

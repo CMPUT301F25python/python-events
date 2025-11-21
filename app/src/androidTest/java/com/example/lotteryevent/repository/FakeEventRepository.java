@@ -2,10 +2,16 @@ package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A fake implementation of IEventRepository for testing purposes.
@@ -14,12 +20,17 @@ public class FakeEventRepository implements IEventRepository {
 
     // --- LiveData to be observed by the ViewModel ---
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
+    private final MutableLiveData<Event> _event = new MutableLiveData<>();
+    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
     // --- In-memory "database" ---
-    // This list holds the state of our fake repository.
+    // These lists hold the state of our fake repository.
     private final ArrayList<Event> inMemoryEvents = new ArrayList<>();
+    private final ArrayList<Entrant> inMemoryEntrants = new ArrayList<>();
 
     // --- Test control flags ---
     private boolean shouldReturnError = false;
@@ -39,6 +50,18 @@ public class FakeEventRepository implements IEventRepository {
         event2.setCreatedAt(Timestamp.now());
         inMemoryEvents.add(event2);
 
+        Entrant entrant1 = new Entrant();
+        entrant1.setUserId("1");
+        entrant1.setUserName("Bob");
+        entrant1.setStatus("waiting");
+        inMemoryEntrants.add(entrant1);
+
+        Entrant entrant2 = new Entrant();
+        entrant1.setUserId("2");
+        entrant1.setUserName("Joe");
+        entrant1.setStatus("waiting");
+        inMemoryEntrants.add(entrant2);
+
         // Post the initial state to the LiveData.
         _events.postValue(new ArrayList<>(inMemoryEvents));
     }
@@ -47,6 +70,18 @@ public class FakeEventRepository implements IEventRepository {
     public LiveData<List<Event>> getUserEvents() {
         return _events;
     }
+
+    @Override
+    public LiveData<Event> getUserEvent() { return _event; }
+
+    @Override
+    public LiveData<List<Entrant>> getEventEntrants() {return _entrants; }
+
+    @Override
+    public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
+
+    @Override
+    public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
 
     @Override
     public LiveData<Boolean> isLoading() {
@@ -74,6 +109,69 @@ public class FakeEventRepository implements IEventRepository {
         }
 
         _isLoading.postValue(false);
+    }
+
+    /**
+     * Simulates fetching event given event ID and its entrants by posting the
+     * current state of the in-memory list.
+     */
+    @Override
+    public void fetchEventAndEntrants(String eventId) {
+        _isLoading.postValue(true);
+
+        if (shouldReturnError) {
+            _message.postValue("Test Error: Could not fetch event.");
+            _event.postValue(null); // Post an empty list on error
+        } else {
+            // Post a copy of the current first event in in-memory list.
+            Event event = null;
+            for (Event e : inMemoryEvents) {
+                if (Objects.equals(e.getEventId(), eventId)) {
+                    event = e;
+                    break;
+                }
+            }
+            if (event == null) {
+                throw new RuntimeException("Event with given ID cannot be found!");
+            }
+            event.setCapacity(inMemoryEntrants.size());
+            _event.postValue(event);
+
+            // Fetch entrants, (fetchEntrantsTask())
+            _entrants.postValue(inMemoryEntrants);
+
+            // Fetch entrant counts (fetchEntrantsCountsTask())
+            int waitingListCount = 0;
+            int selectedUsersCount = 0;
+            for (Entrant entrant : inMemoryEntrants) {
+                if (Objects.equals(entrant.getStatus(), "waiting")) {
+                    waitingListCount++;
+                } else if (Objects.equals(entrant.getStatus(), "invited")) {
+                    selectedUsersCount++;
+                }
+            }
+            _waitingListCount.postValue(waitingListCount);
+            _selectedUsersCount.postValue(selectedUsersCount);
+        }
+
+        _isLoading.postValue(false);
+    }
+
+    /**
+     * Simulates updating attribute of entrants who have a specified old value
+     * @param eventId event to access its entrants
+     * @param fieldName attribute of entrants to modify
+     * @param oldValue old value for only updating specific entrants
+     * @param newValue new value to set
+     */
+    @Override
+    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
+        for (Entrant entrant : inMemoryEntrants) {
+            // add the other fields as needed
+            if (Objects.equals(fieldName, "status") && Objects.equals(entrant.getStatus(), String.valueOf(oldValue))) {
+                entrant.setStatus(String.valueOf(newValue));
+            }
+        }
     }
 
     /**
