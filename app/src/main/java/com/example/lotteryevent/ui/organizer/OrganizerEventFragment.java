@@ -49,7 +49,7 @@ import java.util.Arrays;
  *     and run the participant draw
  * </p>
  */
-public class OrganizerEventPageFragment extends Fragment {
+public class OrganizerEventFragment extends Fragment {
 
     private static final String TAG = "OrganizerEventPage";
 
@@ -64,7 +64,7 @@ public class OrganizerEventPageFragment extends Fragment {
     /**
      * Required empty public constructor for fragment instantiation.
      */
-    public OrganizerEventPageFragment() { }
+    public OrganizerEventFragment() { }
 
     /**
      *
