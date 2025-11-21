@@ -64,6 +64,13 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     */
+    public EntrantListFragment(GenericViewModelFactory factory) {
+        this.viewModelFactory = factory;
+    }
+
+    /**
      * Called when the fragment is first created. This is where we initialize non-view related
      * components and retrieve navigation arguments.
      *
@@ -215,4 +222,10 @@ public class EntrantListFragment extends Fragment {
 
         builder.show();
     }
+
+    // used in testing
+    public void setViewModelFactory(ViewModelProvider.Factory factory) {
+        this.viewModelFactory = factory;
+    }
+
 }

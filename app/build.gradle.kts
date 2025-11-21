@@ -67,6 +67,8 @@ dependencies {
     debugImplementation(libs.fragment.testing.manifest)
     androidTestImplementation(libs.androidx.navigation.testing)
     androidTestImplementation(libs.androidx.espresso.contrib)
+    androidTestImplementation ("org.mockito:mockito-android:5.11.0")
+    testImplementation("org.mockito:mockito-core:5.11.0")
 
 
     // --- Camera Dependencies ---

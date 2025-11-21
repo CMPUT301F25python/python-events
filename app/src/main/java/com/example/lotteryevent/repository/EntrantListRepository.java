@@ -14,13 +14,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EntrantListRepository {
+public class EntrantListRepository implements IEntrantListRepository{
 
     private static final String TAG = "EntrantNotifRepo";
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
+    protected final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final NotificationCustomManager notifManager;
 
     public EntrantListRepository(Context context) {
@@ -34,6 +34,7 @@ public class EntrantListRepository {
      * @param status status of the event (open, finalized)
      * @return LiveData<List<Entrant>> for an event
      */
+    @Override
     public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
         if (eventId == null || status == null) {
             _entrants.postValue(new ArrayList<>());
@@ -67,6 +68,7 @@ public class EntrantListRepository {
      * @param eventId id of the event for which entrant is being notified
      * @param organizerMessage contents of notification
      */
+    @Override
     public void notifyEntrant(String uid, String eventId, String organizerMessage) {
         if(uid == null || eventId == null){
             Log.e(TAG,"Invalid notification request.");

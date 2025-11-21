@@ -4,13 +4,13 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.Entrant;
-import com.example.lotteryevent.repository.EntrantListRepository;
+import com.example.lotteryevent.repository.IEntrantListRepository;
 
 import java.util.List;
 public class EntrantListViewModel extends ViewModel {
 
-    private final EntrantListRepository entrantListRepo;
-    public EntrantListViewModel(EntrantListRepository entrantListRepo) {
+    private final IEntrantListRepository entrantListRepo;
+    public EntrantListViewModel(IEntrantListRepository entrantListRepo) {
         this.entrantListRepo = entrantListRepo;
     }
 
