@@ -24,17 +24,34 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Unit tests for EntrantListViewModel.
- * These do not touch Android framework classes and run on the JVM.
+ * Unit test suite for {@link com.example.lotteryevent.viewmodels.EntrantListViewModel}.
+ * These tests run on the JVM without Android framework dependencies and verify
+ * that the ViewModel correctly interacts with its repository for fetching
+ * entrants and sending notifications.
+ * <p>Mockito is used for mocking the repository, and
+ * {@link androidx.arch.core.executor.testing.InstantTaskExecutorRule} ensures
+ * LiveData updates execute synchronously during testing.</p>
+ * @author Sanaa Bhaidani
+ * @version 1.0
  */
 public class EntrantListViewModelTest {
 
+    /**
+     * Ensures that LiveData operations run synchronously during JVM unit tests.
+     * This rule replaces the background executor normally used by Architecture
+     * Components with one that executes tasks immediately.
+     */
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
     private EntrantListRepository repository;
     private EntrantListViewModel viewModel;
 
+    /**
+     * Creates a mocked {@link EntrantListRepository} and injects it into a new
+     * {@link EntrantListViewModel} instance before each test. Ensures each test
+     * starts with a clean and isolated environment.
+     */
     @Before
     public void setUp() {
         repository = mock(EntrantListRepository.class);
@@ -42,7 +59,13 @@ public class EntrantListViewModelTest {
     }
 
     /**
-     * testing that correct status entrants are shown
+     * Verifies that {@link EntrantListViewModel#getEntrants(String, String)} correctly
+     * delegates to the repository with the expected eventId and status values.
+     * <p>Asserts that:</p>
+     * <ul>
+     *     <li>the repository method is invoked with the correct parameters,</li>
+     *     <li>the ViewModel returns the exact same LiveData instance provided by the repository.</li>
+     * </ul>
      */
     @Test
     public void test_getEntrants_correct() {
@@ -50,6 +73,12 @@ public class EntrantListViewModelTest {
         String status = "accepted";
 
         MutableLiveData<List<Entrant>> repoLiveData = new MutableLiveData<>();
+        /**
+         * Mockito stub used to return a controlled LiveData instance from the repository.
+         * @param eventId the event ID expected by the repository
+         * @param status the status filter expected by the repository
+         * @return the MutableLiveData used to simulate repository output
+         */
         when(repository.fetchEntrantsByStatus(eventId, status)).thenReturn(repoLiveData);
 
         LiveData<List<Entrant>> result = viewModel.getEntrants(eventId, status);
@@ -62,54 +91,72 @@ public class EntrantListViewModelTest {
     }
 
     /**
-     * If null entrant list, repository should not be called
+     * Ensures that when {@link EntrantListViewModel#notifyAllEntrants(List, String, String)}
+     * is called with a null entrant list, the repository is never asked to send
+     * notifications. This guards against null-pointer related behavior.
      */
     @Test
     public void test_notifyAllEntrants_null() {
         viewModel.notifyAllEntrants(null, "event123", "Hello");
-
         verify(repository, never()).notifyEntrant(anyString(), anyString(), anyString());
     }
 
     /**
-     * If empty entrant list, repository should not be called
+     * Ensures that an empty entrant list does not trigger any calls to
+     * {@link EntrantListRepository#notifyEntrant(String, String, String)}.
+     * Prevents unnecessary iteration or operations on empty datasets.
      */
     @Test
     public void test_notifyAllEntrants_empty() {
         List<Entrant> entrants = new ArrayList<>();
-
         viewModel.notifyAllEntrants(entrants, "event123", "Hello");
-
         verify(repository, never()).notifyEntrant(anyString(), anyString(), anyString());
     }
 
     /**
-     * when sending notifications, only everyone who has a user ID receives it
+     * Verifies that {@link EntrantListViewModel#notifyAllEntrants(List, String, String)}
+     * sends notifications only for entrants with valid, non-null user IDs.
+     * <p>Test behavior:</p>
+     * <ul>
+     *     <li>Entrants with mocked user IDs "user1" and "user2" should trigger notification calls.</li>
+     *     <li>Entrants with null user IDs (or null entries in the list) should be ignored.</li>
+     * </ul>
+     * <p>Mockito is used to validate that:</p>
+     * <ul>
+     *     <li>notifyEntrant() is called exactly for valid IDs,</li>
+     *     <li>notifyEntrant() is <em>never</em> called with null user IDs.</li>
+     * </ul>
      */
     @Test
     public void test_notifyAllEntrants_valid() {
         String eventId = "event123";
         String message = "Hello";
 
+        // generating mock entrants
         Entrant entrantWithId1 = mock(Entrant.class);
-        when(entrantWithId1.getUserId()).thenReturn("user1");
-
         Entrant entrantWithId2 = mock(Entrant.class);
-        when(entrantWithId2.getUserId()).thenReturn("user2");
-
         Entrant entrantWithoutId = mock(Entrant.class);
+        /**
+         * Mockito stubs for entrant.getUserId() calls. These stubs allow the test to
+         * simulate valid IDs, invalid IDs, and null users within the iterator loop.
+         * @return the mocked user ID for each test entrant
+         */
+        when(entrantWithId1.getUserId()).thenReturn("user1");
+        when(entrantWithId2.getUserId()).thenReturn("user2");
         when(entrantWithoutId.getUserId()).thenReturn(null);
 
-        List<Entrant> entrants = Arrays.asList(
-                entrantWithId1,
-                null,
-                entrantWithoutId,
-                entrantWithId2
-        );
+        List<Entrant> entrants = Arrays.asList(entrantWithId1, null, entrantWithoutId, entrantWithId2);
 
         viewModel.notifyAllEntrants(entrants, eventId, message);
 
-        // Only valid user ids should be used
+        /**
+         * Verification step ensuring the repository receives notification calls
+         * only for entrants with valid non-null user IDs. Confirms that filtering
+         * inside the ViewModel behaves as expected.
+         * @param uid the expected user ID of a valid entrant
+         * @param eventId the event associated with the notification
+         * @param message the organizer's message sent to all entrants
+         */
         verify(repository).notifyEntrant("user1", eventId, message);
         verify(repository).notifyEntrant("user2", eventId, message);
         verify(repository, never()).notifyEntrant(Mockito.isNull(), Mockito.anyString(), Mockito.anyString());
