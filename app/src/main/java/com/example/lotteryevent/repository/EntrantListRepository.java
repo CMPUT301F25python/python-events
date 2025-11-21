@@ -65,7 +65,7 @@ public class EntrantListRepository {
      * sends notification
      * @param uid id of the entrant being notified
      * @param eventId id of the event for which entrant is being notified
-     * @param organizerMessage contents of the notification
+     * @param organizerMessage contents of notification
      */
     public void notifyEntrant(String uid, String eventId, String organizerMessage) {
         if(uid == null || eventId == null){
