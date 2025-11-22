@@ -69,6 +69,10 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-lite")
     }
+    androidTestImplementation(libs.androidx.espresso.contrib)
+    androidTestImplementation ("org.mockito:mockito-android:5.11.0")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+
 
     // --- Camera Dependencies ---
     implementation(libs.camera.core)
