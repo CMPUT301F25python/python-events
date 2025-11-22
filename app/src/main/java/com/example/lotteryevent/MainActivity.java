@@ -1,7 +1,5 @@
 package com.example.lotteryevent;
 
-import static java.security.AccessController.getContext;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -121,16 +119,10 @@ public class MainActivity extends AppCompatActivity {
         notificationCustomManager.clearNotifications();
         notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
         notificationCustomManager.listenForNotifications(uid);
-
     }
 
     /**
      * Called when the activity becomes visible to the user.
-     * <p>
-     * This method checks if there is an authenticated Firebase user
-     * when the app is launched. If a user is already signed in, it calls
-     * initializeUser(FirebaseUser).
-     * </p>
      */
     @Override
     public void onStart() {
