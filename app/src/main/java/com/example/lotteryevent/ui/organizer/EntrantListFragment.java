@@ -1,9 +1,7 @@
 package com.example.lotteryevent.ui.organizer;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,13 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EntrantListAdapter;
-import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Fragment responsible for displaying a list of entrants for a specific event,
@@ -127,13 +123,13 @@ public class EntrantListFragment extends Fragment {
         if (viewModelFactory == null) {
             EntrantListRepositoryImpl entrantListRepo = new EntrantListRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo));
+            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId, status));
             viewModelFactory = factory;
         }
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
-        titleTextView.setText(viewModel.getCapitalizedStatus(status));
+        titleTextView.setText(viewModel.getCapitalizedStatus());
 
         // --- The rest of the method is the same ---
         setupObservers();
@@ -180,14 +176,11 @@ public class EntrantListFragment extends Fragment {
          * dialog for notifying all entrants.
          * @param list the updated list of entrants retrieved from the ViewModel
          */
-        viewModel.getEntrants(eventId, status).observe(getViewLifecycleOwner(), list -> {
+        viewModel.getEntrants().observe(getViewLifecycleOwner(), list -> {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
-                Log.d(TAG, "Fetched " + list.size() + " entrants with status: " + status);
-                sendNotificationButton.setOnClickListener(v -> showNotificationDialog(list));
-            } else {
-                Log.e(TAG, "Entrant list is null.");
+                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
             }
         });
         // observe user message LiveData and display it as a Toast
@@ -203,41 +196,24 @@ public class EntrantListFragment extends Fragment {
      * sent as a notification to all entrants currently shown in the list.
      * Provides input validation and triggers the ViewModel's bulk notification
      * method when confirmed.
-     * @param currentEntrantsList the list of entrants currently displayed that
-     *                            will receive the notification
      */
-    private void showNotificationDialog(List<Entrant> currentEntrantsList) {
+    private void showNotificationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Notification Message");
         final EditText input = new EditText(getContext());
         input.setHint("Enter message...");
         builder.setView(input);
-        builder.setPositiveButton("Notify All", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Notify All", (dialog, which) -> {
             /**
-             * Callback triggered when the "Notify All" button in the dialog is pressed.
-             * Retrieves and validates the organizer's message. If a non-empty message is
-             * provided, invokes the ViewModel to send notifications to all entrants.
-             * @param dialog the dialog in which the button was clicked
-             * @param which the identifier of the clicked button
-             */
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String organizerMessage = input.getText().toString().trim();
-                viewModel.notifyAllEntrants(currentEntrantsList, eventId, organizerMessage);
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            /**
-             * Callback triggered when the "Cancel" button in the notification dialog is
-             * pressed. Simply dismisses the dialog without performing any actions.
+             * Callback triggered when the "Notify All" button in the notification dialog is
+             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+             * bulk notification method.
              * @param dialog the dialog that triggered the callback
-             * @param which the identifier of the clicked button
              */
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
+            String organizerMessage = input.getText().toString().trim();
+            viewModel.notifyAllEntrants(organizerMessage);
         });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
     }
