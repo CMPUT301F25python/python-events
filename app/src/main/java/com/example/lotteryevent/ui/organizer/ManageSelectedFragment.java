@@ -19,6 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * This Fragment allows the organizer to view and manage entrants who were selected
@@ -51,6 +52,9 @@ public class ManageSelectedFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
+        setHasOptionsMenu(true);
+        
         View view = inflater.inflate(R.layout.fragment_manage_selected, container, false);
 
         if (this.getArguments() != null) {
@@ -102,23 +106,68 @@ public class ManageSelectedFragment extends Fragment {
 
     /**
      * Cancels a selected entrant by setting their status back to "waiting"
+     * and automatically selects the next waiting user if one exists
      *
      * @param userId
      * This is the user's ID stored as docId in firestore
      */
     private void cancelSelectedUser(String userId) {
-        // Remove entrant from selected list
-        this.db.collection("events")
-                .document(this.eventId)
+        // Get waitlist before anything is modified
+        db.collection("events")
+                .document(eventId)
                 .collection("entrants")
-                .document(userId)
-                .update("status", "waiting")
-                .addOnSuccessListener(aVoid -> {
-                    this.loadSelectedEntrants();
+                .whereEqualTo("status", "waiting")
+                .get()
+                .addOnSuccessListener(waitQuery -> {
+                    List<DocumentSnapshot> waitlistDocs = waitQuery.getDocuments();
 
-                    Toast.makeText(this.getContext(), "User cancelled and returned to waitlist", Toast.LENGTH_SHORT).show();
+                    String replacementUserId = null;
+
+                    // Select replacement entrant before removing user from invited list
+                    if (!waitlistDocs.isEmpty()) {
+                        int randomUser = new Random().nextInt(waitlistDocs.size());
+                        replacementUserId = waitlistDocs.get(randomUser).getId();
+                    }
+
+                    String finalReplacementUserId = replacementUserId;
+
+                    // Move replacement to invited list if they exist
+                    if (finalReplacementUserId != null) {
+                        db.collection("events")
+                                .document(eventId)
+                                .collection("entrants")
+                                .document(finalReplacementUserId)
+                                .update("status", "invited")
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(getContext(), "New user was not moved to invtied list",Toast.LENGTH_SHORT).show()
+                                );
+                    }
+
+                    // After replacing return cancelled user to waiting list
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("entrants")
+                            .document(userId)
+                            .update("status", "waiting")
+                            .addOnSuccessListener(aVoid -> {
+
+                                selectedUsers.remove(userId);
+
+                                if (finalReplacementUserId != null) {
+                                    selectedUsers.add(finalReplacementUserId);
+                                    Toast.makeText(getContext(), "Replacement selected from waitlist", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getContext(), "Cancelled. No users left in waitlist.", Toast.LENGTH_SHORT).show();
+                                }
+
+                                selectedAdapter.notifyDataSetChanged();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(getContext(),"Unable to update cancelled user", Toast.LENGTH_SHORT).show()
+                            );
                 })
-                .addOnFailureListener(e -> Toast.makeText(this.getContext(), "Failed to return user to waitlist", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show()
                 );
     }
 }
