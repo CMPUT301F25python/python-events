@@ -147,7 +147,7 @@ public class HomeFragment extends Fragment {
      *     <li>Attaches the adapter to the RecyclerView. The layout manager (GridLayoutManager)
      *         is defined in the corresponding XML layout file ({@code fragment_home.xml}).</li>
      *     <li>Sets an item click listener on the adapter. When an event item is clicked, it navigates
-     *         to the {@code OrganizerEventPageFragment}, passing the event's ID as a safe argument.
+     *         to the {@code OrganizerEventFragment}, passing the event's ID as a safe argument.
      *         It includes a check to prevent navigation if the event ID is null.</li>
      * </ul>
      *
