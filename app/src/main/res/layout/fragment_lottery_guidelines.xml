@@ -15,6 +15,7 @@ tools:context=".ui.LotteryGuidelinesFragment">
 
     <!-- Lottery Selection Guidelines -->
     <LinearLayout
+        android:id="@+id/lottery_guidelines_motto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
