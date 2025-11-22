@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
     id("androidx.navigation.safeargs")
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
@@ -78,4 +79,7 @@ dependencies {
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
+
+    // --- Map Dependencies ---
+    implementation(libs.play.services.maps)
 }
