@@ -46,6 +46,7 @@ public class EntrantListViewModelTest {
 
     private EntrantListRepositoryImpl repository;
     private EntrantListViewModel viewModel;
+    private MutableLiveData<List<Entrant>> mockRepoLiveData;
 
     /**
      * Creates a mocked {@link EntrantListRepositoryImpl} and injects it into a new
@@ -55,11 +56,15 @@ public class EntrantListViewModelTest {
     @Before
     public void setUp() {
         repository = mock(EntrantListRepositoryImpl.class);
-        viewModel = new EntrantListViewModel(repository);
+        mockRepoLiveData = new MutableLiveData<>();
+        when(repository.fetchEntrantsByStatus("event123", "accepted"))
+                .thenReturn(mockRepoLiveData);
+
+        viewModel = new EntrantListViewModel(repository, "event123", "accepted");
     }
 
     /**
-     * Verifies that {@link EntrantListViewModel#getEntrants(String, String)} correctly
+     * Verifies that {@link EntrantListViewModel#getEntrants()} correctly
      * delegates to the repository with the expected eventId and status values.
      * <p>Asserts that:</p>
      * <ul>
@@ -69,35 +74,25 @@ public class EntrantListViewModelTest {
      */
     @Test
     public void test_getEntrants_correct() {
-        String eventId = "event123";
-        String status = "accepted";
+        // Act
+        LiveData<List<Entrant>> result = viewModel.getEntrants();
 
-        MutableLiveData<List<Entrant>> repoLiveData = new MutableLiveData<>();
-        /**
-         * Mockito stub used to return a controlled LiveData instance from the repository.
-         * @param eventId the event ID expected by the repository
-         * @param status the status filter expected by the repository
-         * @return the MutableLiveData used to simulate repository output
-         */
-        when(repository.fetchEntrantsByStatus(eventId, status)).thenReturn(repoLiveData);
+        // Verify repository method was called (happened in constructor)
+        verify(repository).fetchEntrantsByStatus("event123", "accepted");
 
-        LiveData<List<Entrant>> result = viewModel.getEntrants(eventId, status);
-
-        // Verify repository method is called with correct arguments
-        verify(repository).fetchEntrantsByStatus(eventId, status);
-
-        // ViewModel should return exactly the same LiveData instance
-        assert result == repoLiveData;
+        // Verify the ViewModel returns the exact LiveData instance we created
+        assert result == mockRepoLiveData;
     }
 
     /**
-     * Ensures that when {@link EntrantListViewModel#notifyAllEntrants(List, String, String)}
+     * Ensures that when {@link EntrantListViewModel#notifyAllEntrants(String)}
      * is called with a null entrant list, the repository is never asked to send
      * notifications. This guards against null-pointer related behavior.
      */
     @Test
     public void test_notifyAllEntrants_null() {
-        viewModel.notifyAllEntrants(null, "event123", "Hello");
+        mockRepoLiveData.setValue(null);
+        viewModel.notifyAllEntrants("Hello");
         verify(repository, never()).notifyEntrant(anyString(), anyString(), anyString());
     }
 
@@ -108,13 +103,18 @@ public class EntrantListViewModelTest {
      */
     @Test
     public void test_notifyAllEntrants_empty() {
-        List<Entrant> entrants = new ArrayList<>();
-        viewModel.notifyAllEntrants(entrants, "event123", "Hello");
+        // Arrange: Set the internal LiveData value to empty list
+        mockRepoLiveData.setValue(new ArrayList<>());
+
+        // Act
+        viewModel.notifyAllEntrants("Hello");
+
+        // Assert
         verify(repository, never()).notifyEntrant(anyString(), anyString(), anyString());
     }
 
     /**
-     * Verifies that {@link EntrantListViewModel#notifyAllEntrants(List, String, String)}
+     * Verifies that {@link EntrantListViewModel#notifyAllEntrants(String)}
      * sends notifications only for entrants with valid, non-null user IDs.
      * <p>Test behavior:</p>
      * <ul>
@@ -146,8 +146,9 @@ public class EntrantListViewModelTest {
         when(entrantWithoutId.getUserId()).thenReturn(null);
 
         List<Entrant> entrants = Arrays.asList(entrantWithId1, null, entrantWithoutId, entrantWithId2);
+        mockRepoLiveData.setValue(entrants);
 
-        viewModel.notifyAllEntrants(entrants, eventId, message);
+        viewModel.notifyAllEntrants(message);
 
         /**
          * Verification step ensuring the repository receives notification calls

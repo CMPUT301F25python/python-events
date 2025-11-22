@@ -57,7 +57,7 @@ public class EntrantListFragmentTest {
     public void setup() {
         fakeRepository = new FakeEntrantListRepository();
         GenericViewModelFactory viewModelFactory = new GenericViewModelFactory();
-        viewModelFactory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(fakeRepository));
+        viewModelFactory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(fakeRepository, "event123", "accepted"));
         fragmentFactory = new ReusableTestFragmentFactory();
         fragmentFactory.put(EntrantListFragment.class, () -> new EntrantListFragment(viewModelFactory));
     }
