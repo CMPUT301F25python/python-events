@@ -54,14 +54,14 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
 
         db = FirebaseFirestore.getInstance();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
         user = FirebaseAuth.getInstance().getCurrentUser();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -89,7 +89,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         });
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -108,13 +108,13 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
     public void tearDownTests() {
         db.collection("events").document(event.getEventId()).collection("entrants").document(entrant.getUserId()).delete();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         db.collection("events").document(event.getEventId()).delete();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -128,7 +128,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
                 }
             });
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -145,7 +145,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         onView(withId(R.id.runDrawButton)).perform(click());
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -159,7 +159,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         onView(withId(R.id.confirm_and_notify_button)).perform(click());
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -179,7 +179,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         onView(withId(R.id.runDrawButton)).perform(click());
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -193,7 +193,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         onView(withId(R.id.cancel_button)).perform(click());
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

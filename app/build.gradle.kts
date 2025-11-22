@@ -70,8 +70,6 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-lite")
     }
 
-
-
     // --- Camera Dependencies ---
     implementation(libs.camera.core)
     implementation(libs.camera.camera2)
