@@ -86,4 +86,8 @@
     <string name="notifications">Notifications</string>
     <string name="events">Events</string>
     <string name="point_camera_at_a_qr_code">Point camera at a QR code</string>
+    <string name="images">Images</string>
+    <string name="profiles">Profiles</string>
+    <string name="admin_events">Admin Events</string>
+    <string name="sent_notifications">Sent Notifications</string>
 </resources>
