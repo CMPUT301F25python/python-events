@@ -133,9 +133,9 @@
 
     <fragment
         android:id="@+id/manageSelectedFragment"
-        android:name="com.example.lotteryevent.ui.organizer.ManageSelectedFragment"
+        android:name="com.example.lotteryevent.ui.organizer.ManageInvitedFragment"
         android:label="Manage Invited Entrants"
-        tools:layout="@layout/fragment_manage_selected">
+        tools:layout="@layout/fragment_manage_invited">
 
         <argument
             android:name="eventId"

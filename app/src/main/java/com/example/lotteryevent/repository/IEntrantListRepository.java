@@ -54,5 +54,23 @@ public interface IEntrantListRepository {
      */
     void setUserMessage(String message);
 
+    /**
+     * Updates the status of a specific entrant (e.g., from "invited" to "waiting").
+     *
+     * @param eventId   The event ID.
+     * @param userId    The entrant's user ID.
+     * @param newStatus The new status to set.
+     * @param callback  A callback to handle success/failure in the ViewModel.
+     */
+    void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback);
+
+    /**
+     * Simple callback interface for status updates.
+     */
+    interface StatusUpdateCallback {
+        void onSuccess();
+        void onFailure(Exception e);
+    }
+
 }
 
