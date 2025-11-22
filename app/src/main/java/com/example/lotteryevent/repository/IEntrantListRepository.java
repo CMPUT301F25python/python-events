@@ -9,8 +9,6 @@ import java.util.List;
  * and sending notifications related to events. Implementations of this
  * interface provide asynchronous access to entrant lists via LiveData as well
  * as methods to notify individual entrants with organizer-generated messages.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public interface IEntrantListRepository {
 

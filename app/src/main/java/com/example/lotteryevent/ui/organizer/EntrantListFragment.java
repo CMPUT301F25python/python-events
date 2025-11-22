@@ -32,8 +32,6 @@ import java.util.ArrayList;
  * navigation arguments, queries Firestore via the ViewModel, and displays results
  * in a RecyclerView. It also allows the organizer to send notifications to all
  * entrants currently displayed.
- * @author Jacob Mellick, Sanaa Bhaidani
- * @version 2.0
  */
 
 public class EntrantListFragment extends Fragment {

@@ -16,8 +16,6 @@ import java.util.List;
  * requiring a real Firestore backend.
  * <p>All data is stored in memory and exposed through LiveData so that
  * ViewModels and fragments can be tested under normal lifecycle conditions.</p>
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public class FakeEntrantListRepository implements IEntrantListRepository {
 

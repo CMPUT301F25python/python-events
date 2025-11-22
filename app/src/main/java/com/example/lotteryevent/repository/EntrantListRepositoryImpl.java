@@ -22,8 +22,6 @@ import java.util.List;
  * <p>This repository implements {@link IEntrantListRepository} and exposes
  * LiveData streams so that UI layers can observe entrant list updates.</p>
  * @see IEntrantListRepository
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public class EntrantListRepositoryImpl implements IEntrantListRepository{
 
