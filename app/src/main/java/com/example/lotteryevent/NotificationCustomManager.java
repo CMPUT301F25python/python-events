@@ -19,8 +19,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.navigation.NavDeepLinkBuilder;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -95,7 +97,7 @@ public class NotificationCustomManager {
      * @param organizerId Organizer ID who sent the notif
      * @param organizerName Organizer Name who sent the notif
      */
-    public void sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
+    public Task<DocumentReference> sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
         Notification notification = new Notification();
         notification.setTitle(title);
         notification.setMessage(message);
@@ -109,7 +111,7 @@ public class NotificationCustomManager {
         notification.setTimestamp(Timestamp.now());
 
         // adds notif doc to the user's notif collection
-        db.collection("notifications").add(notification)
+        return db.collection("notifications").add(notification)
                 .addOnSuccessListener(v -> Log.d(TAG, "Notification added for user ID " + uid + " with notification ID " + v.getId()))
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Failed to add notification for user " + uid, e);
