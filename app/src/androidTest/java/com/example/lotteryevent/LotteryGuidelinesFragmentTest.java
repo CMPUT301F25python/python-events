@@ -68,7 +68,7 @@ public class LotteryGuidelinesFragmentTest {
      * and asserts that the primary motto TextView is visible.
      */
     @Test
-    public void navigateToLotteryGuidelines_displaysMotto() {
+    public void navigateToLotteryGuidelines() {
         launchFragment(); //inside a test container
         // Assert: The motto TextView is displayed
         Espresso.onView(ViewMatchers.withId(R.id.lottery_guidelines_motto)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
