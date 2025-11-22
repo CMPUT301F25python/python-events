@@ -87,4 +87,5 @@
     <string name="events">Events</string>
     <string name="point_camera_at_a_qr_code">Point camera at a QR code</string>
     <string name="lottery_guidelines">Lottery Guidelines</string>
+    <string name="lottery_guidelines_title">Lottery Guidelines</string>
 </resources>
