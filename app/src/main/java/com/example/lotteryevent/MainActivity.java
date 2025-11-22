@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
         // user identification by device
         mAuth = FirebaseAuth.getInstance();
+        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         // anonymous sign-in if no user, else initialize immediately
@@ -97,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
-        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
     }
 
     /**
