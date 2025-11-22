@@ -53,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "AnonymousAuth";
     private NotificationCustomManager notificationCustomManager;
 
+    // flag to check user is initialized (only then should rest of app be set up)
+    private boolean userInitialized = false;
+
     /**
      * Initializes the activity, sets up the main layout, logs user in based on device id, and configures navigation.
      * <p>
@@ -68,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         // user identification by device
         mAuth = FirebaseAuth.getInstance();
         notificationCustomManager = new NotificationCustomManager(getApplicationContext());
@@ -77,25 +83,8 @@ public class MainActivity extends AppCompatActivity {
         if(currentUser == null){
             signInAnonymously();
         } else {
-            initializeUser(currentUser); // initialize the current user
+            onUserInitialized(currentUser); // now we have a user, initialize the app
         }
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navView = findViewById(R.id.nav_view);
-
-        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
-        NavController navController = navHostFragment.getNavController();
-
-        appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
-                .setOpenableLayout(drawerLayout)
-                .build();
-
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
-
     }
 
     /**
@@ -119,6 +108,42 @@ public class MainActivity extends AppCompatActivity {
         notificationCustomManager.clearNotifications();
         notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
         notificationCustomManager.listenForNotifications(uid);
+    }
+
+    /**
+     * This function initializes the user. Once the auth state is set, app is fully set-up
+     * @param user the user's device id
+     */
+    private void onUserInitialized(FirebaseUser user){
+        // extra check: don't do anything if user isn't logged in
+        if(user == null || userInitialized){
+            return;
+        }
+        userInitialized = true; // set flag
+
+        initializeUser(user); // initialize user data and notifications
+        setUpNavigation(); // guaranteed auth state so set up nav and fragments
+    }
+
+    /**
+     * This function sets up the navigation for the app use in onCreate().
+     * We also setup the nav_graph after the user ID has been set
+     */
+    private void setUpNavigation(){
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        NavigationView navView = findViewById(R.id.nav_view);
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        NavController navController = navHostFragment.getNavController();
+
+        navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
+
+        appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
+                .setOpenableLayout(drawerLayout)
+                .build();
+
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        NavigationUI.setupWithNavController(navView, navController);
     }
 
     /**
@@ -159,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInAnonymously:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            initializeUser(user);
+                            onUserInitialized(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInAnonymously:failure", task.getException());
