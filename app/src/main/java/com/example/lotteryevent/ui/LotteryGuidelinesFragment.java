@@ -15,8 +15,6 @@ import com.example.lotteryevent.R;
 /**
  * A {@link Fragment} subclass that allows users to view the lottery guidelines.
  * Its sole responsibility is to display the data.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public class LotteryGuidelinesFragment extends Fragment {
 

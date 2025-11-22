@@ -21,8 +21,6 @@ import org.junit.runner.RunWith;
  * This test class verifies that the Lottery Guidelines screen initializes
  * correctly and that its key UI components are visible when the fragment
  * is launched within a navigation graph.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 @RunWith(AndroidJUnit4.class)
 public class LotteryGuidelinesFragmentTest {
