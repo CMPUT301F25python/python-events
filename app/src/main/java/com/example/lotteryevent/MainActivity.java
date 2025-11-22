@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
+
         Menu menu = navView.getMenu();
         MenuItem adminNotificationsItem = menu.findItem(R.id.adminSentNotificationsFragment);
         MenuItem adminImagesItem = menu.findItem(R.id.adminImagesFragment);
