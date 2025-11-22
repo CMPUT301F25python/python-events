@@ -1,7 +1,6 @@
 package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.Entrant;
