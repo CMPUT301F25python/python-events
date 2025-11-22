@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -22,6 +24,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.lotteryevent.data.Entrant;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
@@ -56,11 +59,16 @@ public class MainActivity extends AppCompatActivity {
     private NotificationCustomManager notificationCustomManager;
 
     /**
-     * Initializes the activity, sets up the main layout, logs user in based on device id, and configures navigation.
+     * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
      * <p>
-     * This method inflates the activity's UI, finds the NavController, and uses {@link NavigationUI}
-     * to connect the Toolbar and NavigationView to the navigation graph. This enables automatic
-     * title updates and handling of the navigation drawer icon (hamburger icon).
+     * This method handles the following lifecycle operations:
+     * <ul>
+     *     <li>Inflates the activity's UI and sets up the {@link Toolbar}.</li>
+     *     <li>Initiates anonymous Firebase authentication.</li>
+     *     <li>Connects the {@link NavigationView} and {@link DrawerLayout} to the {@link NavController}.</li>
+     *     <li><strong>Admin Check:</strong> Asynchronously queries the Firestore "users" collection for the current user's profile.
+     *     If the "admin" field is true, it dynamically reveals the hidden administrator menu items (Notifications, Images, Profiles, Events).</li>
+     * </ul>
      *
      * @param savedInstanceState If the activity is being re-initialized after previously being
      *                           shut down, this Bundle contains the data it most recently supplied.
@@ -79,6 +87,34 @@ public class MainActivity extends AppCompatActivity {
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
+
+        Menu menu = navView.getMenu();
+        MenuItem adminNotificationsItem = menu.findItem(R.id.adminSentNotificationsFragment);
+        MenuItem adminImagesItem = menu.findItem(R.id.adminImagesFragment);
+        MenuItem adminProfilesItem = menu.findItem(R.id.adminProfilesFragment);
+        MenuItem adminEventsItem = menu.findItem(R.id.adminEventsFragment);
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("users").document(uid).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Boolean isAdmin = documentSnapshot.getBoolean("admin");
+
+                            if (isAdmin != null && isAdmin) {
+                                // show the admin nav drawer items only if the user is an admin
+                                adminNotificationsItem.setVisible(true);
+                                adminImagesItem.setVisible(true);
+                                adminProfilesItem.setVisible(true);
+                                adminEventsItem.setVisible(true);
+                            }
+                        }
+                    });
+        }
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
