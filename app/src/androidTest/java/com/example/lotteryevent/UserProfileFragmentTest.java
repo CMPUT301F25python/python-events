@@ -76,8 +76,8 @@ public class UserProfileFragmentTest {
         String newName = "Jane Doe";
         String newEmail = "jane.doe@example.com";
         launchFragment();
-        onView(withId(R.id.name_field)).perform(clearText(), typeText(newName));
-        onView(withId(R.id.email_field)).perform(clearText(), typeText(newEmail));
+        onView(withId(R.id.name_field)).perform(clearText(), typeText(newName), closeSoftKeyboard());
+        onView(withId(R.id.email_field)).perform(clearText(), typeText(newEmail), closeSoftKeyboard());
         onView(withId(R.id.update_button)).perform(click());
         onView(withId(R.id.name_field)).check(matches(withText(newName)));
         onView(withId(R.id.email_field)).check(matches(withText(newEmail)));

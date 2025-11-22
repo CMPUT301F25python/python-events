@@ -21,9 +21,11 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.viewmodels.QrScannerViewModel;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
@@ -41,17 +43,36 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@link EventDetailsFragment} for that event.
  */
 public class QrScannerFragment extends Fragment {
+    /**
+     * Factory for creating the ViewModel.
+     * This is nullable and primarily used for dependency injection during unit testing.
+     */
+    private androidx.lifecycle.ViewModelProvider.Factory viewModelFactory;
     /** Executor for background camera operations. */
     private ExecutorService cameraExecutor;
     /** The view that displays the camera feed. */
     private PreviewView previewView;
     /** The ML Kit barcode scanner instance. */
     private BarcodeScanner scanner;
+    /** The ViewModel for this fragment. */
+    private QrScannerViewModel viewModel;
+
+
     /**
-     * An atomic boolean to ensure that the QR code is processed only once.
-     * This prevents multiple navigation events from being fired from a single continuous scan.
+     * Required empty public constructor.
      */
-    private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+    public QrScannerFragment() {
+        // Default behavior
+    }
+
+    /**
+     * Constructor used for testing to allow injection of a custom ViewModel factory.
+     *
+     * @param viewModelFactory The factory to use when creating the ViewModel (e.g., a fake for UI tests).
+     */
+    public QrScannerFragment(androidx.lifecycle.ViewModelProvider.Factory viewModelFactory) {
+        this.viewModelFactory = viewModelFactory;
+    }
 
     /**
      * Inflates the layout for this fragment.
@@ -77,11 +98,26 @@ public class QrScannerFragment extends Fragment {
         previewView = view.findViewById(R.id.camera_preview);
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        // Setup the barcode scanner for QR codes only
+        // Initialize ViewModel (use the custom factory if provided by the test constructor)
+        if (viewModelFactory != null) {
+            viewModel = new ViewModelProvider(this, viewModelFactory).get(QrScannerViewModel.class);
+        }
+        else {
+            viewModel = new ViewModelProvider(this).get(QrScannerViewModel.class);
+        }
+
+        // Initialize the barcode scanner
         BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                 .build();
         scanner = BarcodeScanning.getClient(options);
+
+        // Observe ViewModel for successful scans
+        viewModel.getScannedEventId().observe(getViewLifecycleOwner(), eventId -> {
+            if (eventId != null) {
+                navigateToEventDetails(eventId);
+            }
+        });
 
         // Check for camera permission and start the camera
         if (isCameraPermissionGranted()) {
@@ -141,37 +177,31 @@ public class QrScannerFragment extends Fragment {
         scanner.process(image)
                 .addOnSuccessListener(barcodes -> {
                     // Check if we found a barcode and we are not already processing one
-                    if (!barcodes.isEmpty() && isProcessing.compareAndSet(false, true)) {
-                        Barcode barcode = barcodes.get(0); // Get the first barcode
-                        String rawValue = barcode.getRawValue();
-                        Log.d("QrScannerFragment", "QR Code detected: " + rawValue);
-                        handleQrCode(rawValue);
+                    if (!barcodes.isEmpty()) {
+                        Barcode barcode = barcodes.get(0);
+                        // Pass the raw data to ViewModel for processing
+                        viewModel.processScannedContent(barcode.getRawValue());
                     }
                 })
                 .addOnFailureListener(e -> Log.e("QrScannerFragment", "Barcode scanning failed", e))
-                .addOnCompleteListener(task -> {
-                    // Always close the ImageProxy
-                    imageProxy.close();
-                });
+                .addOnCompleteListener(task -> imageProxy.close());
     }
 
+
     /**
-     * Handles the successful detection of a QR code.
-     * This method navigates to the event details screen, passing the scanned data as an argument.
-     * It ensures the navigation call is made on the main UI thread.
-     * @param eventId The raw string value decoded from the QR code.
+     * Navigates to the Event Details screen for the successfully scanned event.
+     * This method creates a Bundle containing the event ID, displays a brief "Event Found!"
+     * confirmation toast to the user, and triggers the navigation action using the NavController.
+     *
+     * @param eventId The unique identifier of the event obtained from the QR code.
      */
-    private void handleQrCode(String eventId) {
-        requireActivity().runOnUiThread(() -> {
-            Toast.makeText(getContext(), "Event Found: " + eventId, Toast.LENGTH_SHORT).show();
+    private void navigateToEventDetails(String eventId) {
+        Toast.makeText(getContext(), "Event Found!", Toast.LENGTH_SHORT).show();
 
-            // Navigate to the event details fragment, passing the scanned eventId
-            Bundle args = new Bundle();
-            args.putString("eventId", eventId); // Key must match the argument in nav_graph.xml
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
 
-            NavHostFragment.findNavController(QrScannerFragment.this)
-                    .navigate(R.id.eventDetailsFragment, args);
-        });
+        NavHostFragment.findNavController(this).navigate(R.id.eventDetailsFragment, args);
     }
 
     /**
@@ -209,5 +239,7 @@ public class QrScannerFragment extends Fragment {
         if (scanner != null) {
             scanner.close();
         }
+        // Reset ViewModel processing state in case the user navigates back to this fragment instance
+        viewModel.resetScanner();
     }
 }

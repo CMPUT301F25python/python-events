@@ -9,12 +9,21 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.repository.AvailableEventsRepositoryImpl;
+import com.example.lotteryevent.repository.EventRepositoryImpl;
+import com.example.lotteryevent.repository.IAvailableEventsRepository;
+import com.example.lotteryevent.repository.IEventRepository;
+import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.example.lotteryevent.viewmodels.HomeViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -25,11 +34,17 @@ import java.util.List;
 
 public class AvailableEventsFragment extends Fragment {
 
-    private FirebaseFirestore db;
-
     private RecyclerView recyclerView;
     private EventAdapter adapter;
-    private ListenerRegistration registration;
+    private AvailableEventsViewModel availableEventsViewModel;
+    private ViewModelProvider.Factory viewModelFactory;
+
+    public AvailableEventsFragment() { }
+
+    public AvailableEventsFragment(ViewModelProvider.Factory viewModelFactory) {
+        this.viewModelFactory = viewModelFactory;
+    }
+
 
     /**
      *
@@ -44,6 +59,17 @@ public class AvailableEventsFragment extends Fragment {
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (viewModelFactory == null) {
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            IAvailableEventsRepository availableEventsRepository = new AvailableEventsRepositoryImpl();
+            factory.put(AvailableEventsViewModel.class, () -> new AvailableEventsViewModel(availableEventsRepository));
+            viewModelFactory = factory;
+        }
+
+        // Use the factory (either from production or from the test) to create the ViewModel.
+        availableEventsViewModel = new ViewModelProvider(this, viewModelFactory).get(AvailableEventsViewModel.class);
+
+        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_available_events, container, false);
     }
 
@@ -57,58 +83,21 @@ public class AvailableEventsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db   = FirebaseFirestore.getInstance();
-        FirebaseAuth auth = FirebaseAuth.getInstance();
+        setupRecyclerView(view);
+        setupObservers();
+        availableEventsViewModel.fetchAvailableEvents();
 
+
+    }
+
+    public void setupRecyclerView(View view) {
         // Use ONE RecyclerView reference
         recyclerView = view.findViewById(R.id.events_recycler_view);
-        if (recyclerView == null) {
-            Toast.makeText(requireContext(),
-                    "RecyclerView with id 'events_recycler_view' not found in fragment_available_events.xml",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
-
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         // Use the adapter constructor that takes the row layout you want here
         adapter = new EventAdapter(R.layout.item_event);
         recyclerView.setAdapter(adapter);
-
-//         click handling
-         adapter.setOnItemClickListener(event ->
-                 Toast.makeText(requireContext(), "Clicked: " + event.getName(), Toast.LENGTH_SHORT).show()
-         );
-
-        // Firestore listener
-        registration = db.collection("events")
-                .addSnapshotListener((snap, err) -> {
-                    if (!isAdded()) return;
-                    if (err != null || snap == null) {
-                        Toast.makeText(requireContext(), "Load failed: " + (err != null ? err.getMessage() : ""), Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    List<Event> list = new ArrayList<>();
-                    for (DocumentSnapshot doc : snap.getDocuments()) {
-                        Event e = new Event();
-
-                        String id = doc.getId();
-                        e.setEventId(id);
-
-                        String title = doc.getString("name");
-                        if (title == null || title.trim().isEmpty()) {
-                            title = id;
-                        }
-                        e.setName(title);
-
-                        e.setLocation(doc.getString("location"));
-                        e.setDescription(doc.getString("description"));
-
-                        list.add(e);
-                    }
-                    adapter.setEvents(list);
-                });
 
         adapter.setOnItemClickListener(event -> {
             String id = event.getEventId();
@@ -124,18 +113,19 @@ public class AvailableEventsFragment extends Fragment {
                     androidx.navigation.fragment.NavHostFragment.findNavController(AvailableEventsFragment.this);
             nav.navigate(R.id.eventDetailsFragment, args);
         });
-
     }
 
-    /**
-     * Destroys view
-     */
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (registration != null) {
-            registration.remove();
-            registration = null;
-        }
+    public void setupObservers() {
+        availableEventsViewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
+            if (events != null) {
+                adapter.setEvents(events);
+            }
+        });
+
+        availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }
