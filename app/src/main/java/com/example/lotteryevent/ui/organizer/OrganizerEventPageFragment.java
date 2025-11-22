@@ -187,12 +187,20 @@ public class OrganizerEventPageFragment extends Fragment {
         btnInvitedParticipants.setOnClickListener(entrantListNavListener);
         btnCancelledParticipants.setOnClickListener(entrantListNavListener);
 
-        View.OnClickListener notImplementedListener = v -> {
-            Button b = (Button) v;
-            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
-        };
-        btnViewEntrantMap.setOnClickListener(notImplementedListener);
-        btnFinalize.setOnClickListener(notImplementedListener);
+        // Listener for Entrant Map button
+        btnViewEntrantMap.setOnClickListener(v -> {
+            if (eventId == null || eventId.isEmpty()) {
+                Toast.makeText(getContext(), "Error: Event ID not found.", Toast.LENGTH_SHORT).show();
+            } else {
+                OrganizerEventPageFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
+                        OrganizerEventPageFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
+                Navigation.findNavController(v).navigate(action);
+            }
+        });
+
+        btnFinalize.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Finalize not implemented yet.", Toast.LENGTH_SHORT).show();
+        });
     }
 
 
