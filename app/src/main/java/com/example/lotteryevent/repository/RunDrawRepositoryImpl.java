@@ -121,6 +121,7 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     if (numToSelect > waitlist.size()) {
                         _message.postValue("You cannot select more than " + waitlist.size() + " people");
                         _isLoading.postValue(false);
+                        return;
                     }
 
                     Collections.shuffle(waitlist);
