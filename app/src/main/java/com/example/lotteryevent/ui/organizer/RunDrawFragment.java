@@ -6,100 +6,169 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
-import com.example.lotteryevent.LotteryManager;
 import com.example.lotteryevent.R;
-
-import com.example.lotteryevent.utilities.FireStoreUtilities;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.example.lotteryevent.repository.RunDrawRepositoryImpl;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.example.lotteryevent.viewmodels.RunDrawViewModel;
 
 /**
  * This fragment allows the organizer to run the draw for an event.
+ *
  * <p>
- *     Organizer enters how many participants should be selected, and then starts draw
- *     When the draw begins, this fragment calls LotteryManager to perform selection
- *     and update firestore
+ *     MVVM refactored version, this Fragment now ONLY handles:
+ *     - Rendering the UI
+ *     - Receiving user input
+ *     - Observing LiveData from the ViewModel
+ *     - Navigating to the next screen on success
+ *
+ *     All Firestore operations, selection logic, and entrant updates
+ *     are now handled inside the ViewModel + Repository layers.
  * </p>
  */
 public class RunDrawFragment extends Fragment {
-    private FirebaseFirestore db;
-    private LotteryManager lotteryManager;
+
+
     private EditText numSelectedEntrants;
-    private String eventId = "temporary filler for event ID";
     private TextView waitingListCountText;
     private TextView availableSpaceCountText;
+    private ProgressBar progressBar;
 
-    /**
-     *
-     * @param inflater The LayoutInflater object that can be used to inflate
-     * any views in the fragment,
-     * @param container If non-null, this is the parent view that the fragment's
-     * UI should be attached to.  The fragment should not add the view itself,
-     * but this can be used to generate the LayoutParams of the view.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
-     *
-     *
-     */
+    // Buttons
+    private Button runDrawButton;
+    private Button cancelButton;
+
+    // EventId passed from previous fragment
+    private String eventId = "temporary filler for event ID";
+
+    // ViewModel
+    private RunDrawViewModel viewModel;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_run_draw, container, false);
-
-        if (getArguments() != null) {
-            eventId = getArguments().getString("eventId");
-        }
-        return view;
+        return inflater.inflate(R.layout.fragment_run_draw, container, false);
     }
 
     /**
-     * This block handles the logic for the removal and adding of users to waitlist and selected list
-     * after draw has been initialized. Also ensures that number of participants selected doesn't exceed
-     * number of people on the waitlist
-     *
-     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
-     * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
+     * Called after the view is created. This is where:
+     * - Views are initialized
+     * - ViewModel is created with dependency injection
+     * - Observers are connected to LiveData
+     * - Button click listeners are set
      */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        lotteryManager = new LotteryManager();
-        numSelectedEntrants = view.findViewById(R.id.numSelectedEntrants);
-        waitingListCountText = view.findViewById(R.id.waiting_list_count);
-        availableSpaceCountText = view.findViewById(R.id.available_space_count);
-        Button runDrawButton = view.findViewById(R.id.runDrawButton);
-        Button cancelButton = view.findViewById(R.id.cancel_button);
+        // Retrieve eventId passed from organizer event page
+        if (getArguments() != null) {
+            eventId = getArguments().getString("eventId");
+        }
 
-        // Firestore helper to populate waiting list and available spots
-        FireStoreUtilities.fillEntrantMetrics(
-                db,
-                eventId,
-                waitingListCountText,
-                null,
-                availableSpaceCountText,
-                getContext()
-            );
+        initializeViews(view);
+        initializeViewModel();
+        setupObservers();
+        setupListeners(view);
 
-        // Run draw
+        // Fetch metrics from Firestore through ViewModel to Repository
+        viewModel.loadMetrics(eventId);
+    }
+
+    /**
+     * Initializes and binds UI components using XML IDs.
+     *
+     */
+    private void initializeViews(View v) {
+        numSelectedEntrants = v.findViewById(R.id.numSelectedEntrants);
+        waitingListCountText = v.findViewById(R.id.waiting_list_count);
+        availableSpaceCountText = v.findViewById(R.id.available_space_count);
+
+        runDrawButton = v.findViewById(R.id.runDrawButton);
+        cancelButton = v.findViewById(R.id.cancel_button);
+
+    }
+
+    /**
+     * Sets up the ViewModel using the GenericViewModelFactory.
+     * This allows unit tests to inject fake repositories.
+     */
+    private void initializeViewModel() {
+        RunDrawRepositoryImpl repo = new RunDrawRepositoryImpl(requireContext());
+
+        GenericViewModelFactory factory = new GenericViewModelFactory();
+        factory.put(RunDrawViewModel.class, () -> new RunDrawViewModel(repo));
+
+        viewModel = new ViewModelProvider(this, factory).get(RunDrawViewModel.class);
+    }
+
+    /**
+     * Observes all LiveData from the ViewModel.
+     * Any UI updates are made here, keeping the Fragment "dumb".
+     *
+     * This ensures:
+     * - No business logic in Fragment
+     * - Only rendering UI based on observable state
+     */
+    private void setupObservers() {
+
+        // Waiting list count
+        viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
+            if (count != null) {
+                waitingListCountText.setText(String.valueOf(count));
+            }
+        });
+
+        // Available spaces count
+        viewModel.availableSpaceCount.observe(getViewLifecycleOwner(), count -> {
+            if (count != null) {
+                availableSpaceCountText.setText(String.valueOf(count));
+            }
+        });
+
+        // Toast messages for user
+        viewModel.message.observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
+            runDrawButton.setEnabled(!isLoading);
+        });
+
+        // Navigation trigger on successful draw
+        viewModel.drawSuccess.observe(getViewLifecycleOwner(), success -> {
+            if (success != null && success) {
+                Bundle bundle = new Bundle();
+                bundle.putString("eventId", eventId);
+
+                Navigation.findNavController(requireView())
+                        .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
+            }
+        });
+    }
+
+    /**
+     * Sets up click listeners for the Run Draw and Cancel buttons.
+     * Validates input and forwards commands to the ViewModel.
+     */
+    private void setupListeners(View root) {
+
         runDrawButton.setOnClickListener(v -> {
+
             String inputText = numSelectedEntrants.getText().toString().trim();
 
             if (inputText.isEmpty()) {
@@ -108,8 +177,6 @@ public class RunDrawFragment extends Fragment {
             }
 
             int numToSelect;
-
-            // In case input is ever changed from numerical Type (Remove try block and only leave numToSelect <= 0)
             try {
                 numToSelect = Integer.parseInt(inputText);
             } catch (NumberFormatException e) {
@@ -122,71 +189,12 @@ public class RunDrawFragment extends Fragment {
                 return;
             }
 
-
-            android.util.Log.d("RunDraw", "Running draw for event: " + eventId);
-
-            // Waitlist status
-            db.collection("events").document(eventId)
-                    .collection("entrants")
-                    .whereEqualTo("status", "waiting")
-                    .get()
-                    .addOnSuccessListener(query -> {
-
-                        List<String> waitlist = new ArrayList<>();
-                        for (DocumentSnapshot d : query.getDocuments()) {
-                            waitlist.add(d.getId());
-                        }
-
-                        if (waitlist.isEmpty()) {
-                            Toast.makeText(getContext(), "Waitlist is empty", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        // Prevent organizer from selecting more people than available
-                        if (numToSelect > waitlist.size()) {
-                            Toast.makeText(getContext(),
-                                    "You cannot select more participants than are on the wait list (" + waitlist.size() + ").",
-                                    Toast.LENGTH_LONG).show();
-                            return;
-                        }
-
-                        Collections.shuffle(waitlist);
-                        List<String> chosen = waitlist.subList(0, numToSelect);
-
-                        com.google.firebase.firestore.WriteBatch batch = db.batch();
-
-                        for (String uid : chosen) {
-                            com.google.firebase.firestore.DocumentReference userRef = db.collection("events").document(eventId)
-                                    .collection("entrants")
-                                    .document(uid);
-                            batch.update(userRef, "status", "invited");
-                        }
-
-                        // Commit the batch operation
-                        batch.commit()
-                                .addOnSuccessListener(aVoid -> {
-                                    // Toast message if all users have been successfully updated
-                                    Toast.makeText(getContext(), "Draw Complete!", Toast.LENGTH_SHORT).show();
-
-                                    Bundle bundle = new Bundle();
-                                    bundle.putString("eventId", eventId);
-
-                                    Navigation.findNavController(view)
-                                            .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(getContext(), "Error updating user statuses.", Toast.LENGTH_SHORT).show();
-                                    android.util.Log.e("RunDraw", "Batch update failed", e);
-                                });
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(getContext(), "Error loading waitlist", Toast.LENGTH_SHORT).show();
-                    });
+            // Execute draw through ViewModel
+            viewModel.runDraw(eventId, numToSelect);
         });
 
-        // Cancel button from Firestore utility helper class
-        cancelButton.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigateUp();
-    });
+        cancelButton.setOnClickListener(v ->
+                Navigation.findNavController(v).navigateUp()
+        );
     }
 }
