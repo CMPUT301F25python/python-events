@@ -51,6 +51,11 @@ public interface IRunDrawRepository {
     LiveData<Boolean> getDrawSuccess();
 
     /**
+     * LiveData indicating cancel lottery completion
+     */
+    LiveData<Boolean> getCancelSuccess();
+
+    /**
      * Loads event metrics:
      * <ul>
      *     <li>waitlist size</li>
@@ -75,4 +80,11 @@ public interface IRunDrawRepository {
      * Number of participants to randomly select from waitlist
      */
     void runDraw(String eventId, int numToSelect);
+
+    /**
+     * cancel draw logic that stops the draw and returns organizer to event details page
+     * @param eventId
+     * Event to cancel draw for
+     */
+    void cancelLottery(String eventId);
 }

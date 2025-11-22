@@ -159,6 +159,13 @@ public class RunDrawFragment extends Fragment {
                         .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);
             }
         });
+
+        // Navigation trigger on successful cancel draw
+        viewModel.cancelSuccess.observe(getViewLifecycleOwner(), success -> {
+            if (success != null && success) {
+                Navigation.findNavController(requireView()).navigateUp();
+            }
+        });
     }
 
     /**

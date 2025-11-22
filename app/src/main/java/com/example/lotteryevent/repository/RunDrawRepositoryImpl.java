@@ -17,6 +17,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.IntConsumer;
 
+/**
+ * Run Draw repository that handles all firestore operations for running draw and loading event metrics
+ *
+ * <p>
+ *     This repository:
+ *     <ul>
+ *         <li>Loads waiting list, selected entrants and available space metrics</li>
+ *         <li>Executes draw by randomly selecting specified number of entrants</li>
+ *         <li>Updates entrant status to "invited" in firestore using batch</li>
+ *         <li>Cancels draw and returns invited users back to waiting list</li>
+ *         <li>Exposes Livedata to viewmodel</li>
+ *     </ul>
+ * </p>
+ */
 public class RunDrawRepositoryImpl implements IRunDrawRepository{
 
     private static final String TAG = "RunDrawRepository";
@@ -31,6 +45,7 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> _message = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _drawSuccess = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> _cancelSuccess = new MutableLiveData<>(false);
 
     public RunDrawRepositoryImpl(Context context) {
         this.context = context;
@@ -55,6 +70,14 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     public LiveData<Boolean> getDrawSuccess() { return _drawSuccess; }
 
     @Override
+    public LiveData<Boolean> getCancelSuccess() { return _cancelSuccess; }
+
+    /**
+     * Loads waiting list count, selected count, available space count
+     * @param eventId
+     * Unique Id for each event signifying which entrants should be retrieved
+     */
+    @Override
     public void loadMetrics(String eventId) {
         // Metrics from utility class
         FireStoreUtilities.fillEntrantMetrics(
@@ -67,6 +90,13 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
         );
     }
 
+    /**
+     * Runs lottery draw
+     * @param eventId
+     * Event we run draw for
+     * @param numToSelect
+     * Number of participants to randomly select from waitlist
+     */
     @Override
     public void runDraw(String eventId, int numToSelect) {
         _isLoading.postValue(true);
@@ -123,6 +153,31 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     _message.postValue("Error loading waitlist");
                     _isLoading.postValue(false);
                 });
+    }
+
+    /**
+     * Cancels lottery draw by restoring statuses from "invited" to "waiting"
+     * @param eventId
+     * Event to cancel draw for
+     */
+    @Override
+    public void cancelLottery(String eventId) {
+        _isLoading.postValue(true);
+
+        FireStoreUtilities.cancelLottery(
+                db,
+                eventId,
+                () -> {
+                    _message.postValue("Lottery cancelled");
+                    _cancelSuccess.postValue(true);
+                    _isLoading.postValue(false);
+                },
+                (err) -> {
+                    _message.postValue(err);
+                    _cancelSuccess.postValue(false);
+                    _isLoading.postValue(false);
+                }
+        );
     }
 
 }

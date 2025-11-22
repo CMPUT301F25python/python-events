@@ -32,6 +32,7 @@ public class RunDrawViewModel extends ViewModel {
     public LiveData<Boolean> isLoading;
     public LiveData<String> message;
     public LiveData<Boolean> drawSuccess;
+    public LiveData<Boolean> cancelSuccess;
 
     /**
      * Builds viewmodel using RunDraw repo
@@ -47,6 +48,7 @@ public class RunDrawViewModel extends ViewModel {
         isLoading = repo.isLoading();
         message = repo.getMessage();
         drawSuccess = repo.getDrawSuccess();
+        cancelSuccess = repo.getCancelSuccess();
     }
 
     /**
@@ -70,9 +72,15 @@ public class RunDrawViewModel extends ViewModel {
      *     with their statuses updated to "invited"
      * </p>
      * @param eventId
+     * Event to run draw for
      * @param numToSelect
+     * Number of participants to select from waitlist to randomly draw for
      */
     public void runDraw(String eventId, int numToSelect) {
         repository.runDraw(eventId, numToSelect);
+    }
+
+    public void cancelLottery(String eventId) {
+        repository.cancelLottery(eventId);
     }
 }
