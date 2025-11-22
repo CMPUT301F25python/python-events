@@ -1,6 +1,7 @@
 package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.User;
@@ -28,6 +29,8 @@ public class UserProfileViewModel extends ViewModel {
     public LiveData<User> getCurrentUser() {
         return userRepository.getCurrentUser();
     }
+
+    public LiveData<Boolean> getNotifPreference() { return userRepository.getNotifPreference(); }
 
     public LiveData<Boolean> isLoading() {
         return userRepository.isLoading();
@@ -84,5 +87,10 @@ public class UserProfileViewModel extends ViewModel {
             }
         }
         return null; // Validation successful
+    }
+
+    public void setNotifPreference(boolean enabled) {
+//        userRepository.updateNotifPreference(enabled);
+//        notifPreference.postValue(enabled);
     }
 }

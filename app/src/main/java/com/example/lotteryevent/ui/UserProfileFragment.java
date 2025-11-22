@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -37,6 +38,7 @@ public class UserProfileFragment extends Fragment {
     private EditText nameField;
     private EditText emailField;
     private EditText phoneField;
+    private CheckBox toggleAllowNotifs;
     private Button updateInfoButton;
     private Button deleteProfileButton;
 
@@ -110,6 +112,7 @@ public class UserProfileFragment extends Fragment {
         nameField = view.findViewById(R.id.name_field);
         emailField = view.findViewById(R.id.email_field);
         phoneField = view.findViewById(R.id.phone_field);
+        toggleAllowNotifs = view.findViewById(R.id.notifications_checkbox);
         updateInfoButton = view.findViewById(R.id.update_button);
         deleteProfileButton = view.findViewById(R.id.delete_button);
 
@@ -134,6 +137,11 @@ public class UserProfileFragment extends Fragment {
                 Toast.makeText(getContext(), "User not found. Returning to previous screen.", Toast.LENGTH_LONG).show();
                 Navigation.findNavController(requireView()).popBackStack();
             }
+        });
+
+        // Observe notification preferences for user of the specific device
+        viewModel.getNotifPreference().observe(getViewLifecycleOwner(), pref -> {
+            toggleAllowNotifs.setChecked(pref == true);
         });
 
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
@@ -165,6 +173,7 @@ public class UserProfileFragment extends Fragment {
     private void setupClickListeners() {
         updateInfoButton.setOnClickListener(v -> handleUpdateProfile());
         deleteProfileButton.setOnClickListener(v -> confirmProfileDeletion());
+        toggleAllowNotifs.setOnClickListener(v -> handleNotifToggle());
     }
 
     /**
@@ -198,5 +207,16 @@ public class UserProfileFragment extends Fragment {
                 })
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    private void handleNotifToggle() {
+        Boolean notifToggleState = toggleAllowNotifs.isChecked();
+        viewModel.setNotifPreference(notifToggleState);
+
+        if (notifToggleState) {
+            Toast.makeText(getContext(), "Notifications enabled", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Notifications disabled", Toast.LENGTH_SHORT).show();
+        }
     }
 }

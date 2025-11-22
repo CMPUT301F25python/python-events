@@ -3,6 +3,8 @@ package com.example.lotteryevent;
 import static java.security.AccessController.getContext;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -114,7 +116,10 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
                         != PackageManager.PERMISSION_GRANTED) {
-                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    if (!getAlreadyAskedForNotifs()) {
+                        getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+                        setAlreadyAskedForNotifs();
+                    }
                 }
             }
             notificationCustomManager.clearNotifications();
@@ -123,12 +128,41 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Gets if user has been asked to allow notifs already (show system dialog only once, afterwards they can toggle from profile screen)
+     * @return boolean of if the user has been asked to allow notifs already
+     */
+    private boolean getAlreadyAskedForNotifs() {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserPreferences", MODE_PRIVATE);
+        return sharedPreferences.getBoolean("asked_notif_pref", false);
+    }
+
+    /**
+     * Sets user has been asked about allowing notifs so that next time they aren't asked again
+     */
+    private void setAlreadyAskedForNotifs() {
+        SharedPreferences sharedPreferences = getSharedPreferences("UserPreferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("asked_notif_pref", true);
+        editor.apply();
+    }
+
     private final ActivityResultLauncher<String> getPermission =
         registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
             @Override
             public void onActivityResult(Boolean isGranted) {
                 if (isGranted) {
-                    Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show();
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    if (user != null) {
+                        String deviceId = user.getUid();
+                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        Map<String, Object> userInfo = new HashMap<>();
+                        userInfo.put("optOutNotifications", false);
+                        db.collection("users").document(deviceId)
+                                .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                                .addOnSuccessListener(aVoid -> Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Error storing notification preference.", Toast.LENGTH_SHORT).show());
+                    }
                 } else {
                     Toast.makeText(getApplicationContext(), "Notification permission denied.", Toast.LENGTH_SHORT).show();
                 }

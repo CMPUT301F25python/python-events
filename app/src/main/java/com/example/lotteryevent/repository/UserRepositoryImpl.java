@@ -21,6 +21,7 @@ public class UserRepositoryImpl implements IUserRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private final MutableLiveData<User> _currentUser = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _notifPreference = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -69,6 +70,9 @@ public class UserRepositoryImpl implements IUserRepository {
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
+
+    @Override
+    public LiveData<Boolean> getNotifPreference() { return _notifPreference; }
 
     @Override
     public LiveData<String> getMessage() {
@@ -249,4 +253,27 @@ public class UserRepositoryImpl implements IUserRepository {
                     return batch.commit();
                 });
     }
+//
+//    public void updateNotifPreference(Boolean enabled) {
+//        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+//        if (firebaseUser == null) {
+//            _userMessage.postValue("No user is signed in to update.");
+//            return;
+//        }
+//        _isLoading.setValue(true);
+//
+//        db.collection("users").document(firebaseUser.getUid()).set(user)
+//                .addOnSuccessListener(aVoid -> {
+//                    _isLoading.setValue(false);
+//                    _currentUser.postValue(user);
+//                    _userMessage.postValue("Profile updated successfully.");
+//                    Log.d(TAG, "User profile updated successfully.");
+//                })
+//                .addOnFailureListener(e -> {
+//                    _isLoading.setValue(false);
+//                    _userMessage.postValue("Profile update failed: " + e.getMessage());
+//                    Log.e(TAG, "Error updating profile", e);
+//                });
+//        _notifPreference.postValue(enabled);
+//    }
 }
