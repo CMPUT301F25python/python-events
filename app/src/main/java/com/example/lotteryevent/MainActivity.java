@@ -72,7 +72,14 @@ public class MainActivity extends AppCompatActivity {
 
         // user identification by device
         mAuth = FirebaseAuth.getInstance();
-        signInAnonymously();
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        // anonymous sign-in if no user, else initialize immediately
+        if(currentUser == null){
+            signInAnonymously();
+        } else {
+            initializeUser(currentUser); // initialize the current user
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -94,11 +101,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Called once we know we have a valid Firebase user.
+     * Sets up Firestore user doc and notifications for this UID.
+     * @param user this is the id of the device
+     */
+    public void initializeUser(FirebaseUser user){
+        // if no user, this doesn't execute (extra safety)
+        if(user == null){
+            return;
+        }
+        String uid = user.getUid();
+        updateUI(user); //write to Firestore
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+        notificationCustomManager.clearNotifications();
+        notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
+        notificationCustomManager.listenForNotifications(uid);
+
+    }
+
+    /**
      * Called when the activity becomes visible to the user.
      * <p>
      * This method checks if there is an authenticated Firebase user
      * when the app is launched. If a user is already signed in, it calls
-     * updateUI(FirebaseUser) to ensure the Firestore entry exists.
+     * initializeUser(FirebaseUser).
      * </p>
      */
     @Override
@@ -106,20 +137,10 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
 
+        // if user is signed in, initialize them
         if (currentUser != null) {
-            String uid = currentUser.getUid();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            }
-            notificationCustomManager.clearNotifications();
-            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
-            notificationCustomManager.listenForNotifications(uid);
+            initializeUser(currentUser);
         }
     }
 
@@ -153,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInAnonymously:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            updateUI(user);
+                            initializeUser(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInAnonymously:failure", task.getException());
