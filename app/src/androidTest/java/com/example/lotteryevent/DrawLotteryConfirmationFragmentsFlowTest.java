@@ -22,6 +22,7 @@ import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.junit.After;
@@ -112,6 +113,20 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
             throw new RuntimeException(e);
         }
         db.collection("events").document(event.getEventId()).delete();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        db.collection("notifications")
+            .whereEqualTo("eventId", event.getEventId())
+            .whereEqualTo("organizerId", user.getUid())
+            .whereEqualTo("type", "lottery_win")      // from your screenshot
+            .get().addOnSuccessListener(notifs -> {
+                for (DocumentSnapshot notif : notifs) {
+                    notif.getReference().delete();
+                }
+            });
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
