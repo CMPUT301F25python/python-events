@@ -111,11 +111,11 @@ public class FireStoreUtilities {
     public static void cancelLottery(
             FirebaseFirestore db,
             String eventId,
-            Context context,
-            @Nullable Runnable onNavigateBack
+            @Nullable Runnable onSuccess,
+            @Nullable Consumer<String> onError
     ) {
         if (db == null || eventId == null) {
-            Log.e(TAG, "db or eventId is null in cancelLottery");
+            if (onError != null) onError.accept("Invalid parameters for cancellation");
             return;
         }
         db.collection("events").document(eventId)
@@ -127,19 +127,17 @@ public class FireStoreUtilities {
                         for (DocumentSnapshot entrantDoc : query.getDocuments()) {
                             entrantDoc.getReference().update("status", "waiting");
                         }
-                        Toast.makeText(context, "Lottery Cancelled", Toast.LENGTH_SHORT).show();
-
-                        if (onNavigateBack != null) {
-                            onNavigateBack.run();
+                        if (onSuccess != null) {
+                            onSuccess.run();
                         } else {
-                            Toast.makeText(context, "No invited entrants to cancel", Toast.LENGTH_SHORT).show();
+                            if (onError != null) onError.accept("No invited entrants to cancel");
                         }
 
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(context, "Error cancelling lottery", Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(e -> {
+                       if (onError != null) onError.accept( "Error cancelling lottery");
+                });
     }
 
 
