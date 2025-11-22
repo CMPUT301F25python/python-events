@@ -59,7 +59,7 @@ public class NotificationsFragment extends Fragment {
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             // Production path: create dependencies manually.
-            INotificationRepository repository = new NotificationRepositoryImpl();
+            INotificationRepository repository = new NotificationRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
             factory.put(NotificationsViewModel.class, () -> new NotificationsViewModel(repository));
             viewModelFactory = factory;

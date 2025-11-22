@@ -1,8 +1,11 @@
 package com.example.lotteryevent.repository;
 
+import android.content.Context;
 import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
 import com.example.lotteryevent.data.Notification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -24,7 +27,8 @@ public class NotificationRepositoryImpl implements INotificationRepository {
 
     private ListenerRegistration listenerRegistration; // To manage the real-time listener
 
-    public NotificationRepositoryImpl() {
+
+    public NotificationRepositoryImpl(Context context) {
         attachListener();
     }
 
