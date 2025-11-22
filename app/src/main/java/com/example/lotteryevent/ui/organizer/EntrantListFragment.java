@@ -1,9 +1,7 @@
 package com.example.lotteryevent.ui.organizer;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,26 +14,28 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EntrantListAdapter;
-import com.example.lotteryevent.data.Entrant;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
+import com.example.lotteryevent.viewmodels.EntrantListViewModel;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
- * A fragment that displays a list of entrants for a specific event, filtered by their status.
- * <p>
- * This fragment receives an {@code eventId} and a {@code status} (e.g., "accepted", "waiting")
- * as navigation arguments. It then queries the corresponding Firestore subcollection and displays
- * the results in a {@link RecyclerView}.
+ * Fragment responsible for displaying a list of entrants for a specific event,
+ * filtered by their status. The fragment receives an event ID and status through
+ * navigation arguments, queries Firestore via the ViewModel, and displays results
+ * in a RecyclerView. It also allows the organizer to send notifications to all
+ * entrants currently displayed.
+ * @author Jacob Mellick, Sanaa Bhaidani
+ * @version 2.0
  */
+
 public class EntrantListFragment extends Fragment {
 
     private static final String TAG = "EntrantListFragment";
@@ -45,20 +45,32 @@ public class EntrantListFragment extends Fragment {
     private EntrantListAdapter adapter;
     private ProgressBar progressBar;
     private TextView titleTextView;
+    private Button sendNotificationButton;
 
-    // --- Firebase & Data ---
-    private FirebaseFirestore db;
+    // --- Data ---
     private String eventId;
     private String status;
-    private List<Entrant> entrants;
-    private Button sendNotificationButton;
-    private NotificationCustomManager notifManager;
+
+    // --- ViewModel ---
+    private EntrantListViewModel viewModel;
+    private ViewModelProvider.Factory viewModelFactory;
 
     /**
      * Required empty public constructor for fragment instantiation by the Android framework.
      */
     public EntrantListFragment() {
         // Required empty public constructor
+    }
+
+    /**
+     * Constructor used primarily for testing, allowing injection of a custom
+     * ViewModelProvider.Factory instance. This makes it possible to supply mock
+     * or fake ViewModels during unit or instrumentation tests.
+     * @param factory a custom ViewModel factory to be used when instantiating
+     *                the fragment's ViewModel
+     */
+    public EntrantListFragment(GenericViewModelFactory factory) {
+        this.viewModelFactory = factory;
     }
 
     /**
@@ -71,7 +83,6 @@ public class EntrantListFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        db = FirebaseFirestore.getInstance();
 
         if (getArguments() != null) {
             EntrantListFragmentArgs args = EntrantListFragmentArgs.fromBundle(getArguments());
@@ -96,7 +107,7 @@ public class EntrantListFragment extends Fragment {
     /**
      * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
      * but before any saved state has been restored in to the view. This is where we finalize the
-     * fragment's UI by initializing views and fetching data.
+     * fragment's UI by initializing views and fetching data by attaching LiveData observers.
      *
      * @param view               The View returned by {@link #onCreateView}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state.
@@ -104,12 +115,24 @@ public class EntrantListFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        initializeViewsAndManager(view);
+        initializeViews(view);
         setupRecyclerView();
 
-        titleTextView.setText(capitalizeFirstLetter(status));
-        fetchEntrantsByStatus();
+        // --- ViewModel Initialization ---
+        // If a factory was not injected (production), create the default one.
+        if (viewModelFactory == null) {
+            EntrantListRepositoryImpl entrantListRepo = new EntrantListRepositoryImpl(getContext());
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId, status));
+            viewModelFactory = factory;
+        }
+
+        // Get the ViewModel instance using the determined factory.
+        viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
+        titleTextView.setText(viewModel.getCapitalizedStatus());
+
+        // --- The rest of the method is the same ---
+        setupObservers();
     }
 
     /**
@@ -117,12 +140,11 @@ public class EntrantListFragment extends Fragment {
      *
      * @param view The root view of the fragment's layout.
      */
-    private void initializeViewsAndManager(View view) {
+    private void initializeViews(View view) {
         titleTextView = view.findViewById(R.id.entrant_list_title);
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress_bar);
         sendNotificationButton = view.findViewById(R.id.send_notification_button);
-        notifManager = new NotificationCustomManager(getContext());
     }
 
     /**
@@ -136,59 +158,44 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Fetches entrants from the Firestore subcollection where their 'status' field
-     * matches the status passed as an argument to this fragment. It updates the
-     * RecyclerView's adapter upon successful completion.
+     * Sets up observers on the ViewModel's LiveData.
+     * This is the core of the reactive UI.
      */
-    private void fetchEntrantsByStatus() {
+    private void setupObservers() {
         if (eventId == null || status == null) {
-            Toast.makeText(getContext(), "Error: Missing event data.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Error: Event data not available.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         progressBar.setVisibility(View.VISIBLE);
 
-        db.collection("events").document(eventId).collection("entrants")
-                .whereEqualTo("status", status)
-                .get()
-                .addOnCompleteListener(task -> {
-                    progressBar.setVisibility(View.GONE);
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        entrants = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult()) {
-                            Entrant entrant = document.toObject(Entrant.class);
-                            if (entrant != null) {
-                                entrants.add(entrant);
-                            }
-                        }
-                        adapter.updateEntrants(entrants);
-                        Log.d(TAG, "Fetched " + entrants.size() + " entrants with status: " + status);
-                        // added here to ensure setup occurs after entrants have been retrieved
-                        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
-                    } else {
-                        Log.w(TAG, "Error getting documents: ", task.getException());
-                        Toast.makeText(getContext(), "Failed to load entrants.", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        /**
+         * Callback triggered whenever the LiveData containing entrant lists updates.
+         * Hides the loading indicator, updates the adapter with the new list, logs
+         * diagnostic information, and configures the notification button to open the
+         * dialog for notifying all entrants.
+         * @param list the updated list of entrants retrieved from the ViewModel
+         */
+        viewModel.getEntrants().observe(getViewLifecycleOwner(), list -> {
+            progressBar.setVisibility(View.GONE);
+            if (list != null) {
+                adapter.updateEntrants(list);
+                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
+            }
+        });
+        // observe user message LiveData and display it as a Toast
+        viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
+            if (message != null && !message.isEmpty()) {
+                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
-     * A utility method to capitalize the first letter of a given string.
-     * Used for formatting the title of the page.
-     *
-     * @param str The string to capitalize.
-     * @return The capitalized string, or an empty string if the input is null or empty.
-     */
-    private String capitalizeFirstLetter(String str) {
-        if (str == null || str.isEmpty()) {
-            return "";
-        }
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
-    }
-
-    /**
-     * Displays notification dialog for organizer to enter a message to send to all entrants
-     * in the shown list. When notify all button is pressed, a notif is sent to each entrant
+     * Displays a dialog allowing the organizer to input a message that will be
+     * sent as a notification to all entrants currently shown in the list.
+     * Provides input validation and triggers the ViewModel's bulk notification
+     * method when confirmed.
      */
     private void showNotificationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -196,55 +203,18 @@ public class EntrantListFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setHint("Enter message...");
         builder.setView(input);
-        builder.setPositiveButton("Notify All", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String organizerMessage = input.getText().toString().trim();
-                if (!organizerMessage.isEmpty()) {
-                    for (Entrant entrant : entrants) {
-                        notifyEntrant(entrant.getUserId(), organizerMessage);
-                    }
-                } else {
-                    Toast.makeText(getContext(), "No message entered to send", Toast.LENGTH_SHORT).show();
-                }
-            }
+        builder.setPositiveButton("Notify All", (dialog, which) -> {
+            /**
+             * Callback triggered when the "Notify All" button in the notification dialog is
+             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+             * bulk notification method.
+             * @param dialog the dialog that triggered the callback
+             */
+            String organizerMessage = input.getText().toString().trim();
+            viewModel.notifyAllEntrants(organizerMessage);
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
-    }
-
-    /**
-     * For each entrant, retrieves even information for notif records, composes message and
-     * sends notification
-     * @param uid recipient user's ID
-     * @param organizerMessage message from organizer
-     */
-    private void notifyEntrant(String uid, String organizerMessage) {
-        db.collection("events").document(eventId).get()
-                .addOnSuccessListener(document -> {
-                    if (document != null && document.exists()) {
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                        String eventName = document.getString("name");
-                        String organizerId = document.getString("organizerId");
-                        String organizerName = document.getString("organizerName");
-                        String title = "Message From Organizer";
-                        String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
-                        String type = "custom_message";
-                        notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
-                    } else {
-                        Log.d(TAG, "No such document");
-                        Toast.makeText(getContext(), "Event not found.", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "get failed with ", e);
-                    Toast.makeText(getContext(), "Error sending notification to chosen entrant", Toast.LENGTH_SHORT).show();
-                });
     }
 }
