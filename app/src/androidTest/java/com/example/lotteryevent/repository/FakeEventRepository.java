@@ -24,6 +24,7 @@ public class FakeEventRepository implements IEventRepository {
     private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
@@ -83,6 +84,9 @@ public class FakeEventRepository implements IEventRepository {
 
     @Override
     public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
+
+    @Override
+    public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
 
     @Override
     public LiveData<Boolean> isLoading() {
@@ -153,6 +157,7 @@ public class FakeEventRepository implements IEventRepository {
             }
             _waitingListCount.postValue(waitingListCount);
             _selectedUsersCount.postValue(selectedUsersCount);
+            _availableSpaceCount.postValue(inMemoryEntrants.size() - selectedUsersCount);
         }
 
         _isLoading.postValue(false);

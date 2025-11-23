@@ -72,7 +72,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         _selectedUsersCount.addSource(repository.getSelectedUsersCount(), event -> calculateEntrantCounts());
         _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
 
-
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
         _bottomUiState.addSource(repository.getEventEntrants(), event -> {
             calculateEntrantCounts();

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.FakeEventRepository;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 
@@ -13,6 +14,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -112,24 +115,58 @@ public class ConfirmDrawAndNotifyViewModelTest {
     }
 
     /**
-     * Tests for valid waiting list count, no other count, based on what gets
-     * updated in repository
-     */
-    @Test
-    public void testCalcEntrantCountWaitingList() {
-        viewModel.waitingListCount.observeForever(string -> {});
-        fakeRepository.setWaitingListCount(1);
-
-        assertEquals("1", viewModel.waitingListCount.getValue());
-        assertNull(viewModel.selectedUsersCount.getValue());
-        assertNull(viewModel.availableSpaceCount.getValue());
-    }
-
-    /**
      * Tests for expected counts, bottom ui state, when event and entrants loaded successfully
      */
     @Test
-    public void testCalcEntrantCountSelectedUsersAvailSpace() {
+    public void testCalcEntrantCountsSuccess() {
+        viewModel.waitingListCount.observeForever(s -> {});
+        viewModel.selectedUsersCount.observeForever(s -> {});
+        viewModel.availableSpaceCount.observeForever(s -> {});
+        viewModel.bottomUiState.observeForever(s -> {});
+
+        fakeRepository.updateEntrantsAttributes("fake-event-id", "status", "waiting", "invited");
+
+        fakeRepository.fetchEventAndEntrants("fake-event-id");
+
+        assertEquals("0", viewModel.waitingListCount.getValue());
+        assertEquals("2", viewModel.selectedUsersCount.getValue());
+        assertEquals("0", viewModel.availableSpaceCount.getValue());
+        assertEquals(BottomUiState.StateType.SHOW_TWO_BUTTONS, Objects.requireNonNull(viewModel.bottomUiState.getValue()).type);
+    }
+
+    /**
+     * Tests for expected counts, bottom ui state, when event and entrants loaded successfully and no capacity is set
+     */
+    @Test
+    public void testCalcEntrantCountsNoLimit() {
+        List<Event> inMemoryEvents = fakeRepository.getInMemoryEvents();
+        inMemoryEvents.get(0).setCapacity(null);
+        fakeRepository.setInMemoryEvents(inMemoryEvents);
+
+        viewModel.waitingListCount.observeForever(s -> {});
+        viewModel.selectedUsersCount.observeForever(s -> {});
+        viewModel.availableSpaceCount.observeForever(s -> {});
+        viewModel.bottomUiState.observeForever(s -> {});
+
+        fakeRepository.updateEntrantsAttributes("fake-event-id", "status", "waiting", "invited");
+
+        fakeRepository.fetchEventAndEntrants("fake-event-id");
+
+        assertEquals("0", viewModel.waitingListCount.getValue());
+        assertEquals("2", viewModel.selectedUsersCount.getValue());
+        assertEquals("No Limit", viewModel.availableSpaceCount.getValue());
+        assertEquals(BottomUiState.StateType.SHOW_TWO_BUTTONS, Objects.requireNonNull(viewModel.bottomUiState.getValue()).type);
+    }
+
+    /**
+     * Tests for expected counts, bottom ui state, when event and entrants loaded successfully and the capacity is less than the number of entrants invited
+     */
+    @Test
+    public void testCalcEntrantCountsOverCapacity() {
+        List<Event> inMemoryEvents = fakeRepository.getInMemoryEvents();
+        inMemoryEvents.get(0).setCapacity(1);
+        fakeRepository.setInMemoryEvents(inMemoryEvents);
+
         viewModel.waitingListCount.observeForever(s -> {});
         viewModel.selectedUsersCount.observeForever(s -> {});
         viewModel.availableSpaceCount.observeForever(s -> {});

@@ -24,12 +24,13 @@ public class FakeEventRepository implements IEventRepository {
     private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
     // --- In-memory "database" ---
     // These lists hold the state of our fake repository.
-    private final ArrayList<Event> inMemoryEvents = new ArrayList<>();
+    private ArrayList<Event> inMemoryEvents = new ArrayList<>();
     private final ArrayList<Entrant> inMemoryEntrants = new ArrayList<>();
 
     // --- Test control flags ---
@@ -44,6 +45,7 @@ public class FakeEventRepository implements IEventRepository {
         event1.setName("Event 1");
         event1.setCreatedAt(Timestamp.now());
         event1.setEventId("fake-event-id");
+        event1.setCapacity(2);
         inMemoryEvents.add(event1);
 
         Event event2 = new Event();
@@ -85,6 +87,9 @@ public class FakeEventRepository implements IEventRepository {
     public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
 
     @Override
+    public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
+
+    @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
@@ -100,14 +105,6 @@ public class FakeEventRepository implements IEventRepository {
      */
     public void setIsLoading(boolean value) {
         _isLoading.setValue(value);
-    }
-
-    /**
-     * Helper method for testing
-     * @param value value to set waiting list to
-     */
-    public void setWaitingListCount(int value) {
-        _waitingListCount.postValue(value);
     }
 
     /**
@@ -151,7 +148,6 @@ public class FakeEventRepository implements IEventRepository {
             if (event == null) {
                 throw new RuntimeException("Event with given ID cannot be found!");
             }
-            event.setCapacity(inMemoryEntrants.size());
             _event.postValue(event);
 
             // Fetch entrants, (fetchEntrantsTask())
@@ -169,6 +165,11 @@ public class FakeEventRepository implements IEventRepository {
             }
             _waitingListCount.postValue(waitingListCount);
             _selectedUsersCount.postValue(selectedUsersCount);
+            if (event.getCapacity() == null) {
+                _availableSpaceCount.postValue(null);
+            } else {
+                _availableSpaceCount.postValue(event.getCapacity() - selectedUsersCount);
+            }
         }
 
         _isLoading.postValue(false);
@@ -213,7 +214,10 @@ public class FakeEventRepository implements IEventRepository {
         _isLoading.postValue(false);
     }
 
-
+    /**
+     * Sets whether to set a return error
+     * @param value set return error boolean
+     */
     public void setShouldReturnError(boolean value) {
         this.shouldReturnError = value;
     }
@@ -224,5 +228,13 @@ public class FakeEventRepository implements IEventRepository {
      */
     public List<Event> getInMemoryEvents() {
         return inMemoryEvents;
+    }
+
+    /**
+     * A helper for tests to set events used by tests
+     * @param events list of events to set
+     */
+    public void setInMemoryEvents(List<Event> events) {
+        inMemoryEvents = (ArrayList<Event>) events;
     }
 }
