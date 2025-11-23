@@ -30,6 +30,16 @@
             android:orientation="vertical"
             android:paddingTop="12dp" />
 
+        <!-- TextView used for "no results" message -->
+        <TextView
+            android:id="@+id/no_history_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/no_draw_results"
+            android:textSize="18sp"
+            android:textColor="@color/grey"
+            android:paddingTop="16dp" />
+
     </LinearLayout>
 
 </ScrollView>

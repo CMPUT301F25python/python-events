@@ -29,6 +29,7 @@ public class RegistrationHistoryFragment extends Fragment {
     private RegistrationHistoryViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
     private TextView drawResults;
+    private TextView noHistoryText;
     private LinearLayout containerDrawResults;
 
     /**
@@ -95,6 +96,7 @@ public class RegistrationHistoryFragment extends Fragment {
     private void bindViews(@NonNull View view) {
         drawResults = view.findViewById(R.id.draw_results_title);
         containerDrawResults = view.findViewById(R.id.container_draw_results);
+        noHistoryText = view.findViewById(R.id.no_history_text);
     }
 
     /**
@@ -122,15 +124,9 @@ public class RegistrationHistoryFragment extends Fragment {
     private void showRegistrationHistory(List<RegistrationHistoryItem> historyList){
         containerDrawResults.removeAllViews(); // reset
 
-        TextView noHistory = new TextView(getContext());
-        noHistory.setText(R.string.no_draw_results);
-        noHistory.setTextSize(16);
-        noHistory.setTextColor(getResources().getColor(R.color.primary_green));
-        noHistory.setPadding(0, 16, 0, 0);
-
         // user has no registration history
         if(historyList == null || historyList.isEmpty()){
-            containerDrawResults.addView(noHistory);
+            noHistoryText.setVisibility(View.VISIBLE);
             return;
         }
 
@@ -156,8 +152,10 @@ public class RegistrationHistoryFragment extends Fragment {
 
             displayedAtLeastOne = true;
 
+            // create row view
             View row = getLayoutInflater().inflate(R.layout.item_registration_history, containerDrawResults, false);
 
+            // setting event name and user status
             TextView eventNameText = row.findViewById(R.id.history_event_name);
             TextView statusTextView = row.findViewById(R.id.history_event_status);
 
@@ -174,15 +172,20 @@ public class RegistrationHistoryFragment extends Fragment {
             // setting status text color
             if (statusText.equals("Selected")) {
                 statusTextView.setTextColor(getResources().getColor(R.color.red));
-            } else { // Not Selected
+            } else if (statusText.equals("Not Selected")) {
                 statusTextView.setTextColor(getResources().getColor(R.color.primary_green));
+            } else { // for future use
+                statusTextView.setTextColor(getResources().getColor(R.color.grey));
             }
 
             containerDrawResults.addView(row);
         }
 
+        // showing or hiding text based on if user has any waitlisted events
         if (!displayedAtLeastOne) {
-            containerDrawResults.addView(noHistory);
+            noHistoryText.setVisibility(View.VISIBLE);
+        } else {
+            noHistoryText.setVisibility(View.GONE);
         }
     }
 
