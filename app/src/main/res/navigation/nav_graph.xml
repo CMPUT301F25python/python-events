@@ -132,14 +132,35 @@
 
     <fragment
         android:id="@+id/manageSelectedFragment"
-        android:name="com.example.lotteryevent.ui.organizer.ManageSelectedFragment"
+        android:name="com.example.lotteryevent.ui.organizer.ManageInvitedFragment"
         android:label="Manage Invited Entrants"
-        tools:layout="@layout/fragment_manage_selected">
+        tools:layout="@layout/fragment_manage_invited">
 
         <argument
             android:name="eventId"
             app:argType="string"/>
     </fragment>
 
+
+    <!-- Admin Fragments -->
+    <fragment
+        android:id="@+id/adminSentNotificationsFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminSentNotificationsFragment"
+        android:label="Sent Notifications" />
+
+    <fragment
+        android:id="@+id/adminImagesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminImagesFragment"
+        android:label="Images" />
+
+    <fragment
+        android:id="@+id/adminProfilesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
+        android:label="Profiles" />
+
+    <fragment
+        android:id="@+id/adminEventsFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
+        android:label="Admin Events" />
 
 </navigation>

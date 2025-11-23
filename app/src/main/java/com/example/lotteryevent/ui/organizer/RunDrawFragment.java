@@ -196,6 +196,21 @@ public class RunDrawFragment extends Fragment {
                 return;
             }
 
+            // Ensure participants can't be more than available space
+            Integer availableSpaces = viewModel.availableSpaceCount.getValue();
+            if (availableSpaces != null && numToSelect > availableSpaces) {
+                Toast.makeText(getContext(), "You cannot select more participants than available spaces (" + availableSpaces + ").", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // Ensure participants selected can't be greater than entrants on wait list
+            // Ensure participants can't be more than available space
+            Integer waitlistSize = viewModel.waitingListCount.getValue();
+            if (waitlistSize != null && numToSelect > waitlistSize) {
+                Toast.makeText(getContext(), "You cannot select more participants than are on the waiting list (" + waitlistSize + ").", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             // Execute draw through ViewModel
             viewModel.runDraw(eventId, numToSelect);
         });
