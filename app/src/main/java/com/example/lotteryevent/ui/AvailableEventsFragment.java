@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * A {@link Fragment} subclass that allows entrants to view a list of available events.
- * It is responsible for reading from the Firebase displaying all events to the user.
+ * It is responsible for displaying all events to the user.
  */
 public class AvailableEventsFragment extends Fragment {
 
@@ -34,7 +34,8 @@ public class AvailableEventsFragment extends Fragment {
     private EventAdapter adapter;
     private AvailableEventsViewModel availableEventsViewModel;
     private ViewModelProvider.Factory viewModelFactory;
-    private List<Event> allEvents = new ArrayList<>();
+
+    // UI-level filter state (the actual filtering is done in the ViewModel)
     private String currentKeyword = "";
     private boolean filterAvailableToday = false;
 
@@ -45,15 +46,13 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     *
-     * @param inflater The LayoutInflater object that can be used to inflate
-     * any views in the fragment,
-     * @param container If non-null, this is the parent view that the fragment's
-     * UI should be attached to.  The fragment should not add the view itself,
-     * but this can be used to generate the LayoutParams of the view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
-     *
+     *                           from a previous saved state as given here.
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -72,10 +71,9 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     *
-     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
-     * from a previous saved state as given here.
+     *                           from a previous saved state as given here.
      */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -84,8 +82,12 @@ public class AvailableEventsFragment extends Fragment {
         setupRecyclerView(view);
         setupObservers();
         setupButtons(view);
+
+        // Trigger initial load
         availableEventsViewModel.fetchAvailableEvents();
 
+        // Ensure initial filter state is applied (keyword = "", availableToday = false)
+        applyFiltersAndUpdateList();
     }
 
     /**
@@ -100,11 +102,9 @@ public class AvailableEventsFragment extends Fragment {
      * @param view the root view of this fragment used to locate the RecyclerView
      */
     public void setupRecyclerView(View view) {
-        // Use one RecyclerView reference
         recyclerView = view.findViewById(R.id.events_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        // Use the adapter constructor that takes the row layout you want here
         adapter = new EventAdapter(R.layout.item_event);
         recyclerView.setAdapter(adapter);
 
@@ -127,19 +127,22 @@ public class AvailableEventsFragment extends Fragment {
     /**
      * Subscribes to LiveData from {@link AvailableEventsViewModel} so that the UI updates
      * automatically when data changes.
+     * <p>
      * This method:
-     * - Observes the list of available events and stores them in {@code allEvents}
-     * - Re-applies filters whenever the event list changes
+     * - Observes the filtered list of available events and sends it directly to the adapter
      * - Observes user-facing messages and shows them using a {@link Toast}
      */
     public void setupObservers() {
-        availableEventsViewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
-            if (events != null) {
-                allEvents = events;
-            } else {
-                allEvents = new ArrayList<>();
+        availableEventsViewModel.getFilteredEvents().observe(getViewLifecycleOwner(), events -> {
+            if (adapter == null) {
+                return;
             }
-            applyFiltersAndUpdateList();
+
+            if (events == null) {
+                adapter.setEvents(new ArrayList<>());
+            } else {
+                adapter.setEvents(events);
+            }
         });
 
         availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
@@ -151,8 +154,8 @@ public class AvailableEventsFragment extends Fragment {
 
     /**
      * Sets up click listeners for the "Available Today" button and the keyword filter button.
-     * - The "Available Today" button toggles a flag and re-applies filters so that only events
-     *   starting today are shown when it is enabled.
+     * - The "Available Today" button toggles a flag and updates the ViewModel's filter state
+     *   so that only events starting today are shown when it is enabled.
      * - The filter button opens a dialog that lets the user enter a keyword to filter events by
      *   name or description.
      *
@@ -173,72 +176,14 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     * Applies both the interest (keyword) filter and the availability filter to the full list of
-     * events, then updates the adapter with the filtered list.
-     * Interest filter:
-     * - If a keyword is provided, only events whose name or description contains that keyword
-     *   (case-insensitive) are included.
-     * Availability filter:
-     * - If the "Available Today" flag is enabled, only events whose start date is today are included.
-     * If the adapter is null, this method does nothing. If the event list is null, an empty list
-     * is sent to the adapter.
+     * Notifies the ViewModel of the current filter state (keyword and "available today" flag).
+     * <p>
+     * All filtering logic is implemented in {@link AvailableEventsViewModel}. This method only
+     * forwards the user's filter choices to the ViewModel.
      */
     private void applyFiltersAndUpdateList() {
-        if (adapter == null) {
-            return;
-        }
-
-        if (allEvents == null) {
-            adapter.setEvents(new ArrayList<>());
-            return;
-        }
-
-        List<Event> filtered = new ArrayList<>();
-
-        String keyword = currentKeyword == null ? "" : currentKeyword.trim().toLowerCase();
-        boolean filterByKeyword = !keyword.isEmpty();
-
-        java.util.Calendar today = java.util.Calendar.getInstance();
-        int todayYear = today.get(java.util.Calendar.YEAR);
-        int todayDayOfYear = today.get(java.util.Calendar.DAY_OF_YEAR);
-
-        for (Event event : allEvents) {
-
-            // Interest filter: checks for keyword in event title or description
-            if (filterByKeyword) {
-                String name = event.getName();
-                String description = event.getDescription();
-
-                String nameLower = name == null ? "" : name.toLowerCase();
-                String descLower = description == null ? "" : description.toLowerCase();
-
-                if (!nameLower.contains(keyword) && !descLower.contains(keyword)) { // Keyword does not appear in name or description
-                    continue;
-                }
-            }
-
-            // Availability filter: checks for if event starts today
-            if (filterAvailableToday) {
-                com.google.firebase.Timestamp startTs = event.getEventStartDateTime();
-                if (startTs == null) { // No start date, therefore cannot be available today
-                    continue;
-                }
-
-                java.util.Calendar eventCal = java.util.Calendar.getInstance();
-                eventCal.setTime(startTs.toDate());
-
-                int eventYear = eventCal.get(java.util.Calendar.YEAR);
-                int eventDayOfYear = eventCal.get(java.util.Calendar.DAY_OF_YEAR);
-
-                if (eventYear != todayYear || eventDayOfYear != todayDayOfYear) { // Event does not start today
-                    continue;
-                }
-            }
-
-            filtered.add(event);
-        }
-
-        adapter.setEvents(filtered);
+        availableEventsViewModel.setKeywordFilter(currentKeyword);
+        availableEventsViewModel.setFilterAvailableToday(filterAvailableToday);
     }
 
     /**
@@ -264,5 +209,4 @@ public class AvailableEventsFragment extends Fragment {
                 .setNeutralButton("Cancel", null)
                 .show();
     }
-
 }
