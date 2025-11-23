@@ -29,22 +29,40 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
     private ListenerRegistration registration;
 
-    // The ViewModel will observe these public, immutable LiveData objects
+    /**
+     * Returns a LiveData object holding the list of available events.
+     * The UI can observe this to get real-time updates.
+     *
+     * @return
+     */
     @Override
     public LiveData<List<Event>> getAvailableEvents() {
         return _events;
     }
 
+    /**
+     * Returns a LiveData object holding the current loading state (true if loading, false otherwise).
+     *
+     * @return
+     */
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
 
+    /**
+     * Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     *
+     * @return
+     */
     @Override
     public LiveData<String> getMessage() {
         return _userMessage;
     }
 
+    /**
+     * Triggers the process of fetching available events from the data source.
+     */
     @Override
     public void fetchAvailableEvents() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -84,6 +102,9 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
 
     }
 
+    /**
+     * Removes the listener used to fetch events from the data source.
+     */
     @Override
     public void removeListener() {
         if (registration != null) {
