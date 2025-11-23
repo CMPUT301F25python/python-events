@@ -300,6 +300,4 @@ public class AvailableEventsFragmentTest {
         onView(withText("Board Games Night")).check(matches(isDisplayed()));
         onView(withText("Cooking Workshop")).check(doesNotExist());
     }
-
-
 }
