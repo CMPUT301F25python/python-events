@@ -55,6 +55,10 @@ public class UserProfileFragment extends Fragment {
 
     private Toast myToast;
 
+    /**
+     * Controls toasts so that new ones replace old ones (eliminates delay of showing new toasts)
+     * @param message message to display
+     */
     private void makeToast(String message) {
         if (myToast != null) {
             myToast.cancel();
@@ -230,6 +234,10 @@ public class UserProfileFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * updates notification preferences and if system level notifs are disabled but checkbox is set to checked,
+     * open a redirect to settings dialog
+     */
     private void handleNotifToggle() {
         boolean notifToggleState = toggleAllowNotifs.isChecked();
         boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
@@ -244,6 +252,10 @@ public class UserProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Opens dialog explaining how system level notifs need to be enabled for one to get notifs, allows for
+     * redirect to settings
+     */
     private void redirectToSettingsDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle("Enable Notifications");
@@ -255,7 +267,6 @@ public class UserProfileFragment extends Fragment {
              * bulk notification method.
              * @param dialog the dialog that triggered the callback
              */
-//            startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS));
             Intent intent = new Intent();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -276,6 +287,10 @@ public class UserProfileFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Whenever fragment is loaded, sets notif preferences, needed when coming back from settings redirect to
+     * update the notifs checkbox accordingly
+     */
     @Override
     public void onResume() {
         super.onResume();

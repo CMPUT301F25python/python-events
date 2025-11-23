@@ -171,7 +171,7 @@ public class NotificationCustomManager {
 
     /**
      * Checks db for unread notifs once and either generates one notif if only one or a bulk notif
-     * of a number of unread notifs
+     * of a number of unread notifs if user has notifs enabled in db
      * @param uid recipient user's id
      */
     public void checkAndDisplayUnreadNotifications(String uid) {
@@ -219,7 +219,7 @@ public class NotificationCustomManager {
     }
 
     /**
-     * listens for new notifs while on the app, if found generates notif
+     * listens for new notifs while on the app, if found generates notif if user has notifs enabled in db
      * @param uid recipient user's id
      */
     public void listenForNotifications(String uid) {

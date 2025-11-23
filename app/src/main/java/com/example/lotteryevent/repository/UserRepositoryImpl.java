@@ -48,13 +48,15 @@ public class UserRepositoryImpl implements IUserRepository {
     }
 
     /**
-     * Fetches a user's profile from Firestore using their UID.
+     * Fetches a user's profile from Firestore using their UID and their notification preference
+     * (based on their preference stored in db as well as device's setting).
      * <p>
      * On success, updates {@code _currentUser} LiveData with the {@link User} object.
      * On failure, posts an error to {@code _userMessage} and logs the exception.
      * The loading state is managed via {@code _isLoading}.
      *
      * @param uid The unique identifier for the user's profile.
+     * @param systemNotifEnabled device's system level app notif setting
      */
     private void fetchFirestoreUserProfile(String uid, boolean systemNotifEnabled) {
         _isLoading.setValue(true);
@@ -79,6 +81,12 @@ public class UserRepositoryImpl implements IUserRepository {
                 });
     }
 
+    /**
+     * sets notification preference of user depending on the user's db doc's preference
+     * and system's preference
+     * @param userNotifEnabled user's preference set in db
+     * @param systemNotifEnabled device's system level notif preference for the app
+     */
     private void fetchNotifPreference(boolean userNotifEnabled, boolean systemNotifEnabled) {
         if (userNotifEnabled && systemNotifEnabled) {
             _notifPreference.postValue(true);
@@ -275,6 +283,14 @@ public class UserRepositoryImpl implements IUserRepository {
                 });
     }
 
+    /**
+     * Updates a user's notif preference in db, clears notifs if now disabled,
+     * notifies of missing notifs if db preference and system level preference
+     * are both true, and sends error if trying to enable but system level is disabled.
+     * @param enabled checkbox value (user's preference for db)
+     * @param systemNotifPreference system level notif preference
+     * @param notificationCustomManager manager for notifs needed to notify/clear notifs
+     */
     @Override
     public void updateNotifPreference(Boolean enabled, boolean systemNotifPreference, NotificationCustomManager notificationCustomManager) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
