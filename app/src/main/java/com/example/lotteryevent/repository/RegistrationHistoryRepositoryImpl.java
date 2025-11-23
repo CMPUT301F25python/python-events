@@ -87,11 +87,11 @@ public class RegistrationHistoryRepositoryImpl implements IRegistrationHistoryRe
 
     @Override
     public LiveData<String> getUserMessage() {
-        return null;
+        return _userMessage;
     }
 
     @Override
     public void setUserMessage(String message) {
-
+        _userMessage.postValue(message);
     }
 }
