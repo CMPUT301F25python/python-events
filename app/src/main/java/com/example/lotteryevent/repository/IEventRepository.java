@@ -70,6 +70,15 @@ public interface IEventRepository {
     LiveData<Integer> getSelectedUsersCount();
 
     /**
+
+     Returns a LiveData object holding the count of the number of the number of spaces available of
+     a specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
+    LiveData<Integer> getAvailableSpaceCount();
+
+    /**
      * Fetches an specified event and its entrants.
      * @param eventId The unique identifier of the event to load.
      */

@@ -70,11 +70,14 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
         _selectedUsersCount.addSource(repository.getSelectedUsersCount(), event -> calculateEntrantCounts());
-        _availableSpaceCount.addSource(repository.getEventEntrants(), event -> calculateEntrantCounts());
+        _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
 
 
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
-        _bottomUiState.addSource(repository.getEventEntrants(), event -> calculateUiState());
+        _bottomUiState.addSource(repository.getEventEntrants(), event -> {
+            calculateEntrantCounts();
+            calculateUiState();
+        });
         _bottomUiState.addSource(repository.isLoading(), isLoading -> {
             calculateEntrantCounts();
             calculateUiState();
@@ -102,32 +105,42 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         Event event = repository.getUserEvent().getValue();
         Integer selectedUsersCount = repository.getSelectedUsersCount().getValue();
         Integer waitingListCount = repository.getWaitingListCount().getValue();
+        Integer availableSpaceCount = repository.getAvailableSpaceCount().getValue();
 
         if (isLoading != null && isLoading) {
             return;
         }
-
-        if (waitingListCount == null) {
+        if (event == null) {
             return;
         }
-        _waitingListCount.postValue(String.valueOf(waitingListCount));
 
-        if (selectedUsersCount == null || event == null) {
-            return;
+        if (waitingListCount != null) {
+            _waitingListCount.postValue(String.valueOf(waitingListCount));
         }
-        _selectedUsersCount.postValue(String.valueOf(selectedUsersCount));
 
-        Integer capacity = event.getCapacity();
-        if (capacity == null) {
+        if (selectedUsersCount != null) {
+            _selectedUsersCount.postValue(String.valueOf(selectedUsersCount));
+        }
+
+        if (availableSpaceCount == null) {
             _availableSpaceCount.postValue("No Limit");
+        } else if (availableSpaceCount > 0) {
+            _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
         } else {
-            Integer spaceLeft = capacity - selectedUsersCount;
-            if (spaceLeft > 0) {
-                _availableSpaceCount.postValue(String.valueOf(spaceLeft));
-            } else {
-                _availableSpaceCount.postValue("0");
-            }
+            _availableSpaceCount.postValue(String.valueOf(0));
         }
+//
+//        Integer capacity = event.getCapacity();
+//        if (capacity == null) {
+//            _availableSpaceCount.postValue("No Limit");
+//        } else {
+//            Integer spaceLeft = capacity - selectedUsersCount;
+//            if (spaceLeft > 0) {
+//                _availableSpaceCount.postValue(String.valueOf(spaceLeft));
+//            } else {
+//                _availableSpaceCount.postValue("0");
+//            }
+//        }
     }
 
     /**

@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.utilities.FireStoreUtilities;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,6 +42,7 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
+    private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -59,6 +61,8 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
     @Override
     public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
+    @Override
+    public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
@@ -112,12 +116,13 @@ public class EventRepositoryImpl implements IEventRepository {
                         Event event = documentSnapshot.toObject(Event.class);
                         _event.postValue(event);
 
+                        fetchEntrantsCountsTask(eventId);
+
                         // After fetching the event, kick off the subcollection fetches.
                         // We use Tasks.whenAllComplete to know when all of them are done.
                         Task<QuerySnapshot> entrantsTask = fetchEntrantsTask(eventId);
-                        Task<List<Object>> entrantsCountsTask = fetchEntrantsCountsTask(eventId);
 
-                        Tasks.whenAllComplete(entrantsTask, entrantsCountsTask)
+                        Tasks.whenAllComplete(entrantsTask)
                                 .addOnCompleteListener(allTasks -> {
                                     _isLoading.postValue(false); // All loading is now finished.
                                 });
@@ -145,34 +150,15 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
-    private Task<List<Object>> fetchEntrantsCountsTask(String eventId) {
-        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
-
-        entrantsRef.get().addOnSuccessListener(snap -> {
-            for (DocumentSnapshot d : snap.getDocuments()) {
-                Log.d("DEBUG_STATUS", d.getId() + " → " + d.get("status"));
-            }
-        });
-
-        // Query 1: Count of "invited" entrants
-        AggregateQuery acceptedCountQuery = entrantsRef.whereEqualTo("status", "invited").count();
-        Task<Long> acceptedTask = acceptedCountQuery.get(AggregateSource.SERVER).onSuccessTask(snapshot -> Tasks.forResult(snapshot.getCount())).addOnFailureListener(e -> Log.e("COUNTS", "COUNT FAILED", e));
-
-        // Query 2: Count of "waiting" entrants
-        AggregateQuery waitingCountQuery = entrantsRef.whereEqualTo("status", "waiting").count();
-        Task<Long> waitingTask = waitingCountQuery.get(AggregateSource.SERVER).onSuccessTask(snapshot -> Tasks.forResult(snapshot.getCount())).addOnFailureListener(e -> Log.e("COUNTS", "COUNT FAILED", e));
-
-        // Run both count queries in parallel and wait for them to succeed.
-        return Tasks.whenAllSuccess(acceptedTask, waitingTask)
-                .addOnSuccessListener(results -> {
-                    // results is a List<Object> where results.get(0) is the result of acceptedTask,
-                    // and results.get(1) is the result of waitingTask.
-                    long selected = (long) results.get(0);
-                    long waiting = (long) results.get(1);
-
-                    _selectedUsersCount.postValue((int) selected);
-                    _waitingListCount.postValue((int) waiting);
-                });
+    private void fetchEntrantsCountsTask(String eventId) {
+        FireStoreUtilities.fillEntrantMetrics(
+                db,
+                eventId,
+                count -> _waitingListCount.postValue(count),
+                count -> _selectedUsersCount.postValue(count),
+                count -> _availableSpaceCount.postValue(count),
+                msg -> _userMessage.postValue(msg)
+        );
     }
 
     @Override
