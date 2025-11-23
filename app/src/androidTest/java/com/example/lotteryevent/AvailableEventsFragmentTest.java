@@ -40,6 +40,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+/***
+ * Unit tests for {@link AvailableEventsFragment}.
+ */
 @RunWith(AndroidJUnit4.class)
 public class AvailableEventsFragmentTest {
 
@@ -67,8 +70,8 @@ public class AvailableEventsFragmentTest {
     }
 
     /**
-     * Helper to launch the fragment and attach a TestNavHostController,
-     * same pattern as your UserProfileFragmentTest.
+     * Helper to launch the fragment and attach a TestNavHostController, same pattern as your
+     * UserProfileFragmentTest.
      */
     private FragmentScenario<AvailableEventsFragment> launchFragment() {
         navController = new TestNavHostController(
@@ -92,12 +95,21 @@ public class AvailableEventsFragmentTest {
         return scenario;
     }
 
+    /**
+     * Verifies that when the fragment's view is created, it triggers a fetch of available events
+     * through the repository.
+     * This ensures that the ViewModel correctly calls the repository's fetch method as part of the
+     * fragment's initialization.
+     */
     @Test
     public void onViewCreated_callsFetchAvailableEventsOnRepository() {
         launchFragment();
         assertTrue(fakeRepository.wasFetchCalled());
     }
 
+    /**
+     * This test verifies that events returned by the repository are displayed in the RecyclerView.
+     */
     @Test
     public void eventsFromRepository_areShownInRecyclerView() {
         // Arrange fake events
@@ -128,6 +140,10 @@ public class AvailableEventsFragmentTest {
         onView(withText("Event Two")).check(matches(isDisplayed()));
     }
 
+    /**
+     * This test verifies that when a repository returns an empty list of events, the RecyclerView
+     * is empty.
+     */
     @Test
     public void emptyEventsList_recyclerViewHasNoItems() {
         fakeRepository.setEventsToReturn(new ArrayList<>());
@@ -142,8 +158,8 @@ public class AvailableEventsFragmentTest {
     }
 
     /**
-     * Instead of checking the Toast, we assert the **UI effect** of an error:
-     * the adapter shows an empty list when the repository reports an error.
+     * This test verifies that when the repository reports an error, the RecyclerView displays an
+     * empty list of events.
      */
     @Test
     public void repositoryError_resultsInEmptyRecyclerView() {
@@ -160,6 +176,10 @@ public class AvailableEventsFragmentTest {
         });
     }
 
+    /**
+     * This test verifies that when an event is clicked in the RecyclerView, it navigates to the
+     * event details screen.
+     */
     @Test
     public void clickValidEvent_navigatesToEventDetails_withEventIdArgument() {
         List<Event> events = new ArrayList<>();
@@ -189,6 +209,10 @@ public class AvailableEventsFragmentTest {
         assertEquals("abc123", args.getString("eventId"));
     }
 
+    /**
+     * This test verifies that when an event is clicked in the RecyclerView, it does not navigates
+     * away from the AvailableEventsFragment.
+     */
     @Test
     public void clickEventWithInvalidId_doesNotNavigate() {
         List<Event> events = new ArrayList<>();
@@ -212,6 +236,10 @@ public class AvailableEventsFragmentTest {
         );
     }
 
+    /**
+     * This test verifies that when the fragment is destroyed, the ViewModel's onCleared method is
+     * called, which in turn calls the repository's removeListener method.
+     */
     @Test
     public void onCleared_callsRemoveListenerOnRepository() {
         FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
@@ -222,6 +250,10 @@ public class AvailableEventsFragmentTest {
         assertTrue(fakeRepository.wasRemoveListenerCalled());
     }
 
+    /**
+     * This test verifies that when the "Available Today" button is clicked, only events that start
+     * today are shown in the RecyclerView.
+     */
     @Test
     public void availableTodayButton_filtersEventsToThoseStartingToday() {
         List<Event> events = new ArrayList<>();
@@ -263,6 +295,10 @@ public class AvailableEventsFragmentTest {
         onView(withText("Tomorrow Event")).check(doesNotExist());
     }
 
+    /**
+     * This test verifies that when the "Filter" button is clicked, the keyword filter dialog is
+     * shown.
+     */
     @Test
     public void filterButton_filtersEventsByKeywordInNameOrDescription() {
         List<Event> events = new ArrayList<>();
