@@ -1,5 +1,7 @@
 package com.example.lotteryevent.ui;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,8 +14,13 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -24,7 +31,10 @@ import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.Timestamp;
+
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -54,6 +64,23 @@ public class EventDetailsFragment extends Fragment {
     private EventDetailsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
 
+    // --- Location Services ---
+    private FusedLocationProviderClient fusedLocationClient;
+
+    /**
+     * Handles the result of the system permission dialog.
+     */
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    fetchLocationAndJoin();
+                } else {
+                    Toast.makeText(getContext(), "Location is required to join this event.", Toast.LENGTH_LONG).show();
+                    // Inform ViewModel so it can reset its state
+                    viewModel.onLocationPermissionDenied();
+                }
+            });
+
     /**
      * Default constructor for production use by the Android Framework.
      */
@@ -77,6 +104,10 @@ public class EventDetailsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // --- Initialize Location Client ---
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+
 
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
@@ -134,6 +165,13 @@ public class EventDetailsFragment extends Fragment {
         viewModel.bottomUiState.observe(getViewLifecycleOwner(), uiState -> {
             if (uiState != null) {
                 renderBottomUi(uiState);
+            }
+        });
+
+        // Listener for location permission requests
+        viewModel.requestLocationPermission.observe(getViewLifecycleOwner(), shouldRequest -> {
+            if (shouldRequest != null && shouldRequest) {
+                checkPermissionAndAct();
             }
         });
     }
@@ -218,5 +256,41 @@ public class EventDetailsFragment extends Fragment {
         v = v.trim();
         if (v.isEmpty() || "null".equalsIgnoreCase(v)) return;
         dataList.add(label + ": " + v);
+    }
+
+    // --- Location Logic ---
+    private void checkPermissionAndAct() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Permission already granted, get location directly
+            fetchLocationAndJoin();
+        } else {
+            // Ask for permission
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+    }
+
+    private void fetchLocationAndJoin() {
+        // Double-check permission before calling location services (Linter requirement)
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(requireActivity(), location -> {
+                    if (location != null) {
+                        // Pass data back to ViewModel
+                        viewModel.onLocationRetrieved(location.getLatitude(), location.getLongitude());
+                    } else {
+                        // Edge case: GPS is on but no location cached.
+                        Toast.makeText(getContext(), "Unable to determine location. Try opening Google Maps first.", Toast.LENGTH_LONG).show();
+                        viewModel.onLocationPermissionDenied();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error getting location.", Toast.LENGTH_SHORT).show();
+                    viewModel.onLocationPermissionDenied();
+                });
     }
 }
