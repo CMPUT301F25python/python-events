@@ -96,6 +96,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Inflates home menu so the profile icon appears across all fragments.
+     * @param menu The options menu in which you place your items.
+     * @return true if initialized correctly
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_fragment_menu, menu); // this has profile_icon
+        return true;
+    }
+
+    /**
+     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * @param item The menu item that was selected.
+     * @return boolean value indicating success of action
+     */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.profile_icon) {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+                navController.navigate(R.id.userProfileFragment);
+            }
+            return true;
+        }
+
+        // default handling
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
      * Called once we know we have a valid Firebase user.
      * Sets up Firestore user doc and notifications for this UID.
      * @param user this is the id of the device
