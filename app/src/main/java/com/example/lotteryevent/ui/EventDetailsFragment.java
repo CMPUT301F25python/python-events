@@ -3,7 +3,6 @@ package com.example.lotteryevent.ui;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +13,10 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.provider.Settings;
+import android.content.Intent;
+import android.net.Uri;
+import android.app.AlertDialog;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -75,9 +78,18 @@ public class EventDetailsFragment extends Fragment {
                 if (isGranted) {
                     fetchLocationAndJoin();
                 } else {
-                    Toast.makeText(getContext(), "Location is required to join this event.", Toast.LENGTH_LONG).show();
-                    // Inform ViewModel so it can reset its state
+                    // The user denied the system dialog just now.
+                    // We need to inform the ViewModel to reset the state so the button works again next time.
                     viewModel.onLocationPermissionDenied();
+
+                    // Check if we should show a manual "Go to Settings" dialog
+                    // If shouldShowRequestPermissionRationale is false after a denial,
+                    // it means "Don't ask again" was checked.
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        showSettingsDialog();
+                    } else {
+                        Toast.makeText(getContext(), "Location is required to join this event.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
@@ -209,6 +221,7 @@ public class EventDetailsFragment extends Fragment {
         addAny("Description", event.getDescription());
         addAny("Lottery Guidelines", event.getLotteryGuidelines());
         addAny("Max Attendees", event.getCapacity());
+        addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
 
@@ -262,12 +275,44 @@ public class EventDetailsFragment extends Fragment {
     private void checkPermissionAndAct() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            // Permission already granted, get location directly
             fetchLocationAndJoin();
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Case 2: User denied it before. Show an explanation dialog BEFORE launching the system dialog.
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Location Required")
+                    .setMessage("This event requires geolocation verification to join. Please grant location permission.")
+                    .setPositiveButton("OK", (dialog, which) -> {
+                        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> {
+                        viewModel.onLocationPermissionDenied();
+                        dialog.dismiss();
+                    })
+                    .create()
+                    .show();
         } else {
-            // Ask for permission
+            // Case 3: First time asking, OR user checked "Don't ask again" previously.
+            // The system handles which one it is.
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
+    }
+
+    /**
+     * Shows a dialog directing the user to Settings if they permanently denied permission
+     */
+    private void showSettingsDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Permission Denied")
+                .setMessage("You have permanently denied location permission. To join this event, you must enable it in the app settings.")
+                .setPositiveButton("Go to Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", requireActivity().getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
     }
 
     private void fetchLocationAndJoin() {
