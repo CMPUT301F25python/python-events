@@ -34,12 +34,32 @@ public class AdminEventsFragment extends Fragment {
     // Call existing available events xml
     public AdminEventsFragment() { }
 
+    /**
+     * Inflates layour for admin events screen
+     * <p>
+     *     Uses existing fragment_available_events layout, with user buttons hidden for admin view
+     * </p>
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         return inflater.inflate(R.layout.fragment_available_events, container, false);
     }
 
+    /**
+     * Called after fragment view created
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 
@@ -61,6 +81,14 @@ public class AdminEventsFragment extends Fragment {
         viewModel.fetchAllEvents();
     }
 
+    /**
+     * Sets up RecyclerView to display events
+     * <p>
+     *     Intialize layout manager and attach admin specific adapter
+     *     Click navigation added to event details screen
+     * </p>
+     * @param view
+     */
     private void setupRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.events_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -81,6 +109,12 @@ public class AdminEventsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
     }
 
+    /**
+     * Hides UI buttons intended only for user view: "Available today" and "new Event" Buttons
+     * Filter button also temporarily hidden but can be later added
+     * @param view
+     * View containing buttons
+     */
     private void hideParticipantsButtons(View view) {
         MaterialButton availableToday = view.findViewById(R.id.available_today_button);
         MaterialButton newEvent = view.findViewById(R.id.new_event_button);
@@ -92,6 +126,13 @@ public class AdminEventsFragment extends Fragment {
         view.findViewById(R.id.filter_button).setVisibility(View.GONE);
     }
 
+    /**
+     * Gets LiveData to update UI
+     * <ul>
+     *     <li>Updates adapter</li>
+     *     <li>Displays toast depending on error</li>
+     * </ul>
+     */
     private void setupObservers() {
         viewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
             if (events != null) {
