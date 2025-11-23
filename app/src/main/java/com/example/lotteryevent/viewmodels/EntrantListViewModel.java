@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.IEntrantListRepository;
+import com.example.lotteryevent.repository.IEntrantListRepository.StatusUpdateCallback;
 
 import java.util.List;
 
@@ -13,8 +14,6 @@ import java.util.List;
  * to the UI layer. This ViewModel delegates all data retrieval and notification
  * logic to an {@link IEntrantListRepository} implementation, ensuring that the UI
  * remains lifecycle-aware and reactive via LiveData.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 
 public class EntrantListViewModel extends ViewModel {
@@ -82,5 +81,27 @@ public class EntrantListViewModel extends ViewModel {
                 entrantListRepo.notifyEntrant(e.getUserId(), this.eventId, organizerMessage);
             }
         }
+    }
+
+    /**
+     * Cancels an invitation for a specific user.
+     * Sets their status back to "waiting".
+     * On success, it refreshes the list automatically via the repository logic (or we trigger a re-fetch).
+     */
+    public void cancelInvite(String userId) {
+        if (userId == null) return;
+
+        entrantListRepo.updateEntrantStatus(this.eventId, userId, "waiting", new StatusUpdateCallback() {
+            @Override
+            public void onSuccess() {
+                entrantListRepo.setUserMessage("User returned to waitlist.");
+                // Refresh the list
+                entrantListRepo.fetchEntrantsByStatus(eventId, status);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+            }
+        });
     }
 }

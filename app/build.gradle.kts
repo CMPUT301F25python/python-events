@@ -54,6 +54,9 @@ dependencies {
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
@@ -70,7 +73,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-lite")
     }
-    androidTestImplementation(libs.androidx.espresso.contrib)
     androidTestImplementation ("org.mockito:mockito-android:5.11.0")
     testImplementation("org.mockito:mockito-core:5.11.0")
 

@@ -9,8 +9,6 @@ import java.util.List;
  * and sending notifications related to events. Implementations of this
  * interface provide asynchronous access to entrant lists via LiveData as well
  * as methods to notify individual entrants with organizer-generated messages.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public interface IEntrantListRepository {
 
@@ -53,6 +51,24 @@ public interface IEntrantListRepository {
      * @param message set by the organizer
      */
     void setUserMessage(String message);
+
+    /**
+     * Updates the status of a specific entrant (e.g., from "invited" to "waiting").
+     *
+     * @param eventId   The event ID.
+     * @param userId    The entrant's user ID.
+     * @param newStatus The new status to set.
+     * @param callback  A callback to handle success/failure in the ViewModel.
+     */
+    void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback);
+
+    /**
+     * Simple callback interface for status updates.
+     */
+    interface StatusUpdateCallback {
+        void onSuccess();
+        void onFailure(Exception e);
+    }
 
 }
 

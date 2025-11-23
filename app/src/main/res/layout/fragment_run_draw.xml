@@ -19,7 +19,7 @@
         tools:ignore="HardcodedText"/>
 
     <TextView
-        android:id="@+id/waitingListCount"
+        android:id="@+id/waiting_list_count"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:text="# of people on waiting list"
@@ -29,7 +29,7 @@
         tools:ignore="HardcodedText"/>
 
     <TextView
-        android:id="@+id/availableSpace"
+        android:id="@+id/available_space"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Spots Available:"
@@ -39,7 +39,7 @@
         tools:ignore="HardcodedText" />
 
     <TextView
-        android:id="@+id/availableSpaceCount"
+        android:id="@+id/available_space_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="# of spots available for registration"
@@ -48,7 +48,7 @@
         android:layout_marginBottom="24dp"
         tools:ignore="HardcodedText" />
 
-    <EditText
+    <TextView
         android:id="@+id/numSelectPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -75,7 +75,7 @@
         android:gravity="center">
 
         <Button
-            android:id="@+id/cancelButton"
+            android:id="@+id/cancel_button"
             android:text="Cancel"
             android:layout_weight="1"
             android:layout_width="0dp"

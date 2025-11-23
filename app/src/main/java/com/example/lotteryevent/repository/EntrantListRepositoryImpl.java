@@ -22,8 +22,6 @@ import java.util.List;
  * <p>This repository implements {@link IEntrantListRepository} and exposes
  * LiveData streams so that UI layers can observe entrant list updates.</p>
  * @see IEntrantListRepository
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public class EntrantListRepositoryImpl implements IEntrantListRepository{
 
@@ -188,6 +186,43 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error sending notification", e);
                     _userMessage.postValue("Failed to send notification.");
+                });
+    }
+
+    /**
+     * Updates the status of a specific entrant (e.g., from "invited" to "waiting").
+     *
+     * @param eventId   The event ID.
+     * @param userId    The entrant's user ID.
+     * @param newStatus The new status to set.
+     * @param callback  A callback to handle success/failure in the ViewModel.
+     */
+    @Override
+    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback) {
+        if (eventId == null || userId == null || newStatus == null) {
+            if (callback != null) {
+                callback.onFailure(new IllegalArgumentException("Invalid arguments for status update"));
+            }
+            return;
+        }
+
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(userId)
+                .update("status", newStatus)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Entrant " + userId + " status updated to " + newStatus);
+                    if (callback != null) {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update entrant status", e);
+                    _userMessage.postValue("Failed to update status.");
+                    if (callback != null) {
+                        callback.onFailure(e);
+                    }
                 });
     }
 }

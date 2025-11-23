@@ -16,8 +16,6 @@ import java.util.List;
  * requiring a real Firestore backend.
  * <p>All data is stored in memory and exposed through LiveData so that
  * ViewModels and fragments can be tested under normal lifecycle conditions.</p>
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 public class FakeEntrantListRepository implements IEntrantListRepository {
 
@@ -128,5 +126,46 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
      */
     public List<Notification> getNotificationCalls() {
         return notificationCalls;
+    }
+
+    /**
+     * Simulates updating an entrant's status in the in-memory list.
+     * If {@code shouldReturnError} is true, calls {@code onFailure}.
+     * Otherwise, finds the entrant, updates the status, refreshes the LiveData, and calls {@code onSuccess}.
+     *
+     * @param eventId   The event ID (ignored in fake)
+     * @param userId    The ID of the entrant to update
+     * @param newStatus The new status string
+     * @param callback  Callback to notify ViewModel of success/failure
+     */
+    @Override
+    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback) {
+        if (shouldReturnError) {
+            if (callback != null) {
+                callback.onFailure(new Exception("Simulated database failure"));
+            }
+            return;
+        }
+
+        boolean found = false;
+        for (Entrant e : inMemoryEntrants) {
+            if (e.getUserId() != null && e.getUserId().equals(userId)) {
+                e.setStatus(newStatus);
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            // Trigger LiveData update to reflect the change in UI immediately
+            _entrants.postValue(inMemoryEntrants);
+            if (callback != null) {
+                callback.onSuccess();
+            }
+        } else {
+            if (callback != null) {
+                callback.onFailure(new Exception("User ID not found in fake data"));
+            }
+        }
     }
 }
