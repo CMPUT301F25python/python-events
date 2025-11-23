@@ -37,8 +37,6 @@ import java.util.List;
  * <p>Mockito is used for mocking the repository, and
  * {@link androidx.arch.core.executor.testing.InstantTaskExecutorRule} ensures
  * LiveData updates execute synchronously during testing.</p>
- * @author Sanaa Bhaidani, Jacob Mellick
- * @version 1.1
  */
 public class EntrantListViewModelTest {
 

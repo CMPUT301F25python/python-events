@@ -27,9 +27,6 @@ import com.example.lotteryevent.viewmodels.UserProfileViewModel;
  * This Fragment follows MVVM principles, delegating all data and business logic
  * to the {@link UserProfileViewModel}. Its sole responsibility is to display data and
  * forward user events to the ViewModel.
- *
- * @author Sanaa Bhaidani
- * @version 2.0
  */
 public class UserProfileFragment extends Fragment {
 

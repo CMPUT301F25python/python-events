@@ -82,9 +82,12 @@
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.ui.AvailableEventsFragment"
         android:label="Events"
-        tools:layout="@layout/fragment_available_events">
-
-    </fragment>
+        tools:layout="@layout/fragment_available_events" />
+    <fragment
+        android:id="@+id/lotteryGuidelines"
+        android:name="com.example.lotteryevent.ui.LotteryGuidelinesFragment"
+        android:label="@string/lottery_guidelines_title"
+        tools:layout="@layout/fragment_lottery_guidelines" />
 
     <fragment
         android:id="@+id/notificationsFragment"
