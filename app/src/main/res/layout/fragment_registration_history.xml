@@ -1,13 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".ui.RegistrationHistoryFragment">
+
+<LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.RegistrationHistoryFragment">
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:orientation="vertical">
 
+    <!-- Draw Results -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
+        android:id="@+id/draw_results_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/draw_results"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="@color/primary_green" />
 
-</FrameLayout>
+    <!-- Dynamic container for Draw Results -->
+    <LinearLayout
+        android:id="@+id/container_draw_results"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="12dp" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="24dp" />
+
+    <!-- Active Waiting List  -->
+    <TextView
+        android:id="@+id/waiting_list_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/active_waiting_list"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="@color/primary_green" />
+
+    <!-- Dynamic container for Waiting List -->
+    <LinearLayout
+        android:id="@+id/container_waiting_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="12dp" />
+
+</LinearLayout>
+
+</ScrollView>
