@@ -77,7 +77,11 @@
         android:id="@+id/userProfileFragment"
         android:name="com.example.lotteryevent.ui.UserProfileFragment"
         android:label="@string/user_profile_page"
-        tools:layout="@layout/fragment_user_profile" />
+        tools:layout="@layout/fragment_user_profile" >
+        <action
+            android:id="@+id/action_userProfileFragment_to_registrationHistoryFragment"
+            app:destination="@id/registrationHistoryFragment" />
+    </fragment>
     <fragment
         android:id="@+id/availableEventsFragment"
         android:name="com.example.lotteryevent.ui.AvailableEventsFragment"
@@ -165,5 +169,10 @@
         android:id="@+id/adminEventsFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
         android:label="Admin Events" />
+    <fragment
+        android:id="@+id/registrationHistoryFragment"
+        android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"
+        android:label="Registration History"
+        tools:layout="@layout/fragment_registration_history" />
 
 </navigation>

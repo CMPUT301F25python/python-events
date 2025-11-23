@@ -36,6 +36,7 @@ public class UserProfileFragment extends Fragment {
     private EditText phoneField;
     private Button updateInfoButton;
     private Button deleteProfileButton;
+    private Button registrationHistoryButton;
 
     // --- ViewModel ---
     private UserProfileViewModel viewModel;
@@ -109,6 +110,7 @@ public class UserProfileFragment extends Fragment {
         phoneField = view.findViewById(R.id.phone_field);
         updateInfoButton = view.findViewById(R.id.update_button);
         deleteProfileButton = view.findViewById(R.id.delete_button);
+        registrationHistoryButton = view.findViewById(R.id.history_button);
 
         // Add text formatting watcher
         phoneField.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
@@ -162,8 +164,12 @@ public class UserProfileFragment extends Fragment {
     private void setupClickListeners() {
         updateInfoButton.setOnClickListener(v -> handleUpdateProfile());
         deleteProfileButton.setOnClickListener(v -> confirmProfileDeletion());
+        registrationHistoryButton.setOnClickListener(v -> viewRegistrationHistory(v));
     }
 
+    private void viewRegistrationHistory(View v){
+        Navigation.findNavController(v).navigate(R.id.action_userProfileFragment_to_registrationHistoryFragment);
+    }
     /**
      * Gathers user input and asks the ViewModel to perform the update.
      */
