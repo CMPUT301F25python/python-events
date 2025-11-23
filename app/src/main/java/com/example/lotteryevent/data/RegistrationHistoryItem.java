@@ -12,7 +12,7 @@ public class RegistrationHistoryItem {
     /**
      * A public no-argument constructor is required for Firestore deserialization.
      */
-    private RegistrationHistoryItem(){
+    public RegistrationHistoryItem(){
     }
 
     /**
