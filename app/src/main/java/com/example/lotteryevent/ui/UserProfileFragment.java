@@ -14,6 +14,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -253,6 +255,15 @@ public class UserProfileFragment extends Fragment {
     }
 
     /**
+     * Allows for update of checkbox after returning from settings to show as checked if user enabled
+     * system level notifications for the app.
+     */
+    private final ActivityResultLauncher<Intent> appNotifSettingsLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+        viewModel.updateNotifPreference(true, systemNotifEnabled, notificationCustomManager);
+    });
+
+    /**
      * Opens dialog explaining how system level notifs need to be enabled for one to get notifs, allows for
      * redirect to settings
      */
@@ -262,9 +273,9 @@ public class UserProfileFragment extends Fragment {
         builder.setMessage("Notifications are disabled in your device's settings. Get redirected to your settings to enable them.");
         builder.setPositiveButton("Open Settings", (dialog, which) -> {
             /**
-             * Callback triggered when the "Notify All" button in the notification dialog is
-             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
-             * bulk notification method.
+             * Callback triggered when the "Open Settings" button in the dialog is
+             * pressed. Open's the app's system level notifications settings.
+             * On return, it updates the checkbox accordingly
              * @param dialog the dialog that triggered the callback
              */
             Intent intent = new Intent();
@@ -280,22 +291,10 @@ public class UserProfileFragment extends Fragment {
                 intent.addCategory(Intent.CATEGORY_DEFAULT);
                 intent.setData(Uri.parse("package:" + requireContext().getPackageName()));
             }
-            startActivity(intent);
+            appNotifSettingsLauncher.launch(intent);
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
-    }
-
-    /**
-     * Whenever fragment is loaded, sets notif preferences, needed when coming back from settings redirect to
-     * update the notifs checkbox accordingly
-     */
-    @Override
-    public void onResume() {
-        super.onResume();
-        boolean userNotifPreference = Boolean.TRUE.equals(viewModel.getNotifPreference().getValue());
-        boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
-        viewModel.updateNotifPreference(userNotifPreference, systemNotifEnabled, notificationCustomManager);
     }
 }
