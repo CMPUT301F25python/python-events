@@ -14,8 +14,6 @@ import java.util.List;
  * to the UI layer. This ViewModel delegates all data retrieval and notification
  * logic to an {@link IEntrantListRepository} implementation, ensuring that the UI
  * remains lifecycle-aware and reactive via LiveData.
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 
 public class EntrantListViewModel extends ViewModel {
