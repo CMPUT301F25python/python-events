@@ -90,6 +90,13 @@ public class UserProfileViewModel extends ViewModel {
         return null; // Validation successful
     }
 
+    /**
+     * Updates notif preferences in db and clears notif banners/notifies of notifs/messages system level notif
+     * is disabled accordingly
+     * @param enabled checkbox value
+     * @param systemNotifEnabled system level notif enabled
+     * @param notificationCustomManager notif manager
+     */
     public void updateNotifPreference(boolean enabled, boolean systemNotifEnabled, NotificationCustomManager notificationCustomManager) {
         userRepository.updateNotifPreference(enabled, systemNotifEnabled, notificationCustomManager);
     }
