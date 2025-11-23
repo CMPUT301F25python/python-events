@@ -40,7 +40,7 @@ public class EventTest {
         assertNull("createdAt should be null", event.getCreatedAt());
 
         // Verify primitive types are their default values
-        assertFalse("isgeolocationRequired should be false", event.isGeoLocationRequired());
+        assertFalse("getGeolocationRequired should be false", event.getGeoLocationRequired());
     }
 
     /**
@@ -128,8 +128,8 @@ public class EventTest {
         assertEquals(waitinglistlimit, event.getWaitingListLimit());
 
         // Test Boolean property
-        event.setIsGeoLocationRequired(true);
-        assertTrue(event.isGeoLocationRequired());
+        event.setGeoLocationRequired(true);
+        assertTrue(event.getGeoLocationRequired());
 
         // Test Timestamp properties
         Timestamp now = new Timestamp(new Date());
