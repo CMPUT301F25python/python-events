@@ -9,31 +9,25 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.app.AlertDialog;
-import android.widget.EditText;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EventAdapter;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.AvailableEventsRepositoryImpl;
-import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IAvailableEventsRepository;
-import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
-import com.example.lotteryevent.viewmodels.HomeViewModel;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A {@link Fragment} subclass that allows entrants to view a list of available events.
+ * It is responsible for reading from the Firebase displaying all events to the user.
+ */
 public class AvailableEventsFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -49,7 +43,6 @@ public class AvailableEventsFragment extends Fragment {
     public AvailableEventsFragment(ViewModelProvider.Factory viewModelFactory) {
         this.viewModelFactory = viewModelFactory;
     }
-
 
     /**
      *
@@ -95,8 +88,19 @@ public class AvailableEventsFragment extends Fragment {
 
     }
 
+    /**
+     * Sets up the {@link RecyclerView} used to display the list of
+     * available events. This method:
+     * - Finds the RecyclerView in the layout
+     * - Attaches a {@link LinearLayoutManager} for vertical scrolling
+     * - Creates an {@link EventAdapter} with the event item layout
+     * - Registers a click listener that navigates to the event
+     *   details screen when an event is selected
+     *
+     * @param view the root view of this fragment used to locate the RecyclerView
+     */
     public void setupRecyclerView(View view) {
-        // Use ONE RecyclerView reference
+        // Use one RecyclerView reference
         recyclerView = view.findViewById(R.id.events_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -120,6 +124,14 @@ public class AvailableEventsFragment extends Fragment {
         });
     }
 
+    /**
+     * Subscribes to LiveData from {@link AvailableEventsViewModel} so that the UI updates
+     * automatically when data changes.
+     * This method:
+     * - Observes the list of available events and stores them in {@code allEvents}
+     * - Re-applies filters whenever the event list changes
+     * - Observes user-facing messages and shows them using a {@link Toast}
+     */
     public void setupObservers() {
         availableEventsViewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
             if (events != null) {
@@ -138,9 +150,13 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     * Sets up click listeners for the "Available Today" and filter buttons.
+     * Sets up click listeners for the "Available Today" button and the keyword filter button.
+     * - The "Available Today" button toggles a flag and re-applies filters so that only events
+     *   starting today are shown when it is enabled.
+     * - The filter button opens a dialog that lets the user enter a keyword to filter events by
+     *   name or description.
      *
-     * @param view The root view of this fragment.
+     * @param view the root view of this fragment used to locate the buttons
      */
     public void setupButtons(View view) {
         View availableTodayButton = view.findViewById(R.id.available_today_button);
@@ -157,20 +173,15 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     * Applies the interest (keyword) and availability filters to the full list of events
-     * and updates the adapter with the filtered list.
-     *
-     * <p>Interest filter:
-     * <ul>
-     *     <li>If a keyword is provided, only events whose name or description contains
-     *         that keyword (case-insensitive) are shown.</li>
-     * </ul>
-     *
-     * <p>Availability filter:
-     * <ul>
-     *     <li>If "Available Today" is active, only events whose start date is today
-     *         are shown.</li>
-     * </ul>
+     * Applies both the interest (keyword) filter and the availability filter to the full list of
+     * events, then updates the adapter with the filtered list.
+     * Interest filter:
+     * - If a keyword is provided, only events whose name or description contains that keyword
+     *   (case-insensitive) are included.
+     * Availability filter:
+     * - If the "Available Today" flag is enabled, only events whose start date is today are included.
+     * If the adapter is null, this method does nothing. If the event list is null, an empty list
+     * is sent to the adapter.
      */
     private void applyFiltersAndUpdateList() {
         if (adapter == null) {
