@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
+    implementation(libs.play.services.location)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
