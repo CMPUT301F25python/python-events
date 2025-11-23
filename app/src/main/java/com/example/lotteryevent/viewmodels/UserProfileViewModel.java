@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 import com.example.lotteryevent.repository.IUserRepository;
 import com.example.lotteryevent.ui.UserProfileFragment;
@@ -89,8 +90,7 @@ public class UserProfileViewModel extends ViewModel {
         return null; // Validation successful
     }
 
-    public void setNotifPreference(boolean enabled) {
-//        userRepository.updateNotifPreference(enabled);
-//        notifPreference.postValue(enabled);
+    public void updateNotifPreference(boolean enabled, boolean systemNotifEnabled, NotificationCustomManager notificationCustomManager) {
+        userRepository.updateNotifPreference(enabled, systemNotifEnabled, notificationCustomManager);
     }
 }

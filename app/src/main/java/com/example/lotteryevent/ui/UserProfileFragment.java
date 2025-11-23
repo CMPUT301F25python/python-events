@@ -1,6 +1,10 @@
 package com.example.lotteryevent.ui;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,16 +16,21 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.IUserRepository;
 import com.example.lotteryevent.repository.UserRepositoryImpl;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.UserProfileViewModel;
+
+import java.util.Objects;
 
 /**
  * A {@link Fragment} subclass that allows users to view and update their profile information.
@@ -45,6 +54,17 @@ public class UserProfileFragment extends Fragment {
     // --- ViewModel ---
     private UserProfileViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
+    private NotificationCustomManager notificationCustomManager;
+
+    private Toast myToast;
+
+    private void makeToast(String message) {
+        if (myToast != null) {
+            myToast.cancel();
+        }
+        myToast = Toast.makeText(getContext(), message, Toast.LENGTH_LONG);
+        myToast.show();
+    }
 
     /**
      * Required empty public constructor.
@@ -89,7 +109,8 @@ public class UserProfileFragment extends Fragment {
         // --- ViewModel Initialization ---
         // If a factory was not injected (production), create the default one.
         if (viewModelFactory == null) {
-            IUserRepository userRepository = new UserRepositoryImpl();
+            boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+            IUserRepository userRepository = new UserRepositoryImpl(systemNotifEnabled);
             GenericViewModelFactory factory = new GenericViewModelFactory();
             factory.put(UserProfileViewModel.class, () -> new UserProfileViewModel(userRepository));
             viewModelFactory = factory;
@@ -97,6 +118,9 @@ public class UserProfileFragment extends Fragment {
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(UserProfileViewModel.class);
+
+        // Initialize notif manager
+        notificationCustomManager = new NotificationCustomManager(requireContext());
 
         // --- The rest of the method is the same ---
         bindViews(view);
@@ -134,7 +158,7 @@ public class UserProfileFragment extends Fragment {
                 phoneField.setText(user.getPhone());
             } else {
                 // If the user becomes null (e.g., logged out elsewhere), handle it gracefully
-                Toast.makeText(getContext(), "User not found. Returning to previous screen.", Toast.LENGTH_LONG).show();
+                makeToast("User not found. Returning to previous screen.");
                 Navigation.findNavController(requireView()).popBackStack();
             }
         });
@@ -157,7 +181,7 @@ public class UserProfileFragment extends Fragment {
         // Observe messages (for errors or success confirmations)
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                makeToast(message);
 
                 // If a successful deletion message is received, navigate back
                 if (message.contains("successfully deleted")) {
@@ -189,7 +213,7 @@ public class UserProfileFragment extends Fragment {
 
         if (validationError != null) {
             // If the ViewModel finds a validation error, show it
-            Toast.makeText(getContext(), validationError, Toast.LENGTH_SHORT).show();
+            makeToast(validationError);
         }
         // If successful, the `getError` observer will show the success Toast.
     }
@@ -210,13 +234,56 @@ public class UserProfileFragment extends Fragment {
     }
 
     private void handleNotifToggle() {
-        Boolean notifToggleState = toggleAllowNotifs.isChecked();
-        viewModel.setNotifPreference(notifToggleState);
+        boolean notifToggleState = toggleAllowNotifs.isChecked();
+        boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
 
-        if (notifToggleState) {
-            Toast.makeText(getContext(), "Notifications enabled", Toast.LENGTH_SHORT).show();
+        NotificationCustomManager notificationCustomManager = new NotificationCustomManager(requireContext());
+
+        if (notifToggleState && !systemNotifEnabled) {
+            viewModel.updateNotifPreference(notifToggleState, systemNotifEnabled, notificationCustomManager);
+            redirectToSettingsDialog();
         } else {
-            Toast.makeText(getContext(), "Notifications disabled", Toast.LENGTH_SHORT).show();
+            viewModel.updateNotifPreference(notifToggleState, systemNotifEnabled, notificationCustomManager);
         }
+    }
+
+    private void redirectToSettingsDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle("Enable Notifications");
+        builder.setMessage("Notifications are disabled in your device's settings. Get redirected to your settings to enable them.");
+        builder.setPositiveButton("Open Settings", (dialog, which) -> {
+            /**
+             * Callback triggered when the "Notify All" button in the notification dialog is
+             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+             * bulk notification method.
+             * @param dialog the dialog that triggered the callback
+             */
+//            startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS));
+            Intent intent = new Intent();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+                intent.putExtra("app_package", requireContext().getPackageName());
+                intent.putExtra("app_uid", requireContext().getApplicationInfo().uid);
+            } else {
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.setData(Uri.parse("package:" + requireContext().getPackageName()));
+            }
+            startActivity(intent);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        boolean userNotifPreference = Boolean.TRUE.equals(viewModel.getNotifPreference().getValue());
+        boolean systemNotifEnabled = NotificationManagerCompat.from(requireContext()).areNotificationsEnabled();
+        viewModel.updateNotifPreference(userNotifPreference, systemNotifEnabled, notificationCustomManager);
     }
 }

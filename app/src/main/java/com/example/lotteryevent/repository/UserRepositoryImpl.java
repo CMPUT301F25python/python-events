@@ -1,8 +1,12 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
+
+import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -13,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 import java.util.HashMap;
 import java.util.Map;
+import android.content.Context;
 
 public class UserRepositoryImpl implements IUserRepository {
 
@@ -31,11 +36,11 @@ public class UserRepositoryImpl implements IUserRepository {
      * If a user is signed in, it fetches their profile from Firestore.
      * If the user signs out, it updates the current user LiveData to null.
      */
-    public UserRepositoryImpl() {
+    public UserRepositoryImpl(boolean systemNotifEnabled) {
         mAuth.addAuthStateListener(firebaseAuth -> {
             FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
             if (firebaseUser != null) {
-                fetchFirestoreUserProfile(firebaseUser.getUid());
+                fetchFirestoreUserProfile(firebaseUser.getUid(), systemNotifEnabled);
             } else {
                 _currentUser.postValue(null);
             }
@@ -51,7 +56,7 @@ public class UserRepositoryImpl implements IUserRepository {
      *
      * @param uid The unique identifier for the user's profile.
      */
-    private void fetchFirestoreUserProfile(String uid) {
+    private void fetchFirestoreUserProfile(String uid, boolean systemNotifEnabled) {
         _isLoading.setValue(true);
         db.collection("users").document(uid).get()
                 .addOnCompleteListener(task -> {
@@ -59,11 +64,27 @@ public class UserRepositoryImpl implements IUserRepository {
                     if (task.isSuccessful() && task.getResult() != null) {
                         User user = task.getResult().toObject(User.class);
                         _currentUser.postValue(user);
+                        if (user != null) {
+                            Boolean optOut = user.getOptOutNotifications();
+                            if (optOut == null) {
+                                optOut = true;
+                            }
+                            boolean userNotifEnabled = !optOut;
+                            fetchNotifPreference(userNotifEnabled, systemNotifEnabled);
+                        }
                     } else {
                         _userMessage.postValue("Failed to load user profile.");
                         Log.e(TAG, "Error fetching user profile", task.getException());
                     }
                 });
+    }
+
+    private void fetchNotifPreference(boolean userNotifEnabled, boolean systemNotifEnabled) {
+        if (userNotifEnabled && systemNotifEnabled) {
+            _notifPreference.postValue(true);
+        } else {
+            _notifPreference.postValue(false);
+        }
     }
 
     @Override
@@ -253,27 +274,35 @@ public class UserRepositoryImpl implements IUserRepository {
                     return batch.commit();
                 });
     }
-//
-//    public void updateNotifPreference(Boolean enabled) {
-//        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-//        if (firebaseUser == null) {
-//            _userMessage.postValue("No user is signed in to update.");
-//            return;
-//        }
-//        _isLoading.setValue(true);
-//
-//        db.collection("users").document(firebaseUser.getUid()).set(user)
-//                .addOnSuccessListener(aVoid -> {
-//                    _isLoading.setValue(false);
-//                    _currentUser.postValue(user);
-//                    _userMessage.postValue("Profile updated successfully.");
-//                    Log.d(TAG, "User profile updated successfully.");
-//                })
-//                .addOnFailureListener(e -> {
-//                    _isLoading.setValue(false);
-//                    _userMessage.postValue("Profile update failed: " + e.getMessage());
-//                    Log.e(TAG, "Error updating profile", e);
-//                });
-//        _notifPreference.postValue(enabled);
-//    }
+
+    @Override
+    public void updateNotifPreference(Boolean enabled, boolean systemNotifPreference, NotificationCustomManager notificationCustomManager) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null) {
+            _userMessage.postValue("No user is signed in to update.");
+            return;
+        }
+        _isLoading.setValue(true);
+
+        db.collection("users").document(firebaseUser.getUid()).update("optOutNotifications", !enabled)
+                .addOnSuccessListener(aVoid -> {
+                    _isLoading.setValue(false);
+                    fetchNotifPreference(enabled, systemNotifPreference);
+                    if (!enabled) {
+                        _userMessage.postValue("Notifications disabled.");
+                        notificationCustomManager.clearNotifications();
+                    } else if (systemNotifPreference) {
+                        _userMessage.postValue("Notifications enabled.");
+                        notificationCustomManager.checkAndDisplayUnreadNotifications(firebaseUser.getUid());
+                    } else {
+                        _userMessage.postValue("ERROR: Please allow notifications for the app in settings!");
+                    }
+                    Log.d(TAG, "Notification preferences updated successfully in db.");
+                })
+                .addOnFailureListener(e -> {
+                    _isLoading.setValue(false);
+                    _userMessage.postValue("Notification preference update failed: " + e.getMessage());
+                    Log.e(TAG, "Error updating notification preference", e);
+                });
+    }
 }

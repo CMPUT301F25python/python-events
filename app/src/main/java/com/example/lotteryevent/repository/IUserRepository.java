@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 
 public interface IUserRepository {
@@ -20,4 +22,6 @@ public interface IUserRepository {
      * Deletes the current user's profile and all associated data.
      */
     void deleteCurrentUser();
+
+    void updateNotifPreference(Boolean enabled, boolean systemNotifPreference, NotificationCustomManager notificationCustomManager);
 }
