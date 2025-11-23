@@ -11,6 +11,11 @@ public class AdminEventsRepositoryImpl implements IAdminEventsRepository{
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    /**
+     * Repo implementation to retrieve all events for admin view
+     * Uses firestore to fetch entire collection of events regardless of status
+     * @param callback
+     */
     @Override
     public void getAllEvents(EventsCallback callback) {
         db.collection("events")

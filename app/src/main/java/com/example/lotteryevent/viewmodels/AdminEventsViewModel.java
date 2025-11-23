@@ -9,6 +9,13 @@ import com.example.lotteryevent.repository.IAdminEventsRepository;
 
 import java.util.List;
 
+/**
+ * This viewmodel manages and provides event data to AdminEventsFragment
+ * Responsible for communicating between repo and UI
+ * <p>
+ *     Gets all events from repo and shows resulting list or throws an error
+ * </p>
+ */
 public class AdminEventsViewModel extends ViewModel {
     private final IAdminEventsRepository repo;
 
