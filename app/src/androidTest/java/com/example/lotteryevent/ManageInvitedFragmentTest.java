@@ -13,6 +13,7 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.data.Notification;
 import com.example.lotteryevent.repository.FakeEntrantListRepository;
 import com.example.lotteryevent.ui.organizer.ManageInvitedFragment;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
@@ -24,12 +25,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertEquals;
@@ -210,5 +216,64 @@ public class ManageInvitedFragmentTest {
                 }
             }
         };
+    }
+
+    /**
+     * Verifies that the "Notify All" workflow triggers notification calls for all
+     * entrants displayed in the fragment. The test:
+     * <ul>
+     *     <li>injects two mock entrants into the fake repository,</li>
+     *     <li>launches the fragment,</li>
+     *     <li>opens the notification dialog,</li>
+     *     <li>types an organizer message,</li>
+     *     <li>presses "Notify All",</li>
+     *     <li>asserts that the repository recorded exactly two notification calls
+     *         with the correct UID, eventId, and message values.</li>
+     * </ul>
+     * <p>This test ensures both UI interaction and ViewModel–repository integration
+     * behave correctly under test conditions.</p>
+     */
+    @Test
+    public void test_notifyAll() {
+        launchFragment();
+
+        // Click "Send Notification" button
+        onView(withId(R.id.buttonNotifyInvited)).perform(click());
+
+        // Dialog is shown
+        onView(withText("Notification Message")).check(matches(isDisplayed()));
+
+        // Type into the EditText with hint "Enter message..."
+        String message = "Test organizer message";
+        /**
+         * Callback executed when typing text into the dialog's EditText field.
+         * Ensures the message input is correctly inserted and that the soft keyboard
+         * is closed afterward to allow subsequent interactions.
+         * @param message the message being typed into the EditText
+         */
+        onView(withHint("Enter message..."))
+                .perform(typeText(message), closeSoftKeyboard());
+
+        /**
+         * Callback triggered when the "Notify All" button inside the dialog is clicked.
+         * Commits the organizer message and causes the ViewModel to dispatch simulated
+         * notification calls through the fake repository.
+         * @param view the button view that was clicked
+         */
+        onView(withText("Notify All")).perform(click());
+
+
+        // Verify repository received correct calls
+        List<Notification> calls = fakeRepository.getNotificationCalls();
+        assertEquals(2, calls.size());
+
+        assertEquals("user1", calls.get(0).getRecipientId());
+        assertEquals(TEST_EVENT_ID, calls.get(0).getEventId());
+        assertEquals(message, calls.get(0).getMessage());
+
+        assertEquals("user2", calls.get(1).getRecipientId());
+        assertEquals(TEST_EVENT_ID, calls.get(1).getEventId());
+        assertEquals(message, calls.get(1).getMessage());
+
     }
 }

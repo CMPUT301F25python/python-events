@@ -3,7 +3,7 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/availableEventsFragment"
-            android:icon="@drawable/ic_calendar_month_24"
+            android:icon="@drawable/calendar_today_24px"
             android:title="@string/events" />
         <item
             android:id="@+id/lotteryGuidelines"
@@ -17,6 +17,28 @@
             android:id="@+id/qrScannerFragment"
             android:icon="@drawable/qr_code_scanner_24px"
             android:title="@string/scan_a_qr_code" />
+
+        <!-- Admin-only Options -->
+        <item
+            android:id="@+id/adminEventsFragment"
+            android:icon="@drawable/edit_calendar_24px"
+            android:title="@string/admin_events"
+            android:visible="false" />
+        <item
+            android:id="@+id/adminProfilesFragment"
+            android:icon="@drawable/groups_24px"
+            android:title="@string/profiles"
+            android:visible="false" />
+        <item
+            android:id="@+id/adminImagesFragment"
+            android:icon="@drawable/photo_library_24px"
+            android:title="@string/images"
+            android:visible="false" />
+        <item
+            android:id="@+id/adminSentNotificationsFragment"
+            android:icon="@drawable/send_24px"
+            android:title="@string/sent_notifications"
+            android:visible="false" />
 
     </group>
 </menu>

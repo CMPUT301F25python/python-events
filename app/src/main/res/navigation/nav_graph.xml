@@ -143,4 +143,25 @@
     </fragment>
 
 
+    <!-- Admin Fragments -->
+    <fragment
+        android:id="@+id/adminSentNotificationsFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminSentNotificationsFragment"
+        android:label="Sent Notifications" />
+
+    <fragment
+        android:id="@+id/adminImagesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminImagesFragment"
+        android:label="Images" />
+
+    <fragment
+        android:id="@+id/adminProfilesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
+        android:label="Profiles" />
+
+    <fragment
+        android:id="@+id/adminEventsFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
+        android:label="Admin Events" />
+
 </navigation>
