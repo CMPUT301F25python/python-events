@@ -7,7 +7,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,12 +18,9 @@ import android.widget.Toast;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.RegistrationHistoryItem;
 import com.example.lotteryevent.repository.IRegistrationHistoryRepository;
-import com.example.lotteryevent.repository.IUserRepository;
 import com.example.lotteryevent.repository.RegistrationHistoryRepositoryImpl;
-import com.example.lotteryevent.repository.UserRepositoryImpl;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.RegistrationHistoryViewModel;
-import com.example.lotteryevent.viewmodels.UserProfileViewModel;
 
 import java.util.List;
 
@@ -75,9 +71,7 @@ public class RegistrationHistoryFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        drawResults = view.findViewById(R.id.draw_results_title);
-        containerDrawResults = view.findViewById(R.id.container_draw_results);
+        bindViews(view);
 
         // --- ViewModel Initialization ---
         // If a factory was not injected (production), create the default one.
@@ -90,7 +84,17 @@ public class RegistrationHistoryFragment extends Fragment {
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(RegistrationHistoryViewModel.class);
+
         setupObservers();
+    }
+
+    /**
+     * Finds and binds all the UI components from the layout file.
+     * @param view The root view of the fragment.
+     */
+    private void bindViews(@NonNull View view) {
+        drawResults = view.findViewById(R.id.draw_results_title);
+        containerDrawResults = view.findViewById(R.id.container_draw_results);
     }
 
     /**
@@ -117,8 +121,12 @@ public class RegistrationHistoryFragment extends Fragment {
      */
     private void showRegistrationHistory(List<RegistrationHistoryItem> historyList){
         containerDrawResults.removeAllViews(); // reset
+
         TextView noHistory = new TextView(getContext());
         noHistory.setText(R.string.no_draw_results);
+        noHistory.setTextSize(16);
+        noHistory.setTextColor(getResources().getColor(R.color.primary_green));
+        noHistory.setPadding(0, 16, 0, 0);
 
         // user has no registration history
         if(historyList == null || historyList.isEmpty()){
@@ -126,16 +134,15 @@ public class RegistrationHistoryFragment extends Fragment {
             return;
         }
 
+        boolean displayedAtLeastOne = false; // flag for setting up rows and columns of events
+
         // displaying each item in the list in a new row
         for(RegistrationHistoryItem item: historyList){
-            if(item == null){
-                return;
+            if(item == null || item.getStatus() == null){
+                continue;
             }
 
             String databaseStatus = item.getStatus();
-            if(databaseStatus == null){
-                continue;
-            }
 
             // assigning user facing statusText (showing only invited or waiting)
             String statusText;
@@ -147,10 +154,12 @@ public class RegistrationHistoryFragment extends Fragment {
                 continue; // skip all other statuses
             }
 
-            // set up the row
-            TextView row = new TextView(getContext());
-            row.setPadding(0, 8,0, 8);
-            row.setTextSize(16);
+            displayedAtLeastOne = true;
+
+            View row = getLayoutInflater().inflate(R.layout.item_registration_history, containerDrawResults, false);
+
+            TextView eventNameText = row.findViewById(R.id.history_event_name);
+            TextView statusTextView = row.findViewById(R.id.history_event_status);
 
             String eventName;
             if(item.getEventName() != null){
@@ -158,15 +167,21 @@ public class RegistrationHistoryFragment extends Fragment {
             } else {
                 eventName = "Unnamed event";
             }
-            // show the data
-            String displayText = eventName + " - " + statusText;
-            row.setText(displayText);
+
+            eventNameText.setText(eventName);
+            statusTextView.setText(statusText);
+
+            // setting status text color
+            if (statusText.equals("Selected")) {
+                statusTextView.setTextColor(getResources().getColor(R.color.red));
+            } else { // Not Selected
+                statusTextView.setTextColor(getResources().getColor(R.color.primary_green));
+            }
 
             containerDrawResults.addView(row);
         }
 
-        // if all results are filtered (i.e. no waiting or invited status)
-        if(containerDrawResults.getChildCount() == 0){
+        if (!displayedAtLeastOne) {
             containerDrawResults.addView(noHistory);
         }
     }
