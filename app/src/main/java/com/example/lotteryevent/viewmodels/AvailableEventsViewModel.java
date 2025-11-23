@@ -6,8 +6,11 @@ import androidx.lifecycle.ViewModel;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IAvailableEventsRepository;
 import com.example.lotteryevent.ui.AvailableEventsFragment;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
