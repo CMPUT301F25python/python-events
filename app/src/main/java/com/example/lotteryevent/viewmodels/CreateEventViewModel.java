@@ -79,7 +79,7 @@ public class CreateEventViewModel extends ViewModel {
         newEvent.setCapacity(capacity);
         newEvent.setWaitingListLimit(waitingListLimit);
         newEvent.setLotteryGuidelines(lotteryGuidelinesStr);
-        newEvent.setIsGeoLocationRequired(isGeoLocationRequired);
+        newEvent.setGeoLocationRequired(isGeoLocationRequired);
         newEvent.setEventStartDateTime(eventStartTimestamp);
         newEvent.setEventEndDateTime(eventEndTimestamp);
         newEvent.setRegistrationStartDateTime(regStartTimestamp);
