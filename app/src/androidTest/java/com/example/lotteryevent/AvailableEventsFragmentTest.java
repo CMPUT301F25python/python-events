@@ -20,8 +20,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.google.firebase.Timestamp;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -29,6 +33,9 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static androidx.test.espresso.action.ViewActions.replaceText;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
+import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -107,7 +114,6 @@ public class AvailableEventsFragmentTest {
 
         fakeRepository.setEventsToReturn(events);
 
-        // Act
         FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
 
         // Assert adapter count
@@ -204,7 +210,6 @@ public class AvailableEventsFragmentTest {
                 R.id.availableEventsFragment,
                 navController.getCurrentDestination().getId()
         );
-        // No Toast check here on purpose
     }
 
     @Test
@@ -216,4 +221,85 @@ public class AvailableEventsFragmentTest {
 
         assertTrue(fakeRepository.wasRemoveListenerCalled());
     }
+
+    @Test
+    public void availableTodayButton_filtersEventsToThoseStartingToday() {
+        List<Event> events = new ArrayList<>();
+
+        Date now = new Date();
+        Timestamp todayTimestamp = new Timestamp(now);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date tomorrowDate = calendar.getTime();
+        Timestamp tomorrowTimestamp = new Timestamp(tomorrowDate);
+
+        Event todayEvent = new Event();
+        todayEvent.setEventId("today-id");
+        todayEvent.setName("Today Event");
+        todayEvent.setEventStartDateTime(todayTimestamp);
+        events.add(todayEvent);
+
+        Event tomorrowEvent = new Event();
+        tomorrowEvent.setEventId("tomorrow-id");
+        tomorrowEvent.setName("Tomorrow Event");
+        tomorrowEvent.setEventStartDateTime(tomorrowTimestamp);
+        events.add(tomorrowEvent);
+
+        fakeRepository.setEventsToReturn(events);
+
+        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
+
+        // Both events should be visible before applying the filter
+        onView(withText("Today Event")).check(matches(isDisplayed()));
+        onView(withText("Tomorrow Event")).check(matches(isDisplayed()));
+
+        // Click "Available Today" button to enable the availability filter
+        onView(withId(R.id.available_today_button)).perform(click());
+
+        // Assert: only the event starting today remains visible
+        onView(withText("Today Event")).check(matches(isDisplayed()));
+        onView(withText("Tomorrow Event")).check(doesNotExist());
+    }
+
+    @Test
+    public void filterButton_filtersEventsByKeywordInNameOrDescription() {
+        List<Event> events = new ArrayList<>();
+
+        Event gamesEvent = new Event();
+        gamesEvent.setEventId("games-id");
+        gamesEvent.setName("Board Games Night");
+        gamesEvent.setDescription("An evening of board games.");
+        events.add(gamesEvent);
+
+        Event cookingEvent = new Event();
+        cookingEvent.setEventId("cook-id");
+        cookingEvent.setName("Cooking Workshop");
+        cookingEvent.setDescription("Learn to cook with friends.");
+        events.add(cookingEvent);
+
+        fakeRepository.setEventsToReturn(events);
+
+        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
+
+        // Both events visible before filtering
+        onView(withText("Board Games Night")).check(matches(isDisplayed()));
+        onView(withText("Cooking Workshop")).check(matches(isDisplayed()));
+
+        // Open the keyword filter dialog via the filter button
+        onView(withId(R.id.filter_button)).perform(click());
+
+        // Type a keyword that should match only the "Board Games Night" event
+        onView(withHint("Enter a keyword")).perform(replaceText("game"));
+
+        // Apply the filter
+        onView(withText("Apply")).perform(click());
+
+        // Assert: matching event is shown, non-matching event is filtered out
+        onView(withText("Board Games Night")).check(matches(isDisplayed()));
+        onView(withText("Cooking Workshop")).check(doesNotExist());
+    }
+
+
 }
