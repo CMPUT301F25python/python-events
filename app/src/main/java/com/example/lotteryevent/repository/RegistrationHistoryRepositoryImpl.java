@@ -12,6 +12,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class reads through each of the events, check if the UID is inside the entrants
@@ -33,7 +34,6 @@ public class RegistrationHistoryRepositoryImpl implements IRegistrationHistoryRe
      */
     @Override
     public LiveData <List<RegistrationHistoryItem>> fetchRegistrationHistory() {
-
         // getting the user's id
         String uid;
         if (auth.getCurrentUser() != null) {
@@ -60,39 +60,56 @@ public class RegistrationHistoryRepositoryImpl implements IRegistrationHistoryRe
                 .addOnSuccessListener(eventSnapshots -> {
                     List<RegistrationHistoryItem> list = new ArrayList<>();
 
+                    // if there are no events, we end
+                    if(eventSnapshots.isEmpty()){
+                        _history.postValue(list);
+                        return;
+                    }
+
+                    // track number of remaining queries
+                    AtomicInteger remaining = new AtomicInteger(eventSnapshots.size());
+
                     for (QueryDocumentSnapshot eventDocument : eventSnapshots) {
                         String eventId = eventDocument.getId(); // getting the event ID
                         String eventName = eventDocument.getString("name"); // getting the event name
 
-                        /**
-                         * Callback fired when Firestore successfully retrieves the entrant document for
-                         * the current user within a specific event. If the document exists and contains
-                         * a non-null "status" field, a new {@link RegistrationHistoryItem} is created
-                         * and added to the history list.
-                         * @param entrantDocument the Firestore document representing the user's entry
-                         *                        within the event's "entrants" subcollection
-                         */
                         eventDocument.getReference().collection("entrants").document(uid).get()
+                                /**
+                                 * Callback triggered when Firestore successfully fetches the users id in a
+                                 * an entrant document for a particular event
+                                 * @param entrantDocument the document containing the entrants status
+                                 */
                                 .addOnSuccessListener(entrantDocument -> {
-                                    // if entrant does not exist, move on to next event
-                                    if (!entrantDocument.exists()) {
-                                        return;
+                                    if (entrantDocument.exists()) {
+                                        String status = entrantDocument.getString("status");
+
+                                        // entrant is assigned a status, get all information
+                                        if (status != null) {
+                                            RegistrationHistoryItem item = new RegistrationHistoryItem();
+                                            item.setEventId(eventId);
+                                            item.setEventName(eventName);
+                                            item.setStatus(status);
+                                            list.add(item);
+                                        }
                                     }
 
-                                    String status = entrantDocument.getString("status");
-                                    // if, for some reason, user is in subcollection but has no status, ignore
-                                    if (status == null) {
-                                        return;
+                                    // Once all events processed, post whatever we have (possibly empty)
+                                    if (remaining.decrementAndGet() == 0) {
+                                        _history.postValue(list);
                                     }
-
-                                    // create item (i.e. row) for this event
-                                    RegistrationHistoryItem item = new RegistrationHistoryItem();
-                                    item.setEventId(eventId);
-                                    item.setEventName(eventName);
-                                    item.setStatus(status);
-
-                                    list.add(item);
-                                    _history.postValue(list);
+                                })
+                                /**
+                                 * Callback triggered when Firestore fails to retrieve the entrant.
+                                 * Logs the error, updates the user-facing message, and posts an empty list
+                                 * to history LiveData so UI observers can react gracefully.
+                                 * @param e the exception thrown during Firestore event retrieval
+                                 */
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Failed to load entrant", e);
+                                    // Even on failure, we still count down
+                                    if (remaining.decrementAndGet() == 0) {
+                                        _history.postValue(list);
+                                    }
                                 });
                     }
                 })

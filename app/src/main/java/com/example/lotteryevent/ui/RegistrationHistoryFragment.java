@@ -37,6 +37,7 @@ public class RegistrationHistoryFragment extends Fragment {
     private ViewModelProvider.Factory viewModelFactory;
     private TextView noHistoryText;
     private LinearLayout containerDrawResults;
+    private View loadingIndicator;
 
     /**
      * This is the required empty constructor
@@ -94,6 +95,7 @@ public class RegistrationHistoryFragment extends Fragment {
     private void bindViews(@NonNull View view) {
         containerDrawResults = view.findViewById(R.id.container_draw_results);
         noHistoryText = view.findViewById(R.id.no_history_text);
+        loadingIndicator = view.findViewById(R.id.history_loading_indicator);
     }
 
     /**
@@ -108,7 +110,12 @@ public class RegistrationHistoryFragment extends Fragment {
          *                    representing the user's registration history
          */
         viewModel.getUserHistory().observe(getViewLifecycleOwner(), historyList ->{
-            showRegistrationHistory(historyList);
+            if (historyList == null){
+                showLoading(); // still loading
+            } else {
+                hideLoading(); // done loading
+                showRegistrationHistory(historyList);
+            }
         });
 
         /**
@@ -126,6 +133,24 @@ public class RegistrationHistoryFragment extends Fragment {
     }
 
     /**
+     * This function shows the loading indicator and hides all data while user's registration
+     * history is being fetched.
+     */
+    private void showLoading(){
+        loadingIndicator.setVisibility(View.VISIBLE);
+        containerDrawResults.setVisibility(View.GONE);
+        noHistoryText.setVisibility(View.GONE);
+    }
+
+    /**
+     * This function hides the loading indicator and shows all data once user's registration
+     * history fetched.
+     */
+    private void hideLoading(){
+        loadingIndicator.setVisibility(View.GONE);
+    }
+
+    /**
      * Renders the user's registration history inside the container layout. Clears
      * any existing rows, maps each valid {@link RegistrationHistoryItem} to a user
      * friendly status label, inflates a row view for each, and sets the appropriate
@@ -137,8 +162,9 @@ public class RegistrationHistoryFragment extends Fragment {
     private void showRegistrationHistory(List<RegistrationHistoryItem> historyList){
         containerDrawResults.removeAllViews(); // reset
 
-        // user has no registration history
+        // user has no registration history (after loading)
         if(historyList == null || historyList.isEmpty()){
+            containerDrawResults.setVisibility(View.GONE);
             noHistoryText.setVisibility(View.VISIBLE);
             return;
         }
@@ -196,15 +222,16 @@ public class RegistrationHistoryFragment extends Fragment {
             } else {
                 statusTextView.setTextColor(getResources().getColor(R.color.grey));
             }
-
             containerDrawResults.addView(row);
         }
 
-        // showing or hiding text based on if user has any waitlisted events
-        if (!displayedAtLeastOne) {
-            noHistoryText.setVisibility(View.VISIBLE);
-        } else {
+        // showing or hiding text  based on if user has any registered events
+        if (displayedAtLeastOne) {
+            containerDrawResults.setVisibility(View.VISIBLE);
             noHistoryText.setVisibility(View.GONE);
+        } else {
+            containerDrawResults.setVisibility(View.GONE);
+            noHistoryText.setVisibility(View.VISIBLE);
         }
     }
 

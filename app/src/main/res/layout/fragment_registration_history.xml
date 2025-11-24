@@ -11,13 +11,14 @@
         android:padding="16dp"
         android:orientation="vertical">
 
-        <!-- Container for Draw Results -->
-        <LinearLayout
-            android:id="@+id/container_draw_results"
-            android:layout_width="match_parent"
+        <!-- Loading spinner -->
+        <ProgressBar
+            android:id="@+id/history_loading_indicator"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingTop="12dp" />
+            android:layout_gravity="center"
+            android:visibility="visible" />
 
         <!-- TextView used for "no results" message -->
         <TextView
@@ -25,9 +26,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/no_draw_results"
+            android:textAlignment="center"
             android:textSize="18sp"
             android:textColor="@color/grey"
-            android:paddingTop="16dp" />
+            android:paddingTop="16dp"
+            android:visibility="gone"/>
+
+        <!-- Container for Draw Results -->
+        <LinearLayout
+            android:id="@+id/container_draw_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="12dp"
+            android:visibility="gone"/>
 
     </LinearLayout>
 
