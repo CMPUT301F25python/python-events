@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     private static final String TAG = "OrganizerEventRepo";
@@ -23,12 +25,15 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
 
 
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
+    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isRunDrawButtonEnabled = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
     @Override
     public LiveData<Event> getEvent() { return _event; }
+    @Override
+    public LiveData<List<Entrant>> getEntrants() { return _entrants; }
     @Override
     public LiveData<Boolean> isRunDrawButtonEnabled() { return _isRunDrawButtonEnabled; }
     @Override
@@ -60,6 +65,32 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                     _isLoading.postValue(false);
                     _userMessage.postValue("Error: Failed to load event details.");
                     Log.e(TAG, "fetchEventDetails failed", e);
+                });
+    }
+
+    /**
+     * Fetches the full list of entrants for the specific event.
+     * Used to generate the CSV file for the entrants.
+     * @param eventId the ID of the event
+     */
+    @Override
+    public void fetchEntrants(String eventId) {
+        _isLoading.postValue(true);
+
+        db.collection("events").document(eventId).collection("entrants")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots != null) {
+                        // Automatically maps documents to Entrant objects using getters/setters
+                        List<Entrant> entrantList = queryDocumentSnapshots.toObjects(Entrant.class);
+                        _entrants.postValue(entrantList);
+                    }
+                    _isLoading.postValue(false);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching entrants list", e);
+                    _userMessage.postValue("Error: Could not fetch entrants list.");
+                    _isLoading.postValue(false);
                 });
     }
 

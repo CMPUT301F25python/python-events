@@ -2,10 +2,14 @@ package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
 
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+
+import java.util.List;
 
 public interface IOrganizerEventRepository {
     LiveData<Event> getEvent();
+    LiveData<List<Entrant>> getEntrants();
     LiveData<Boolean> isRunDrawButtonEnabled();
     LiveData<Boolean> isLoading();
     LiveData<String> getMessage();
@@ -21,4 +25,10 @@ public interface IOrganizerEventRepository {
      * @param eventId the ID of the event to finalize
      */
     void finalizeEvent(String eventId);
+
+    /**
+     * Fetches the full list of entrants for the specific event.
+     * @param eventId the ID of the event
+     */
+    void fetchEntrants(String eventId);
 }
