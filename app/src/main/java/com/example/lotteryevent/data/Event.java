@@ -27,7 +27,6 @@ public class Event {
     private Timestamp registrationStartDateTime;
     private Timestamp registrationEndDateTime;
     private Integer capacity;
-    private String lotteryGuidelines;
     private Integer waitingListLimit;
     private boolean geoLocationRequired;
     private String status;
@@ -242,19 +241,4 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
-    /**
-     * Gets the organizer-defined guidelines for the lottery selection process.
-     * @return The lottery guidelines.
-     */
-    public String getLotteryGuidelines() {
-        return lotteryGuidelines;
-    }
-
-    /**
-     * Sets the organizer-defined guidelines for the lottery selection process.
-     * @param lotteryGuidelines The lottery guidelines.
-     */
-    public void setLotteryGuidelines(String lotteryGuidelines) {
-        this.lotteryGuidelines = lotteryGuidelines;
-    }
 }
