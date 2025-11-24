@@ -37,8 +37,6 @@ import static org.junit.Assert.assertEquals;
  * <p>Tests are executed using the AndroidJUnit4 runner and utilize
  * {@link androidx.fragment.app.testing.FragmentScenario} to launch the fragment
  * in a container.</p>
- * @author Sanaa Bhaidani
- * @version 1.0
  */
 @RunWith(AndroidJUnit4.class)
 public class EntrantListFragmentTest {

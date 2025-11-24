@@ -54,6 +54,10 @@ dependencies {
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
     implementation(libs.androidx.uiautomator.v18)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)

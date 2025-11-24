@@ -307,6 +307,46 @@ public class EventDetailsFragmentTest {
     }
 
     /**
+     * Test Case 11: Event requires geolocation.
+     * Verifies that clicking "Join" for an event requiring geolocation will succeed
+     * if the user has granted permission.
+     */
+    @Test
+    public void joinEvent_locationRequired_waitsForPermission() {
+        // 1. Arrange: Require Geolocation
+        fakeRepository.getInMemoryEvent().setGeoLocationRequired(true);
+
+        // 2. PRE-GRANT PERMISSION
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .executeShellCommand("pm grant " + androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName() + " android.permission.ACCESS_FINE_LOCATION");
+
+        // 3. Act: Launch and Click
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+        onView(withId(R.id.btn_action_positive)).perform(click());
+
+        // 4. Assert
+        onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
+    }
+
+    /**
+     * Test Case 12: Event does NOT require geolocation.
+     * Verifies that clicking "Join" joins the list immediately.
+     */
+    @Test
+    public void joinEvent_locationNotRequired_joinsImmediately() {
+        // Arrange
+        fakeRepository.getInMemoryEvent().setGeoLocationRequired(false);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+        onView(withId(R.id.btn_action_positive)).perform(click());
+
+        // Assert
+        // Since no permission was needed, the join happened immediately.
+        onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
+    }
+
+    /**
      * Test Case 11: A regular (non-admin) user CANNOT see the delete button.
      * This is a critical security check.
      */

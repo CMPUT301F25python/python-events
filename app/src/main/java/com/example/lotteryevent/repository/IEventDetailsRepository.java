@@ -49,7 +49,7 @@ public interface IEventDetailsRepository {
      *
      * @param eventId The ID of the event to join.
      */
-    void joinWaitingList(String eventId);
+    void joinWaitingList(String eventId, Double latitude, Double longitude);
 
     /**
      * Removes the current user from the event's waiting list.

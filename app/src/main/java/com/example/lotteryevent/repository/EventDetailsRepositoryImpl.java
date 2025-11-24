@@ -3,6 +3,7 @@ package com.example.lotteryevent.repository;
 import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import com.example.lotteryevent.data.User;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.android.gms.tasks.Task;
@@ -17,6 +18,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.firebase.firestore.GeoPoint;
 
 import java.util.List;
 
@@ -121,34 +123,64 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     }
 
     @Override
-    public void joinWaitingList(String eventId) {
+    public void joinWaitingList(String eventId, Double latitude, Double longitude) {
         _isLoading.postValue(true);
         FirebaseUser currentUser = mAuth.getCurrentUser();
+
         if (currentUser == null) {
             _isLoading.postValue(false);
             _message.postValue("You must be signed in to join.");
             return;
         }
 
-        Entrant newEntrant = new Entrant();
-        newEntrant.setUserName(currentUser.getDisplayName());
-        newEntrant.setStatus("waiting");
-        newEntrant.setDateRegistered(Timestamp.now());
-        getEntrantDocRef(eventId, currentUser.getUid()).set(newEntrant)
-                .addOnSuccessListener(aVoid -> {
-                    _message.postValue("Successfully joined the waiting list!");
-                    Task<DocumentSnapshot> entrantStatusTask = fetchEntrantStatusTask(eventId);
-                    Task<List<Object>> entrantCountsTask = fetchEntrantCountsTask(eventId);
+        // 1. Fetch the user's profile to get their specific "name" field
+        db.collection("users").document(currentUser.getUid()).get()
+                .addOnSuccessListener(userSnapshot -> {
 
-                    Tasks.whenAllComplete(entrantStatusTask, entrantCountsTask)
-                            .addOnCompleteListener(allTasks -> {
-                                _isLoading.postValue(false); // All loading is now finished.
+                    // Default to "Anonymous"  if the field is missing
+                    String userName = "Anonymous";
+
+                    if (userSnapshot.exists() && userSnapshot.getString("name") != null) {
+                        userName = userSnapshot.getString("name");
+                    }
+
+                    // 2. Create the Entrant object with the fetched name
+                    Entrant newEntrant = new Entrant();
+                    newEntrant.setUserName(userName);
+                    newEntrant.setStatus("waiting");
+                    newEntrant.setDateRegistered(Timestamp.now());
+
+                    // Add location if provided
+                    if (latitude != null && longitude != null) {
+                        newEntrant.setGeoLocation(new GeoPoint(latitude, longitude));
+                    } else {
+                        newEntrant.setGeoLocation(null);
+                    }
+
+                    // 3. Save the Entrant to the Event's subcollection
+                    getEntrantDocRef(eventId, currentUser.getUid()).set(newEntrant)
+                            .addOnSuccessListener(aVoid -> {
+                                _message.postValue("Successfully joined the waiting list!");
+
+                                // Refresh data
+                                Task<DocumentSnapshot> entrantStatusTask = fetchEntrantStatusTask(eventId);
+                                Task<List<Object>> entrantCountsTask = fetchEntrantCountsTask(eventId);
+
+                                Tasks.whenAllComplete(entrantStatusTask, entrantCountsTask)
+                                        .addOnCompleteListener(allTasks -> _isLoading.postValue(false));
+                            })
+                            .addOnFailureListener(e -> {
+                                _isLoading.postValue(false);
+                                _message.postValue("Failed to join waiting list.");
+                                Log.e(TAG, "joinWaitingList failed to save entrant", e);
                             });
+
                 })
                 .addOnFailureListener(e -> {
+                    // Failed to fetch the user profile name
                     _isLoading.postValue(false);
-                    _message.postValue("Failed to join the waiting list.");
-                    Log.e(TAG, "joinWaitingList failed", e);
+                    _message.postValue("Error fetching user profile.");
+                    Log.e(TAG, "Failed to fetch user profile for name", e);
                 });
     }
 
