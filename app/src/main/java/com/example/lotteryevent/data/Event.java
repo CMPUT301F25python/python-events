@@ -28,11 +28,9 @@ public class Event {
     private Timestamp registrationEndDateTime;
     private Integer capacity;
     private String lotteryGuidelines;
-    private Integer waitinglistlimit;
-    private boolean isgeolocationRequired;
+    private Integer waitingListLimit;
+    private boolean geoLocationRequired;
     private String status;
-    private int waitinglistCount;
-    private int attendeeCount;
 
     // @ServerTimestamp tells Firestore to automatically populate this field with the
     // server's timestamp when the document is first created. It will be null until then.
@@ -205,23 +203,23 @@ public class Event {
      * Gets the waiting list limit for the event.
      * @return The waiting list limit.
      */
-    public Integer getWaitinglistlimit() { return waitinglistlimit; }
+    public Integer getWaitingListLimit() { return waitingListLimit; }
     /**
      * Sets the waiting list limit for the event.
-     * @param waitinglistlimit The waiting list limit.
+     * @param waitingListLimit The waiting list limit.
      */
-    public void setWaitinglistlimit(Integer waitinglistlimit) { this.waitinglistlimit = waitinglistlimit; }
+    public void setWaitingListLimit(Integer waitingListLimit) { this.waitingListLimit = waitingListLimit; }
 
     /**
      * Checks if geolocation is required for the event.
      * @return True if geolocation is required, false otherwise.
      */
-    public boolean isIsgeolocationRequired() { return isgeolocationRequired; }
+    public boolean getGeoLocationRequired() { return geoLocationRequired; }
     /**
      * Sets whether geolocation is required for the event.
-     * @param isgeolocationRequired True if geolocation is required, false otherwise.
+     * @param geoLocationRequired True if geolocation is required, false otherwise.
      */
-    public void setIsgeolocationRequired(boolean isgeolocationRequired) { this.isgeolocationRequired = isgeolocationRequired; }
+    public void setGeoLocationRequired(boolean geoLocationRequired) { this.geoLocationRequired = geoLocationRequired; }
 
     /**
      * Gets the status of the event.
@@ -233,27 +231,6 @@ public class Event {
      * @param status The event status.
      */
     public void setStatus(String status) { this.status = status; }
-    /**
-     * Gets the number of people on the waiting list.
-     * @return The waiting list count.
-     */
-    public int getWaitinglistCount() { return waitinglistCount; }
-    /**
-     * Sets the number of people on the waiting list.
-     * @param waitinglistCount The waiting list count.
-     */
-    public void setWaitinglistCount(int waitinglistCount) { this.waitinglistCount = waitinglistCount; }
-
-    /**
-     * Gets the number of attendees for the event.
-     * @return The attendee count.
-     */
-    public int getAttendeeCount() { return attendeeCount; }
-    /**
-     * Sets the number of attendees for the event.
-     * @param attendeeCount The attendee count.
-     */
-    public void setAttendeeCount(int attendeeCount) { this.attendeeCount = attendeeCount; }
 
     /**
      * Gets the timestamp when the event was created.
@@ -280,8 +257,4 @@ public class Event {
     public void setLotteryGuidelines(String lotteryGuidelines) {
         this.lotteryGuidelines = lotteryGuidelines;
     }
-
-//    public String getId() { return eventId; }
-//    public void setId(String id) {
-//    }
 }

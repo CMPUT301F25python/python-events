@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">LotteryEvent</string>
-    <string name="event_lotto">Event Lotto</string>
+    <string name="app_name">FairChance</string>
+    <string name="fair_chance">FairChance</string>
     <string name="add_new_event">Add new event</string>
     <string name="profile">Profile</string>
     <string name="create_new_event">Create New Event</string>
@@ -86,4 +86,32 @@
     <string name="notifications">Notifications</string>
     <string name="events">Events</string>
     <string name="point_camera_at_a_qr_code">Point camera at a QR code</string>
+    <string name="images">Images</string>
+    <string name="profiles">Profiles</string>
+    <string name="admin_events">Admin Events</string>
+    <string name="sent_notifications">Sent Notifications</string>
+    <string name="lottery_guidelines">Lottery Guidelines</string>
+    <string name="lottery_guidelines_title">Lottery Guidelines</string>
+    <string name="lottery_guidelines_intro">Our standardized lottery process is used for all events. </string>
+    <string name="dice_emoji">🎲</string>
+    <string name="guidelines_motto">Tap, Join, and Let Luck Do The Rest</string>
+    <string name="motto_description">Everyone on the waiting list has the same chance of being selected.</string>
+    <string name="scale_emoji">⚖️</string>
+    <string name="equal_opportunity">Equal Opportunity</string>
+    <string name="equal_opportunity_text">Selection is random.\nNo priority based on past attendance or profile info.\nEveryone who joins the waitlist before the deadline has equal opportunity.</string>
+    <string name="hourglass_emoji">⏳</string>
+    <string name="after_registration_closes">After Registration Closes</string>
+    <string name="after_registration_closes_text">The system randomly selects one person for every open spot when registration ends.</string>
+    <string name="repeat_emoji">🔄</string>
+    <string name="additional_draws">Additional Draws</string>
+    <string name="additional_draws_text">If anyone declines their spot, additional random draws may occur to fill it.\nYou may receive a late invitation if not chosen first.</string>
+    <string name="bell_emoji">🔔</string>
+    <string name="notifications_amp_status"><![CDATA[Notifications & Status]]></string>
+    <string name="notifications_amp_status_text">You will receive notifications if you win or lose the lottery.\nVisit the event page to view availability and your status.</string>
+    <string name="location_emoji">📍</string>
+    <string name="geolocation">Geolocation (If Required)</string>
+    <string name="geolocation_text">Some events may require sharing your location to sign-up.\nThe app will tell you if this is needed.</string>
+    <string name="transparent_emoji">🔍</string>
+    <string name="transparent_amp_audited"><![CDATA[Transparent & Audited]]></string>
+    <string name="transparent_amp_audited_text">Organizers can review draw results and notifications to ensure fairness.\nThe system logs ensure transparency and accuracy.</string>
 </resources>

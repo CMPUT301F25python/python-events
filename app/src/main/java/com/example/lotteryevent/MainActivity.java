@@ -1,12 +1,12 @@
 package com.example.lotteryevent;
 
-import static java.security.AccessController.getContext;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -21,7 +21,9 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.core.splashscreen.SplashScreen;
 
+import com.example.lotteryevent.data.Entrant;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
@@ -55,33 +57,125 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "AnonymousAuth";
     private NotificationCustomManager notificationCustomManager;
 
+    // flag to check user is initialized (only then should rest of app be set up)
+    private boolean userInitialized = false;
+
     /**
-     * Initializes the activity, sets up the main layout, logs user in based on device id, and configures navigation.
+     * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
      * <p>
-     * This method inflates the activity's UI, finds the NavController, and uses {@link NavigationUI}
-     * to connect the Toolbar and NavigationView to the navigation graph. This enables automatic
-     * title updates and handling of the navigation drawer icon (hamburger icon).
+     * This method handles the following lifecycle operations:
+     * <ul>
+     *     <li>Inflates the activity's UI and sets up the {@link Toolbar}.</li>
+     *     <li>Initiates anonymous Firebase authentication.</li>
+     *     <li>Connects the {@link NavigationView} and {@link DrawerLayout} to the {@link NavController}.</li>
+     *     <li><strong>Admin Check:</strong> Asynchronously queries the Firestore "users" collection for the current user's profile.
+     *     If the "admin" field is true, it dynamically reveals the hidden administrator menu items (Notifications, Images, Profiles, Events).</li>
+     * </ul>
      *
      * @param savedInstanceState If the activity is being re-initialized after previously being
      *                           shut down, this Bundle contains the data it most recently supplied.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // user identification by device
-        mAuth = FirebaseAuth.getInstance();
-        signInAnonymously();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // user identification by device
+        mAuth = FirebaseAuth.getInstance();
+        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        // anonymous sign-in if no user, else initialize immediately
+        if(currentUser == null){
+            signInAnonymously();
+        } else {
+            onUserInitialized(currentUser); // now we have a user, initialize the app
+        }
+    }
+
+    /**
+     * Called once we know we have a valid Firebase user.
+     * Sets up Firestore user doc and notifications for this UID.
+     * @param user this is the id of the device
+     */
+    public void initializeUser(FirebaseUser user){
+        // if no user, this doesn't execute (extra safety)
+        if(user == null){
+            return;
+        }
+        String uid = user.getUid();
+        updateUI(user); //write to Firestore
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+        notificationCustomManager.clearNotifications();
+        notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
+        notificationCustomManager.listenForNotifications(uid);
+    }
+
+    /**
+     * This function initializes the user. Once the auth state is set, app is fully set-up
+     * @param user the user's device id
+     */
+    private void onUserInitialized(FirebaseUser user){
+        // extra check: don't do anything if user isn't logged in
+        if(user == null || userInitialized){
+            return;
+        }
+        userInitialized = true; // set flag
+
+        initializeUser(user); // initialize user data and notifications
+        setUpNavigation(); // guaranteed auth state so set up nav and fragments
+    }
+
+    /**
+     * This function sets up the navigation for the app use in onCreate().
+     * We also setup the nav_graph after the user ID has been set
+     */
+    private void setUpNavigation(){
         DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navView = findViewById(R.id.nav_view);
 
+        Menu menu = navView.getMenu();
+        MenuItem adminNotificationsItem = menu.findItem(R.id.adminSentNotificationsFragment);
+        MenuItem adminImagesItem = menu.findItem(R.id.adminImagesFragment);
+        MenuItem adminProfilesItem = menu.findItem(R.id.adminProfilesFragment);
+        MenuItem adminEventsItem = menu.findItem(R.id.adminEventsFragment);
+
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            String uid = currentUser.getUid();
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("users").document(uid).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Boolean isAdmin = documentSnapshot.getBoolean("admin");
+
+                            if (isAdmin != null && isAdmin) {
+                                // show the admin nav drawer items only if the user is an admin
+                                adminNotificationsItem.setVisible(true);
+                                adminImagesItem.setVisible(true);
+                                adminProfilesItem.setVisible(true);
+                                adminEventsItem.setVisible(true);
+                            }
+                        }
+                    });
+        }
+
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
+
+        navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
 
         appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
                 .setOpenableLayout(drawerLayout)
@@ -89,38 +183,14 @@ public class MainActivity extends AppCompatActivity {
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
-
-        notificationCustomManager = new NotificationCustomManager(getApplicationContext());
     }
 
     /**
      * Called when the activity becomes visible to the user.
-     * <p>
-     * This method checks if there is an authenticated Firebase user
-     * when the app is launched. If a user is already signed in, it calls
-     * updateUI(FirebaseUser) to ensure the Firestore entry exists.
-     * </p>
      */
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
-
-        if (currentUser != null) {
-            String uid = currentUser.getUid();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    getPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            }
-            notificationCustomManager.clearNotifications();
-            notificationCustomManager.checkAndDisplayUnreadNotifications(uid);
-            notificationCustomManager.listenForNotifications(uid);
-        }
     }
 
     private final ActivityResultLauncher<String> getPermission =
@@ -153,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInAnonymously:success");
                             FirebaseUser user = mAuth.getCurrentUser();
-                            updateUI(user);
+                            onUserInitialized(user);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInAnonymously:failure", task.getException());

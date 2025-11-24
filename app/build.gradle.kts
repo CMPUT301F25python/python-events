@@ -50,7 +50,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(libs.play.services.mlkit.barcode.scanning)
     implementation(platform(libs.firebase.bom))
-    implementation("com.google.firebase:firebase-firestore")
 
     // --- Navigation Dependencies ---
     implementation(libs.navigation.fragment)
@@ -61,14 +60,33 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // --- Other Dependencies ---
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    implementation("com.google.guava:guava:33.5.0-android")
-    implementation("com.google.zxing:core:3.5.3")
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.google.guava)
+    implementation(libs.zxing.core)
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
+    testImplementation(libs.arch.core.testing)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.fragment.testing)
+    debugImplementation(libs.fragment.testing.manifest)
+    androidTestImplementation(libs.androidx.navigation.testing)
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") {
+        exclude(group = "com.google.protobuf", module = "protobuf-lite")
+    }
+    androidTestImplementation ("org.mockito:mockito-android:5.11.0")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+
 
     // --- Camera Dependencies ---
     implementation(libs.camera.core)
