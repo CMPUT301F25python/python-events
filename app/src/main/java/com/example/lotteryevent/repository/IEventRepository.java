@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.google.android.gms.tasks.Task;
+
 import java.util.List;
 
 /**
@@ -30,13 +32,13 @@ public interface IEventRepository {
      */
     LiveData<Event> getUserEvent();
 
-    /**
-
-     Returns a LiveData object holding a list of entrants of a specific event which is specified through calling fetchEventAndEntrants().
-     The UI can observe this to get real-time updates.
-     @return LiveData list of Entrants.
-     */
-    LiveData<List<Entrant>> getEventEntrants();
+//    /**
+//
+//     Returns a LiveData object holding a list of entrants of a specific event which is specified through calling fetchEventAndEntrants().
+//     The UI can observe this to get real-time updates.
+//     @return LiveData list of Entrants.
+//     */
+//    LiveData<List<Entrant>> getEventEntrants();
 
     /**
 
@@ -82,7 +84,7 @@ public interface IEventRepository {
      * Fetches an specified event and its entrants.
      * @param eventId The unique identifier of the event to load.
      */
-    void fetchEventAndEntrants(String eventId);
+    void fetchEventAndEntrantCounts(String eventId);
 
     /**
      Triggers the process of fetching events from the data source for the currently logged-in user.
@@ -96,11 +98,11 @@ public interface IEventRepository {
     void createEvent(Event event);
 
     /**
-     * Updates an attribute of the entrants of an event
+     * Updates an attribute of an entrant of an event
      * @param eventId event to access its entrants
+     * @param entrantId entrant's ID in db
      * @param fieldName attribute of entrants to modify
-     * @param oldValue old value for only updating specific entrants
      * @param newValue new value to set
      */
-    void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue);
+    Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue);
 }

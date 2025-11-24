@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -39,7 +40,7 @@ public class EventRepositoryImpl implements IEventRepository {
     // Private MutableLiveData that will be updated by this repository
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
-    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
+//    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
@@ -55,8 +56,8 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Event> getUserEvent() {
         return _event;
     }
-    @Override
-    public LiveData<List<Entrant>> getEventEntrants() {return _entrants; }
+//    @Override
+//    public LiveData<List<Entrant>> getEventEntrantCounts() { return _entrants; }
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
     @Override
@@ -108,7 +109,7 @@ public class EventRepositoryImpl implements IEventRepository {
     }
 
     @Override
-    public void fetchEventAndEntrants(String eventId) {
+    public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -117,15 +118,16 @@ public class EventRepositoryImpl implements IEventRepository {
                         _event.postValue(event);
 
                         fetchEntrantsCountsTask(eventId);
+                        _isLoading.postValue(false);
 
-                        // After fetching the event, kick off the subcollection fetches.
-                        // We use Tasks.whenAllComplete to know when all of them are done.
-                        Task<QuerySnapshot> entrantsTask = fetchEntrantsTask(eventId);
-
-                        Tasks.whenAllComplete(entrantsTask)
-                                .addOnCompleteListener(allTasks -> {
-                                    _isLoading.postValue(false); // All loading is now finished.
-                                });
+//                        // After fetching the event, kick off the subcollection fetches.
+//                        // We use Tasks.whenAllComplete to know when all of them are done.
+//                        Task<QuerySnapshot> entrantsTask = fetchEntrantsTask(eventId);
+//
+//                        Tasks.whenAllComplete(entrantsTask)
+//                                .addOnCompleteListener(allTasks -> {
+//                                    _isLoading.postValue(false); // All loading is now finished.
+//                                });
 
                     } else {
                         _isLoading.postValue(false);
@@ -139,16 +141,16 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
-    private Task<QuerySnapshot> fetchEntrantsTask(String eventId) {
-        return db.collection("events").document(eventId).collection("entrants").get()
-                .addOnSuccessListener(collection -> {
-                    ArrayList<Entrant> entrantList = new ArrayList<>();
-                    for (DocumentSnapshot doc : collection.getDocuments()) {
-                        entrantList.add(doc.toObject(Entrant.class));
-                    }
-                    _entrants.postValue(entrantList);
-                });
-    }
+//    private Task<QuerySnapshot> fetchEntrantsTask(String eventId) {
+//        return db.collection("events").document(eventId).collection("entrants").get()
+//                .addOnSuccessListener(collection -> {
+//                    ArrayList<Entrant> entrantList = new ArrayList<>();
+//                    for (DocumentSnapshot doc : collection.getDocuments()) {
+//                        entrantList.add(doc.toObject(Entrant.class));
+//                    }
+//                    _entrants.postValue(entrantList);
+//                });
+//    }
 
     private void fetchEntrantsCountsTask(String eventId) {
         FireStoreUtilities.fillEntrantMetrics(
@@ -162,19 +164,13 @@ public class EventRepositoryImpl implements IEventRepository {
     }
 
     @Override
-    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
-        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
-        entrantsRef.whereEqualTo(fieldName, oldValue)
-                .get()
+    public Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue) {
+        DocumentReference entrantRef = db.collection("events").document(eventId).collection("entrants").document(entrantId);
+        return entrantRef.update(fieldName, newValue)
                 .addOnSuccessListener(query -> {
-                    if (!query.isEmpty()) {
-                        for (DocumentSnapshot entrantDoc : query.getDocuments()) {
-                            entrantDoc.getReference().update(fieldName, newValue);
-                        }
-                        _userMessage.postValue("LotteryCancelled");
-                    }
+                    _userMessage.postValue("Entrant updated successfully");
                 })
-                .addOnFailureListener(e -> _userMessage.postValue("Error cancelling lottery"));
+                .addOnFailureListener(e -> _userMessage.postValue("Error updating entrant"));
     }
 
     @Override

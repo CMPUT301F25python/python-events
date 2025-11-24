@@ -21,12 +21,10 @@ import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.gson.Gson;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -117,10 +115,6 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         }
         viewModel = new ViewModelProvider(this, viewModelFactory).get(ConfirmDrawAndNotifyViewModel.class);
 
-        initializeViews(view);
-        setupClickListeners();
-        setupObservers();
-
         // --- Initial Action ---
         if (getArguments() != null) {
             String eventId = getArguments().getString("eventId");
@@ -137,8 +131,12 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
             newChosenEntrants = gson.fromJson(newChosenEntrantsString, listType);
             newUnchosenEntrants = gson.fromJson(newUnchosenEntrantsString, listType);
 
-            viewModel.loadEventAndEntrants(eventId);
+            viewModel.loadEventAndEntrantCounts(eventId);
         }
+
+        initializeViews(view);
+        setupClickListeners();
+        setupObservers();
     }
 
     /**
@@ -154,14 +152,17 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         waitingListCountText = v.findViewById(R.id.waiting_list_count);
         availableSpaceCountText = v.findViewById(R.id.available_space_count);
         selectedUsersCountText = v.findViewById(R.id.selected_users_count);
+        if (newChosenEntrants != null) {
+            bindSelectedUsersCount(String.valueOf(newChosenEntrants.size()));
+        }
     }
 
     /**
      * Sets up click listeners for the confirm and notify and cancel buttons
      */
     private void setupClickListeners() {
-        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
-        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
+        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked(newChosenEntrants, newUnchosenEntrants));
+        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked(oldEntrantsStatus));
     }
 
     /**
@@ -171,12 +172,6 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), waitingListCount -> {
             if (waitingListCount != null) {
                 bindWaitingListCount(waitingListCount);
-            }
-        });
-
-        viewModel.selectedUsersCount.observe(getViewLifecycleOwner(), selectedUsersCount -> {
-            if (selectedUsersCount != null) {
-                bindSelectedUsersCount(selectedUsersCount);
             }
         });
 
