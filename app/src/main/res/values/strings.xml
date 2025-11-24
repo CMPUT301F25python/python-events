@@ -116,4 +116,5 @@
     <string name="transparent_amp_audited_text">Organizers can review draw results and notifications to ensure fairness.\nThe system logs ensure transparency and accuracy.</string>
     <string name="delete_event">Delete Event</string>
     <string name="delete_organizer">Delete Organizer</string>
+    <string name="delete_user_profile">Delete User Profile</string>
 </resources>
