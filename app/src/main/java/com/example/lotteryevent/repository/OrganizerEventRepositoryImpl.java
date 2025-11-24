@@ -6,8 +6,11 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Event;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -16,11 +19,13 @@ import java.util.Arrays;
 public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     private static final String TAG = "OrganizerEventRepo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
 
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isRunDrawButtonEnabled = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
-    private final MutableLiveData<String> _message = new MutableLiveData<>();
+    private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
     @Override
     public LiveData<Event> getEvent() { return _event; }
@@ -29,7 +34,7 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     @Override
     public LiveData<Boolean> isLoading() { return _isLoading; }
     @Override
-    public LiveData<String> getMessage() { return _message; }
+    public LiveData<String> getMessage() { return _userMessage; }
 
     @Override
     public void fetchEventAndCapacityStatus(String eventId) {
@@ -44,14 +49,68 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                         checkCapacity(eventId, event);
                     } else {
                         _isLoading.postValue(false);
-                        _message.postValue("Error: Event not found.");
+                        _userMessage.postValue("Error: Event not found.");
                     }
                 })
                 .addOnFailureListener(e -> {
                     _isLoading.postValue(false);
-                    _message.postValue("Error: Failed to load event details.");
+                    _userMessage.postValue("Error: Failed to load event details.");
                     Log.e(TAG, "fetchEventDetails failed", e);
                 });
+    }
+
+    @Override
+    public void finalizeEvent(String eventId) {
+        _isLoading.setValue(true);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        // 1. Check if user is logged in
+        if (currentUser == null) {
+            Log.w(TAG, "Cannot finalize event: user is not signed in.");
+            _userMessage.setValue("You must be signed in to finalize an event.");
+            _isLoading.setValue(false);
+            return;
+        }
+
+        DocumentReference eventRef = db.collection("events").document(eventId);
+
+        // 2. Fetch the event document first
+        eventRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String organizerId = documentSnapshot.getString("organizerId");
+
+                // 3. Compare event organizerId with current user's UID
+                if (organizerId != null && organizerId.equals(currentUser.getUid())) {
+
+                    // 4. IDs match, proceed with the update
+                    eventRef.update("status", "finalized")
+                            .addOnSuccessListener(aVoid -> {
+                                _isLoading.setValue(false);
+                                _userMessage.setValue("Event finalized successfully!");
+                            })
+                            .addOnFailureListener(e -> {
+                                _isLoading.setValue(false);
+                                _userMessage.setValue("Error: Could not finalize event.");
+                                Log.e(TAG, "Error finalizing event", e);
+                            });
+
+                } else {
+                    // 5. IDs do not match
+                    _isLoading.setValue(false);
+                    _userMessage.setValue("Permission denied: You are not the organizer of this event.");
+                    Log.w(TAG, "finalizeEvent: User " + currentUser.getUid() + " tried to finalize event " + eventId + " belonging to " + organizerId);
+                }
+            } else {
+                // Document doesn't exist
+                _isLoading.setValue(false);
+                _userMessage.setValue("Error: Event not found.");
+            }
+        }).addOnFailureListener(e -> {
+            // Network error or permission error reading the doc
+            _isLoading.setValue(false);
+            _userMessage.setValue("Error: Could not verify event ownership.");
+            Log.e(TAG, "Error fetching event for verification", e);
+        });
     }
 
     private void checkCapacity(String eventId, Event event) {

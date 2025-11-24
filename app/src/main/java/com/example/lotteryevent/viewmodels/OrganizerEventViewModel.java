@@ -147,6 +147,17 @@ public class OrganizerEventViewModel extends ViewModel {
     }
 
     /**
+     * Triggers the event finalization process in the repository.
+     * The repository will handle the logic of checking if the user is the organizer.
+     *
+     * @param eventId The ID of the event to finalize.
+     */
+    public void finalizeEvent(String eventId) {
+        if (eventId == null || eventId.isEmpty()) return;
+        repository.finalizeEvent(eventId);
+    }
+
+    /**
      * This method is called when the ViewModel is no longer used and will be destroyed.
      * It's crucial to clean up observers registered with `observeForever` to prevent memory leaks.
      */

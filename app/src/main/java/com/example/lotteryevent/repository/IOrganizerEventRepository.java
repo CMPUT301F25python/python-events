@@ -11,4 +11,6 @@ public interface IOrganizerEventRepository {
     LiveData<String> getMessage();
 
     void fetchEventAndCapacityStatus(String eventId);
+
+    void finalizeEvent(String eventId);
 }

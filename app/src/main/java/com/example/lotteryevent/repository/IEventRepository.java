@@ -94,10 +94,4 @@ public interface IEventRepository {
      * @param newValue new value to set
      */
     void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue);
-
-    /**
-     * Changes the status of an event to "finalized"
-     * @param eventId event to finalize
-     */
-    void finalizeEvent(String eventId);
 }
