@@ -28,7 +28,6 @@ public class Event {
     private Timestamp registrationStartDateTime;
     private Timestamp registrationEndDateTime;
     private Integer capacity;
-    private String lotteryGuidelines;
     private Integer waitingListLimit;
     private boolean geoLocationRequired;
     private String status;

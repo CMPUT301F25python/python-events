@@ -34,7 +34,6 @@ public class EventTest {
         assertNull("registrationStartDateTime should be null", event.getRegistrationStartDateTime());
         assertNull("registrationEndDateTime should be null", event.getRegistrationEndDateTime());
         assertNull("capacity should be null", event.getCapacity());
-        assertNull("lotteryGuidelines should be null", event.getLotteryGuidelines());
         assertNull("waitinglistlimit should be null", event.getWaitingListLimit());
         assertNull("status should be null", event.getStatus());
         assertNull("createdAt should be null", event.getCreatedAt());
@@ -105,10 +104,6 @@ public class EventTest {
         String posterImageUrl = "http://example.com/poster.jpg";
         event.setPosterImageUrl(posterImageUrl);
         assertEquals(posterImageUrl, event.getPosterImageUrl());
-
-        String lotteryGuidelines = "Winners will be selected randomly.";
-        event.setLotteryGuidelines(lotteryGuidelines);
-        assertEquals(lotteryGuidelines, event.getLotteryGuidelines());
 
         String status = "open";
         event.setStatus(status);

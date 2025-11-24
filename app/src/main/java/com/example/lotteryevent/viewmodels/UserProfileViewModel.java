@@ -1,8 +1,10 @@
 package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 import com.example.lotteryevent.repository.IUserRepository;
 import com.example.lotteryevent.ui.UserProfileFragment;
@@ -28,6 +30,8 @@ public class UserProfileViewModel extends ViewModel {
     public LiveData<User> getCurrentUser() {
         return userRepository.getCurrentUser();
     }
+
+    public LiveData<Boolean> getNotifPreference() { return userRepository.getNotifPreference(); }
 
     public LiveData<Boolean> isLoading() {
         return userRepository.isLoading();
@@ -84,5 +88,16 @@ public class UserProfileViewModel extends ViewModel {
             }
         }
         return null; // Validation successful
+    }
+
+    /**
+     * Updates notif preferences in db and clears notif banners/notifies of notifs/messages system level notif
+     * is disabled accordingly
+     * @param enabled checkbox value
+     * @param systemNotifEnabled system level notif enabled
+     * @param notificationCustomManager notif manager
+     */
+    public void updateNotifPreference(boolean enabled, boolean systemNotifEnabled, NotificationCustomManager notificationCustomManager) {
+        userRepository.updateNotifPreference(enabled, systemNotifEnabled, notificationCustomManager);
     }
 }
