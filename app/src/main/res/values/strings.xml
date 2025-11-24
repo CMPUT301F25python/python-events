@@ -114,4 +114,5 @@
     <string name="transparent_emoji">🔍</string>
     <string name="transparent_amp_audited"><![CDATA[Transparent & Audited]]></string>
     <string name="transparent_amp_audited_text">Organizers can review draw results and notifications to ensure fairness.\nThe system logs ensure transparency and accuracy.</string>
+    <string name="delete_event">Delete Event</string>
 </resources>

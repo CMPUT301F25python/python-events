@@ -75,4 +75,35 @@ public interface IEventDetailsRepository {
      * Exposes the current count of entrants on the waiting list (status = "waiting").
      */
     LiveData<Integer> getWaitingListCount();
+
+    /**
+     * Exposes the administrative status of the current user as LiveData.
+     * True if the user has admin privileges, false otherwise.
+     */
+    LiveData<Boolean> getIsAdmin();
+
+    /**
+     * Checks the database to see if the specified user has administrative privileges.
+     * The result updates the {@link #getIsAdmin()} LiveData.
+     *
+     * @param userId The unique identifier of the user to check.
+     */
+    void checkAdminStatus(String userId);
+
+
+    /**
+     * Permanently removes the specified event from the data source.
+     * This action is typically restricted to administrators.
+     *
+     * @param eventId The unique identifier of the event to delete.
+     */
+    void deleteEvent(String eventId);
+
+    /**
+     * Exposes a boolean flag indicating whether the event has been successfully deleted.
+     * The View can observe this to trigger navigation away from the current screen.
+     *
+     * @return A LiveData Boolean that becomes true upon successful deletion.
+     */
+    LiveData<Boolean> getIsDeleted();
 }
