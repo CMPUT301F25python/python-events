@@ -170,9 +170,4 @@
         android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
         android:label="Profiles" />
 
-    <fragment
-        android:id="@+id/adminEventsFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
-        android:label="Admin Events" />
-
 </navigation>

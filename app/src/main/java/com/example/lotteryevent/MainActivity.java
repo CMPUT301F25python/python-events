@@ -23,6 +23,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.example.lotteryevent.data.Entrant;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -78,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -150,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
         MenuItem adminNotificationsItem = menu.findItem(R.id.adminSentNotificationsFragment);
         MenuItem adminImagesItem = menu.findItem(R.id.adminImagesFragment);
         MenuItem adminProfilesItem = menu.findItem(R.id.adminProfilesFragment);
-        MenuItem adminEventsItem = menu.findItem(R.id.adminEventsFragment);
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
@@ -168,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
                                 adminNotificationsItem.setVisible(true);
                                 adminImagesItem.setVisible(true);
                                 adminProfilesItem.setVisible(true);
-                                adminEventsItem.setVisible(true);
                             }
                         }
                     });
