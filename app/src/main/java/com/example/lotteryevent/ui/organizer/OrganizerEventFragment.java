@@ -140,6 +140,9 @@ public class OrganizerEventFragment extends Fragment {
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 eventNameLabel.setText(event.getName());
+                if (!event.getGeoLocationRequired()) {
+                    btnViewEntrantMap.setVisibility(View.GONE);
+                }
             }
         });
 
