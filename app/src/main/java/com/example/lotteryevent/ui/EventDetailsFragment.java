@@ -85,7 +85,7 @@ public class EventDetailsFragment extends Fragment {
                     fetchLocationAndJoin();
                 } else {
                     // The user denied the system dialog just now.
-                    // We need to inform the ViewModel to reset the state so the button works again next time.
+                    // Inform the ViewModel to reset the state so the button works again next time.
                     viewModel.onLocationPermissionDenied();
 
                     // Check if we should show a manual "Go to Settings" dialog
@@ -125,7 +125,6 @@ public class EventDetailsFragment extends Fragment {
 
         // --- Initialize Location Client ---
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-
 
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
@@ -236,8 +235,6 @@ public class EventDetailsFragment extends Fragment {
 
         String posterImageUrl = event.getPosterImageUrl();
         if (posterImageUrl == null || posterImageUrl.trim().isEmpty()) {
-            // No poster set; you can either hide the ImageView or leave a placeholder
-            // eventPosterImage.setVisibility(View.GONE);
             return;
         }
 
@@ -245,21 +242,14 @@ public class EventDetailsFragment extends Fragment {
             byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
             Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             eventPosterImage.setImageBitmap(bitmap);
-            // eventPosterImage.setVisibility(View.VISIBLE);
-        } catch (IllegalArgumentException e) {
-            // Invalid Base64; keep default/placeholder image
-            // Log if you want:
-            // Log.e("EventDetailsFragment", "Invalid poster Base64", e);
-        }
+        } catch (IllegalArgumentException e) {}
     }
-
 
     /**
      * Renders the state that the ViewModel has already calculated.
      */
     private void renderBottomUi(BottomUiState uiState) {
         hideAllBottomActions(); // Start by hiding everything.
-
 
         switch (uiState.type) {
             case LOADING:
@@ -289,8 +279,6 @@ public class EventDetailsFragment extends Fragment {
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
-
-    // --- UI Helper Methods  ---
 
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);
