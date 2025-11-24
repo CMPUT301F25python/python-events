@@ -346,9 +346,7 @@ public class EventDetailsFragmentTest {
      */
     @Test
     public void eventWithPoster_showsPosterBitmap() {
-        // Arrange: give the in-memory event a small valid Base64 PNG.
         fakeRepository.resetToDefaultState();
-        // 1x1 transparent PNG (small, valid Base64)
         String base64Png =
                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAA" +
                         "AAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";

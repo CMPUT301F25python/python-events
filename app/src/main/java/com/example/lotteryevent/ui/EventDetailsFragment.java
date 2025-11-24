@@ -206,15 +206,15 @@ public class EventDetailsFragment extends Fragment {
             return;
         }
 
-        String posterBase64 = event.getPosterBase64();
-        if (posterBase64 == null || posterBase64.trim().isEmpty()) {
+        String posterImageUrl = event.getPosterImageUrl();
+        if (posterImageUrl == null || posterImageUrl.trim().isEmpty()) {
             // No poster set; you can either hide the ImageView or leave a placeholder
             // eventPosterImage.setVisibility(View.GONE);
             return;
         }
 
         try {
-            byte[] bytes = Base64.decode(posterBase64, Base64.DEFAULT);
+            byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
             Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             eventPosterImage.setImageBitmap(bitmap);
             // eventPosterImage.setVisibility(View.VISIBLE);

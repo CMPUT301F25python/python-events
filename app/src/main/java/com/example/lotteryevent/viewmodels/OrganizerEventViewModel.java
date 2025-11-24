@@ -116,10 +116,10 @@ public class OrganizerEventViewModel extends ViewModel {
     /**
      * Updates the event poster image (Base64) for the given event.
      * @param eventId The ID of the event to update.
-     * @param posterBase64 The Base64-encoded poster image data.
+     * @param posterImageUrl The Base64-encoded poster image data.
      */
-    public void updateEventPoster(String eventId, String posterBase64) {
-        repository.updateEventPoster(eventId, posterBase64);
+    public void updateEventPoster(String eventId, String posterImageUrl) {
+        repository.updateEventPoster(eventId, posterImageUrl);
     }
 
 

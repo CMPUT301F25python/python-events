@@ -79,7 +79,7 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     }
 
     @Override
-    public void updateEventPoster(String eventId, String posterBase64) {
+    public void updateEventPoster(String eventId, String posterImageUrl) {
         if (eventId == null || eventId.isEmpty()) {
             Log.e("OrganizerEventRepo", "updateEventPoster: invalid eventId");
             return;
@@ -87,7 +87,7 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
 
         db.collection("events")
                 .document(eventId)
-                .update("posterImageUrl", posterBase64)
+                .update("posterImageUrl", posterImageUrl)
                 .addOnSuccessListener(aVoid ->
                         Log.d("OrganizerEventRepo", "Poster updated successfully for event: " + eventId))
                 .addOnFailureListener(e ->

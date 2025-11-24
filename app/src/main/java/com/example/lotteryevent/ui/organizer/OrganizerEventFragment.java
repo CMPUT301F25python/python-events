@@ -150,10 +150,10 @@ public class OrganizerEventFragment extends Fragment {
                 eventNameLabel.setText(event.getName());
 
                 // Display poster image if Base64 data is available
-                String posterBase64 = event.getPosterBase64();
-                if (posterBase64 != null && !posterBase64.isEmpty()) {
+                String posterImageUrl = event.getPosterImageUrl();
+                if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
                     try {
-                        byte[] bytes = Base64.decode(posterBase64, Base64.DEFAULT);
+                        byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                         posterImage.setImageBitmap(bitmap);
                     } catch (IllegalArgumentException e) {
@@ -309,9 +309,9 @@ public class OrganizerEventFragment extends Fragment {
                 posterImage.setImageBitmap(bitmap);
 
                 // Encode to Base64 and send to ViewModel to save on the event
-                String posterBase64 = encodeBitmapToBase64(bitmap);
+                String posterImageUrl = encodeBitmapToBase64(bitmap);
                 if (eventId != null && !eventId.isEmpty()) {
-                    viewModel.updateEventPoster(eventId, posterBase64);
+                    viewModel.updateEventPoster(eventId, posterImageUrl);
                     Toast.makeText(getContext(), "Event poster updated.", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(getContext(), "Unable to update poster: missing event ID.", Toast.LENGTH_SHORT).show();
