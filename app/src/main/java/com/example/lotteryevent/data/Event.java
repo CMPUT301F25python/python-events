@@ -29,8 +29,6 @@ public class Event {
     private Integer capacity;
     private String lotteryGuidelines;
     private Integer waitingListLimit;
-    private Integer waitinglistCount;
-    private boolean isGeoLocationRequired;
     private boolean geoLocationRequired;
     private String status;
 
@@ -211,22 +209,6 @@ public class Event {
      * @param waitingListLimit The waiting list limit.
      */
     public void setWaitingListLimit(Integer waitingListLimit) { this.waitingListLimit = waitingListLimit; }
-
-    /**
-     * Gets the current number of people on the waiting list.
-     * This is populated from the Firestore field "waitinglistCount".
-     */
-    public Integer getWaitinglistCount() {
-        return waitinglistCount;
-    }
-
-    /**
-     * Sets the current number of people on the waiting list.
-     */
-    public void setWaitinglistCount(Integer waitinglistCount) {
-        this.waitinglistCount = waitinglistCount;
-    }
-
 
     /**
      * Checks if geolocation is required for the event.
