@@ -223,6 +223,7 @@ public class NotificationCustomManager {
      * @param uid recipient user's id
      */
     public void listenForNotifications(String uid) {
+        Log.d(TAG, "Attaching listener for uid=" + uid + " instance=" + this.hashCode());
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
         db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
@@ -251,6 +252,10 @@ public class NotificationCustomManager {
                                 }
                                 for (DocumentChange dc : value.getDocumentChanges()) {
                                     if (dc.getType() == ADDED) {
+                                        if (dc.getDocument().getMetadata().hasPendingWrites()) {
+                                            // Local write echo — skip to prevent duplicate banner
+                                            continue;
+                                        }
                                         Notification notification = dc.getDocument().toObject(Notification.class);
                                         String title = notification.getTitle();
                                         String message = notification.getMessage();
