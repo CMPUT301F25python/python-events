@@ -59,10 +59,10 @@ public class ConfirmDrawAndNotifyViewModelTest {
     }
 
     /**
-     * Tests for repository's fetchEventAndEntrants called successfully
+     * Tests for repository's loadEventAndEntrantCounts called successfully
      */
     @Test
-    public void testLoadEventEntrantsSuccess() {
+    public void loadEventAndEntrantCountsSuccess() {
         viewModel.loadEventAndEntrantCounts("fake-event-id");
 
         assertEquals(viewModel.event.getValue(), fakeRepository.getUserEvent().getValue());
@@ -72,7 +72,7 @@ public class ConfirmDrawAndNotifyViewModelTest {
      * Tests for valid behaviour when invalid event id given
      */
     @Test
-    public void testLoadEventEntrantsFailure() {
+    public void testLoadEventAndEntrantCountsFailure() {
         viewModel.loadEventAndEntrantCounts(null);
 
         assertEquals("Error: Missing Event ID.", Objects.requireNonNull(viewModel.bottomUiState.getValue()).infoText);
@@ -102,10 +102,26 @@ public class ConfirmDrawAndNotifyViewModelTest {
     }
 
     /**
-     * Tests for expected counts, bottom ui state, when event and entrants loaded successfully
+     * Tests for expected counts, bottom ui state, when event and waiting entrants loaded successfully
      */
     @Test
-    public void testCalcEntrantCountsSuccess() {
+    public void testCalcEntrantCountsSuccessWaiting() {
+        viewModel.waitingListCount.observeForever(s -> {});
+        viewModel.availableSpaceCount.observeForever(s -> {});
+        viewModel.bottomUiState.observeForever(s -> {});
+
+        fakeRepository.fetchEventAndEntrantCounts("fake-event-id");
+
+        assertEquals("2", viewModel.waitingListCount.getValue());
+        assertEquals("2", viewModel.availableSpaceCount.getValue());
+        assertEquals(BottomUiState.StateType.SHOW_TWO_BUTTONS, Objects.requireNonNull(viewModel.bottomUiState.getValue()).type);
+    }
+
+    /**
+     * Tests for expected counts, bottom ui state, when event and invited entrants loaded successfully
+     */
+    @Test
+    public void testCalcEntrantCountsSuccessInvited() {
         viewModel.waitingListCount.observeForever(s -> {});
         viewModel.availableSpaceCount.observeForever(s -> {});
         viewModel.bottomUiState.observeForever(s -> {});
