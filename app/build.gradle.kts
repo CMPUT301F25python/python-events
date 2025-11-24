@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.uiautomator.v18)
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)

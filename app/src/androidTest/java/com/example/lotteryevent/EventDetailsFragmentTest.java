@@ -2,7 +2,15 @@ package com.example.lotteryevent;
 
 import android.os.Bundle;
 import androidx.fragment.app.testing.FragmentScenario;
+import androidx.navigation.Navigation;
+import androidx.navigation.testing.TestNavHostController;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiSelector;
+
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.FakeEventDetailsRepository;
 import com.example.lotteryevent.ui.EventDetailsFragment;
@@ -29,6 +37,8 @@ public class EventDetailsFragmentTest {
     private FakeEventDetailsRepository fakeRepository;
     private ReusableTestFragmentFactory fragmentFactory;
     private Bundle fragmentArgs;
+    private UiDevice device;
+    private TestNavHostController navController;
 
     @Before
     public void setup() {
@@ -47,7 +57,37 @@ public class EventDetailsFragmentTest {
         // 4. Prepare arguments to pass to the fragment, simulating navigation.
         fragmentArgs = new Bundle();
         fragmentArgs.putString("eventId", "fake-event-id");
+
+        // Initialize UI Automator - used due to difficulty in testing dialog buttons
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
+
+    /**
+     * Helper method to launch the fragment with a TestNavHostController attached.
+     * This is required for tests that trigger navigation actions (e.g., "navigateUp" after deletion).
+     */
+    private void launchFragment() {
+        // Create a TestNavHostController
+        navController = new TestNavHostController(ApplicationProvider.getApplicationContext());
+
+        // Launch the fragment
+        FragmentScenario<EventDetailsFragment> scenario = FragmentScenario.launchInContainer(
+                EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory
+        );
+
+        // Attach the controller to the fragment's view
+        scenario.onFragment(fragment -> {
+            // Set the graph so the controller knows where it is (start destination)
+            navController.setGraph(R.navigation.nav_graph);
+
+            // Set the current destination to the fragment being tested
+            navController.setCurrentDestination(R.id.eventDetailsFragment);
+
+            // Attach the controller to the view
+            Navigation.setViewNavController(fragment.requireView(), navController);
+        });
+    }
+
 
     /**
      * Test Case 1: A user who is NOT an entrant sees the "Join Waiting List" button.
@@ -265,4 +305,95 @@ public class EventDetailsFragmentTest {
                 .check(matches(withText("This event and its waiting list are full.")));
         onView(withId(R.id.button_actions_container)).check(matches(not(isDisplayed())));
     }
+
+    /**
+     * Test Case 11: A regular (non-admin) user CANNOT see the delete button.
+     * This is a critical security check.
+     */
+    @Test
+    public void nonAdmin_cannotSeeDeleteButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(false);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_event)).check(matches(not(isDisplayed())));
+    }
+
+    /**
+     * Test Case 12: An admin user CAN see the delete button.
+     */
+    @Test
+    public void admin_seesDeleteButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_event)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 13: Admin successfully deletes an event via the dialog (Using UIAutomator).
+     */
+    @Test
+    public void admin_deleteFlow_happyPath() throws Exception {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // 1. Click Delete
+        onView(withId(R.id.btn_remove_event)).perform(click());
+
+        // 2. Use UIAutomator to find the "Delete" button in the dialog
+        UiObject deleteButton = device.findObject(new UiSelector()
+                .text("Delete")
+                .className("android.widget.Button"));
+
+        if (deleteButton.exists() || deleteButton.waitForExists(2000)) {
+            deleteButton.click();
+        } else {
+            throw new RuntimeException("Could not find Delete button in dialog");
+        }
+
+        // 3. Wait briefly for async callback & Verify Repository Update
+        Thread.sleep(500);
+        Boolean isDeleted = fakeRepository.getIsDeleted().getValue();
+        // Use assert to check true (handling nulls safely)
+        assert(isDeleted != null && isDeleted);
+    }
+
+    /**
+     * Test Case 14: Admin cancels the deletion via the dialog (Using UIAutomator).
+     */
+    @Test
+    public void admin_deleteFlow_cancelPath() throws Exception {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // 1. Click Delete
+        onView(withId(R.id.btn_remove_event)).perform(click());
+
+        // 2. Use UIAutomator to find the "Cancel" button
+        UiObject cancelButton = device.findObject(new UiSelector()
+                .text("Cancel")
+                .className("android.widget.Button"));
+
+        if (cancelButton.exists() || cancelButton.waitForExists(2000)) {
+            cancelButton.click();
+        } else {
+            throw new RuntimeException("Could not find Cancel button in dialog");
+        }
+
+        // 3. Verify Repository was NOT updated
+        Thread.sleep(500);
+        Boolean isDeleted = fakeRepository.getIsDeleted().getValue();
+        assert(isDeleted == null || !isDeleted);
+    }
+
 }

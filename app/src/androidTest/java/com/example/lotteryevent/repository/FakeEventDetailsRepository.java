@@ -25,6 +25,8 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     // --- NEW: LiveData for the counts ---
     private final MutableLiveData<Integer> _attendeeCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _isDeleted = new MutableLiveData<>(false);
+    private boolean isAdmin = false;
 
     // --- In-memory "database" ---
     private Event inMemoryEvent;
@@ -190,4 +192,45 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
             inMemoryEntrants.add(entrant);
         }
     }
+
+    /**
+     * Test Helper: Manually sets the admin status for the current test scenario.
+     * @param isAdmin true to simulate an admin user, false for a regular user.
+     */
+    public void setIsAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+
+    @Override
+    public LiveData<Boolean> getIsAdmin() {
+        return new MutableLiveData<>(isAdmin);
+    }
+
+    /**
+     * Simulates the repository check for admin privileges.
+     * In this fake, it simply relies on the flag set by {@link #setIsAdmin(boolean)}.
+     */
+    @Override
+    public void checkAdminStatus(String userId) {
+        // Pass: in the fake repository, the status is already determined by the isAdmin boolean
+    }
+
+    /**
+     * Simulates the deletion of an event.
+     * Sets the isDeleted LiveData to true to signal success.
+     */
+    @Override
+    public void deleteEvent(String eventId) {
+        // Simulate successful deletion immediately
+        _isDeleted.postValue(true);
+    }
+
+    /**
+     * Returns a LiveData indicating if the event has been successfully deleted.
+     */
+    @Override
+    public LiveData<Boolean> getIsDeleted() {
+        return _isDeleted;
+    }
+
 }
