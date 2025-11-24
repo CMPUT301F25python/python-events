@@ -183,7 +183,8 @@ public class EventDetailsFragment extends Fragment {
         // Observer for the main event data.
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
-                bindEventDetails(event);
+                Integer count = viewModel.waitingListCount.getValue();
+                bindEventDetails(event, count);
             }
         });
 
@@ -214,6 +215,14 @@ public class EventDetailsFragment extends Fragment {
                 checkPermissionAndAct();
             }
         });
+
+        // observer to display waitinglistCount
+        viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
+            if (count != null && viewModel.eventDetails.getValue() != null) {
+                // Rebind details including the count
+                bindEventDetails(viewModel.eventDetails.getValue(), count);
+            }
+        });
     }
 
     /**
@@ -239,7 +248,7 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    private void bindEventDetails(Event event) {
+    private void bindEventDetails(Event event, @Nullable Integer waitingListCount) {
         dataList.clear();
         addAny("Name", event.getName());
         addAny("Organizer", event.getOrganizerName());
@@ -248,6 +257,7 @@ public class EventDetailsFragment extends Fragment {
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
         addAny("Max Attendees", event.getCapacity());
+        addAny("Waiting List Count", waitingListCount);
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
