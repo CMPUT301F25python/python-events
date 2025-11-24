@@ -22,6 +22,7 @@ public class Event {
     private String location;
     private Double price;
     private String posterImageUrl;
+    private String posterBase64;
     private Timestamp eventStartDateTime;
     private Timestamp eventEndDateTime;
     private Timestamp registrationStartDateTime;
