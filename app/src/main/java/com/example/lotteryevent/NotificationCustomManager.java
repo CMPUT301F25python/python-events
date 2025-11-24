@@ -252,10 +252,6 @@ public class NotificationCustomManager {
                                 }
                                 for (DocumentChange dc : value.getDocumentChanges()) {
                                     if (dc.getType() == ADDED) {
-                                        if (dc.getDocument().getMetadata().hasPendingWrites()) {
-                                            // Local write echo — skip to prevent duplicate banner
-                                            continue;
-                                        }
                                         Notification notification = dc.getDocument().toObject(Notification.class);
                                         String title = notification.getTitle();
                                         String message = notification.getMessage();
