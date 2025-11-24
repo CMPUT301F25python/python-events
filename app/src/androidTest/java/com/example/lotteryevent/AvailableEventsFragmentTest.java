@@ -275,7 +275,7 @@ public class AvailableEventsFragmentTest {
         availableEvent.setRegistrationEndDateTime(regEndTimestamp);
         availableEvent.setEventStartDateTime(eventStartTimestamp);
         availableEvent.setWaitingListLimit(10);
-        availableEvent.setWaitinglistCount(2);
+        //availableEvent.setWaitinglistCount(2);
         events.add(availableEvent);
 
         // Event that is NOT currently available: registration has already ended
@@ -292,7 +292,7 @@ public class AvailableEventsFragmentTest {
         closedRegistrationEvent.setRegistrationEndDateTime(pastRegEndTimestamp);
         closedRegistrationEvent.setEventStartDateTime(eventStartTimestamp);
         closedRegistrationEvent.setWaitingListLimit(10);
-        closedRegistrationEvent.setWaitinglistCount(2);
+        //closedRegistrationEvent.setWaitinglistCount(2);
         events.add(closedRegistrationEvent);
 
         fakeRepository.setEventsToReturn(events);
