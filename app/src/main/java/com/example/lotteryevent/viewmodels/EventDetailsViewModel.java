@@ -234,4 +234,12 @@ public class EventDetailsViewModel extends ViewModel {
         // Reset the signal
         _requestLocationPermission.setValue(false);
     }
+
+    /**
+     * This function exposes the waiting list count to the Fragment.
+     * @return a LiveData<Integer> representing the waiting list count
+     */
+    public LiveData<Integer> getWaitingListCount(){
+        return repository.getWaitingListCount();
+    }
 }
