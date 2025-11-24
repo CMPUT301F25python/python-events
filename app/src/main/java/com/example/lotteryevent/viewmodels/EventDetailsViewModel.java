@@ -10,6 +10,8 @@ import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * ViewModel for the EventDetailsFragment.
@@ -33,6 +35,7 @@ public class EventDetailsViewModel extends ViewModel {
     // and calculates a new UI state whenever one of them changes.
     private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<BottomUiState> bottomUiState = _bottomUiState;
+    public MutableLiveData<Boolean> isAdmin = new MutableLiveData<>(false);
 
     public EventDetailsViewModel(IEventDetailsRepository repository) {
         this.repository = repository;
@@ -169,6 +172,48 @@ public class EventDetailsViewModel extends ViewModel {
             repository.updateInvitationStatus(eventId, "declined");
         }
     }
+
+    /**
+     * Exposes the administrative status of the current user.
+     * The Fragment can observe this to determine if admin-only controls (like delete) should be visible.
+     *
+     * @return A LiveData Boolean that is true if the user is an admin, false otherwise.
+     */
+    public LiveData<Boolean> getIsAdmin() {
+        return repository.getIsAdmin();
+    }
+
+
+    /**
+     * Checks the current user's authentication status and queries the repository to see if they have admin privileges.
+     * This should be called when the Fragment view is created to update the {@link #getIsAdmin()} LiveData.
+     */
+    public void checkAdminStatus() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();if (user != null) {
+            repository.checkAdminStatus(user.getUid());
+        }
+    }
+
+    /**
+     * Requests the deletion of a specific event through the repository.
+     * This action is generally restricted to users with administrative privileges.
+     *
+     * @param eventId The unique ID of the event to be deleted.
+     */
+    public void deleteEvent(String eventId) {
+        repository.deleteEvent(eventId);
+    }
+
+    /**
+     * Exposes a status flag indicating whether the event has been successfully deleted.
+     * The Fragment can observe this to trigger navigation away from the screen (e.g., popping the back stack).
+     *
+     * @return A LiveData Boolean that becomes true when the deletion operation completes successfully.
+     */
+    public LiveData<Boolean> getIsDeleted() {
+        return repository.getIsDeleted();
+    }
+
 
     // --- Location Methods ---
     /**

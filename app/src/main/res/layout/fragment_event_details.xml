@@ -29,10 +29,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/event_poster_image" />
 
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/dynamic_bottom_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -81,6 +82,17 @@
                 tools:text="Accept / Join" />
 
         </LinearLayout>
-    </FrameLayout>
+
+        <!-- Admin Remove Button -->
+        <Button
+            android:id="@+id/btn_remove_event"
+            style="@style/PinkButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/design_default_color_error"
+            android:text="@string/delete_event"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
