@@ -34,6 +34,7 @@ public class FakeEventRepository implements IEventRepository {
 
     // --- Test control flags ---
     private boolean shouldReturnError = false;
+    private String stubCurrentUserId = "user_123";
 
     /**
      * Initializes the fake repository with some default data.
@@ -213,6 +214,49 @@ public class FakeEventRepository implements IEventRepository {
         _isLoading.postValue(false);
     }
 
+    @Override
+    public void finalizeEvent(String eventId) {
+        _isLoading.postValue(true);
+
+        // 1. Check Signed In (Fake)
+        if (stubCurrentUserId == null) {
+            _message.postValue("You must be signed in to finalize an event.");
+            _isLoading.postValue(false);
+            return;
+        }
+
+        // 2. Find Event
+        Event targetEvent = null;
+        for (Event e : inMemoryEvents) {
+            if (Objects.equals(e.getEventId(), eventId)) {
+                targetEvent = e;
+                break;
+            }
+        }
+
+        if (targetEvent == null) {
+            _message.postValue("Error: Event not found.");
+            _isLoading.postValue(false);
+            return;
+        }
+
+        // 3. Check Organizer ID match
+        String organizerId = targetEvent.getOrganizerId();
+        if (organizerId != null && organizerId.equals(stubCurrentUserId)) {
+            // Success Logic
+            targetEvent.setStatus("finalized");
+            _message.postValue("Event finalized successfully!");
+
+            // Refresh the specific event LiveData if it is currently being viewed
+            _event.postValue(targetEvent);
+        } else {
+            // Failure Logic
+            _message.postValue("Permission denied: You are not the organizer of this event.");
+        }
+
+        _isLoading.postValue(false);
+    }
+
 
     public void setShouldReturnError(boolean value) {
         this.shouldReturnError = value;
@@ -224,5 +268,13 @@ public class FakeEventRepository implements IEventRepository {
      */
     public List<Event> getInMemoryEvents() {
         return inMemoryEvents;
+    }
+
+    /**
+     * Helper to simulate signing in as a different user.
+     * Pass null to simulate signed out.
+     */
+    public void setStubCurrentUserId(String userId) {
+        this.stubCurrentUserId = userId;
     }
 }
