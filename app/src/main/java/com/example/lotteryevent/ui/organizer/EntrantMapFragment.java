@@ -28,6 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.firestore.GeoPoint;
 
@@ -140,10 +141,6 @@ public class EntrantMapFragment extends Fragment implements OnMapReadyCallback {
             updateMapMarkers(viewModel.getEntrants().getValue());
         } else {
             LatLng defaultLocation = new LatLng(53.5461, -113.4938); // Edmonton
-            map.addMarker(new MarkerOptions()
-                    .position(defaultLocation)
-                    .title("Event Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))); // Blue marker for Event
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f));
         }
 
@@ -175,27 +172,18 @@ public class EntrantMapFragment extends Fragment implements OnMapReadyCallback {
      * This handles the conversion from Firestore GeoPoint to Google Maps LatLng.
      */
     private void updateMapMarkers(List<Entrant> entrants) {
-        // 1. Guard clause: If map isn't ready or list is null, stop.
         if (map == null || entrants == null) {
             return;
         }
 
-        // 2. Clear old markers to prevent duplicates if the list updates
-        map.clear();
+        map.clear(); // Clear old markers
 
-        // 3. Re-add the "Event Location" (Since map.clear() wiped it)
-        LatLng defaultLocation = new LatLng(53.5461, -113.4938);
-        map.addMarker(new MarkerOptions()
-                .position(defaultLocation)
-                .title("Event Location")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))); // Make Event Blue
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        boolean hasValidLocation = false;
 
-        // 4. Loop through entrants and add markers
         for (Entrant entrant : entrants) {
-            // Get the Firestore GeoPoint
             GeoPoint geoPoint = entrant.getGeoLocation();
 
-            // Only add marker if they have a location recorded
             if (geoPoint != null) {
                 LatLng userLocation = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
 
@@ -206,9 +194,27 @@ public class EntrantMapFragment extends Fragment implements OnMapReadyCallback {
                         .position(userLocation)
                         .title(name)
                         .snippet(snippet)
-                        // Red markers for Entrants (Default color)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+
+                // Add this point to the boundaries builder
+                builder.include(userLocation);
+                hasValidLocation = true;
             }
+        }
+
+        // If we have at least one entrant with a location, zoom to fit them
+        if (hasValidLocation) {
+            try {
+                LatLngBounds bounds = builder.build();
+                int padding = 200; // Offset from edges of the map in pixels
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+            } catch (Exception e) {
+                Log.e(TAG, "Error moving camera to bounds", e);
+            }
+        } else {
+            // If list is empty or no one has a location, stay at default (Edmonton)
+            LatLng defaultLocation = new LatLng(53.5461, -113.4938);
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f));
         }
     }
 }
