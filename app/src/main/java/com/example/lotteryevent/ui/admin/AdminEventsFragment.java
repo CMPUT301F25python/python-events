@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -102,8 +104,8 @@ public class AdminEventsFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("eventId", event.getEventId());
 
-            androidx.navigation.NavController nav = androidx.navigation.fragment.NavHostFragment.findNavController(this);
-            nav.navigate(R.id.adminEventsFragment, args);
+            NavController nav = NavHostFragment.findNavController(AdminEventsFragment.this);
+            nav.navigate(R.id.action_adminEventsFragment_to_eventDetailsFragment, args);
         });
 
         recyclerView.setAdapter(adapter);

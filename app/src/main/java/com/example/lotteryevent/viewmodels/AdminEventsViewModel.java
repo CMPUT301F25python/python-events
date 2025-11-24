@@ -39,7 +39,7 @@ public class AdminEventsViewModel extends ViewModel {
 
             @Override
             public void onFailure(Exception e) {
-                message.postValue("Failure to load events: " + e.getMessage());
+                message.postValue("Failure to load events");
             }
         });
     }
