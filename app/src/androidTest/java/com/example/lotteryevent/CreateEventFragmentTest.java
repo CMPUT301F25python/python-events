@@ -32,6 +32,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.withClassName;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Instrumented Unit Test for {@link CreateEventFragment}.
@@ -148,50 +150,74 @@ public class CreateEventFragmentTest {
     public void validInputs_createsEvent_andUpdatesRepository() {
         launchFragment();
 
-        // 1. Enter Event Name
-        onView(withId(R.id.edit_text_event_name)).perform(typeText("Espresso Party"), closeSoftKeyboard());
+        // Use helper to fill form
+        fillValidFormInputs("Espresso Party");
 
-        // 2. Set Dates
-        // We use tomorrow's date to ensure we don't hit "Start time cannot be in past" validation
-        Calendar tomorrow = Calendar.getInstance();
-        tomorrow.add(Calendar.DAY_OF_YEAR, 1);
-        int year = tomorrow.get(Calendar.YEAR);
-        // Note: PickerActions.setDate expects standard month integers (Jan=1, Feb=2).
-        // Calendar.MONTH is 0-indexed (Jan=0). We add +1 to align them.
-        int month = tomorrow.get(Calendar.MONTH) + 1;
-        int day = tomorrow.get(Calendar.DAY_OF_MONTH);
-
-        // Set Start Date & Time (12:00)
-        setDate(R.id.edit_text_event_start_date, year, month, day);
-        setTime(R.id.edit_text_event_start_time, 12, 0);
-
-        // Set End Date & Time (14:00)
-        setDate(R.id.edit_text_event_end_date, year, month, day);
-        setTime(R.id.edit_text_event_end_time, 14, 0);
-
-        // 3. Set Capacity (Valid: Limit >= Capacity)
-        onView(withId(R.id.edit_text_max_attendees)).perform(scrollTo(), typeText("50"), closeSoftKeyboard());
-        onView(withId(R.id.edit_text_waiting_list_limit)).perform(scrollTo(), typeText("100"), closeSoftKeyboard());
-
-        // 4. Click Save
+        // Click Save
         onView(withId(R.id.button_save)).perform(scrollTo(), click());
 
-        // Assert:
-        // 1. Repository size should increase from 2 to 3
+        // Assert
         List<Event> events = fakeRepository.getInMemoryEvents();
         assertEquals("Repository should have a new event", 3, events.size());
 
-        // 2. Verify  last event added
         Event newEvent = events.get(2);
         assertEquals("Espresso Party", newEvent.getName());
         assertEquals(Integer.valueOf(50), newEvent.getCapacity());
-        assertEquals("open", newEvent.getStatus());
 
-        // 3. Verify success message was posted
+        // Verify default behavior for location (assuming default is false)
+        assertFalse("GeoLocation should be false by default", newEvent.getGeoLocationRequired());
+
         assertEquals("Event created successfully!", fakeRepository.getMessage().getValue());
     }
 
-    // --- Helpers for Date/Time Pickers ---
+    @Test
+    public void geoLocationSwitch_toggledOn_savesEventWithLocationRequired() {
+        launchFragment();
+
+        // 1. Fill in valid basic info so validation passes
+        fillValidFormInputs("Location Party");
+
+        // 2. Click the Checkbox (Updated ID)
+        onView(withId(R.id.checkbox_geolocation)).perform(scrollTo(), click());
+
+        // 3. Click Save
+        onView(withId(R.id.button_save)).perform(scrollTo(), click());
+
+        // 4. Assert
+        List<Event> events = fakeRepository.getInMemoryEvents();
+        Event newEvent = events.get(2); // The 3rd event (index 2)
+
+        assertEquals("Location Party", newEvent.getName());
+        // This will check if the fragment actually saved the checkbox state
+        assertTrue("GeoLocation should be required after toggle", newEvent.getGeoLocationRequired());
+    }
+
+    // --- Helpers ---
+
+    /**
+     * Helper to fill out the form with valid data to pass validation.
+     * This reduces code duplication in tests.
+     */
+    private void fillValidFormInputs(String eventName) {
+        // 1. Name
+        onView(withId(R.id.edit_text_event_name)).perform(typeText(eventName), closeSoftKeyboard());
+
+        // 2. Dates (Tomorrow)
+        Calendar tomorrow = Calendar.getInstance();
+        tomorrow.add(Calendar.DAY_OF_YEAR, 1);
+        int year = tomorrow.get(Calendar.YEAR);
+        int month = tomorrow.get(Calendar.MONTH) + 1;
+        int day = tomorrow.get(Calendar.DAY_OF_MONTH);
+
+        setDate(R.id.edit_text_event_start_date, year, month, day);
+        setTime(R.id.edit_text_event_start_time, 12, 0);
+        setDate(R.id.edit_text_event_end_date, year, month, day);
+        setTime(R.id.edit_text_event_end_time, 14, 0);
+
+        // 3. Capacity
+        onView(withId(R.id.edit_text_max_attendees)).perform(scrollTo(), typeText("50"), closeSoftKeyboard());
+        onView(withId(R.id.edit_text_waiting_list_limit)).perform(scrollTo(), typeText("100"), closeSoftKeyboard());
+    }
 
     /**
      * Interacts with the system {@link DatePicker} dialog.

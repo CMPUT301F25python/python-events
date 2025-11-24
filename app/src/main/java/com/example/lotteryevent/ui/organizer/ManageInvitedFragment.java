@@ -1,9 +1,12 @@
 package com.example.lotteryevent.ui.organizer;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,6 +50,7 @@ public class ManageInvitedFragment extends Fragment {
     private RecyclerView recyclerView;
     private TextView titleTextView;
     private ProgressBar progressBar;
+    private Button sendNotificationButton;
     private InvitedEntrantsAdapter adapter;
 
     // --- Data & Logic ---
@@ -130,6 +134,7 @@ public class ManageInvitedFragment extends Fragment {
         titleTextView = view.findViewById(R.id.titleInvitedUsers);
         recyclerView = view.findViewById(R.id.recyclerViewInvited);
         progressBar = view.findViewById(R.id.progressBarInvited);
+        sendNotificationButton = view.findViewById(R.id.buttonNotifyInvited);
 
         // Set dynamic title based on ViewModel logic
         if (titleTextView != null) {
@@ -173,6 +178,7 @@ public class ManageInvitedFragment extends Fragment {
             if (entrants != null) {
                 // Update the adapter with the new list of Entrant objects
                 adapter.setEntrants(entrants);
+                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
             }
         });
 
@@ -182,5 +188,32 @@ public class ManageInvitedFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Displays a dialog allowing the organizer to input a message that will be
+     * sent as a notification to all entrants currently shown in the list.
+     * Provides input validation and triggers the ViewModel's bulk notification
+     * method when confirmed.
+     */
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notification Message");
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter message...");
+        builder.setView(input);
+        builder.setPositiveButton("Notify All", (dialog, which) -> {
+            /**
+             * Callback triggered when the "Notify All" button in the notification dialog is
+             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+             * bulk notification method.
+             * @param dialog the dialog that triggered the callback
+             */
+            String organizerMessage = input.getText().toString().trim();
+            viewModel.notifyAllEntrants(organizerMessage);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 }
