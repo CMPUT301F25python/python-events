@@ -35,7 +35,6 @@ public class RegistrationHistoryFragment extends Fragment {
 
     private RegistrationHistoryViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
-    private TextView drawResults;
     private TextView noHistoryText;
     private LinearLayout containerDrawResults;
 
@@ -43,14 +42,6 @@ public class RegistrationHistoryFragment extends Fragment {
      * This is the required empty constructor
      */
     public RegistrationHistoryFragment(){
-    }
-
-    /**
-     * Constructor for testing. Allows us to inject a custom ViewModelFactory
-     * @param factory The factory to use for creating the ViewModel.
-     */
-    public RegistrationHistoryFragment(GenericViewModelFactory factory) {
-        this.viewModelFactory = factory;
     }
 
     /**
@@ -101,7 +92,6 @@ public class RegistrationHistoryFragment extends Fragment {
      * @param view The root view of the fragment.
      */
     private void bindViews(@NonNull View view) {
-        drawResults = view.findViewById(R.id.draw_results_title);
         containerDrawResults = view.findViewById(R.id.container_draw_results);
         noHistoryText = view.findViewById(R.id.no_history_text);
     }
