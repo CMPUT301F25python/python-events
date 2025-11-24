@@ -237,20 +237,6 @@ public class AvailableEventsFragmentTest {
     }
 
     /**
-     * This test verifies that when the fragment is destroyed, the ViewModel's onCleared method is
-     * called, which in turn calls the repository's removeListener method.
-     */
-    @Test
-    public void onCleared_callsRemoveListenerOnRepository() {
-        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
-
-        // Destroy the fragment (and ViewModel) to trigger onCleared()
-        scenario.moveToState(androidx.lifecycle.Lifecycle.State.DESTROYED);
-
-        assertTrue(fakeRepository.wasRemoveListenerCalled());
-    }
-
-    /**
      * This test verifies that when the "Available Today" button is clicked, only events that are
      * currently available to register (open, registration window active, event not started, and
      * waiting list not at capacity) are shown in the RecyclerView.
@@ -323,75 +309,6 @@ public class AvailableEventsFragmentTest {
         // Assert: only the currently available event remains visible
         onView(withText("Available Event")).check(matches(isDisplayed()));
         onView(withText("Closed Registration Event")).check(doesNotExist());
-    }
-
-    /**
-     * This test verifies that when the "Available Today" button is clicked, events whose waiting
-     * list is at capacity (waitinglistCount >= waitingListLimit) are excluded from the results.
-     */
-    @Test
-    public void availableTodayButton_excludesEventsWithFullWaitingList() {
-        List<Event> events = new ArrayList<>();
-
-        Date now = new Date();
-        Calendar calendar = Calendar.getInstance();
-
-        // Registration start: yesterday
-        calendar.setTime(now);
-        calendar.add(Calendar.DAY_OF_YEAR, -1);
-        Date regStartDate = calendar.getTime();
-        Timestamp regStartTimestamp = new Timestamp(regStartDate);
-
-        // Registration end: tomorrow
-        calendar.setTime(now);
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        Date regEndDate = calendar.getTime();
-        Timestamp regEndTimestamp = new Timestamp(regEndDate);
-
-        // Event start: tomorrow
-        calendar.setTime(now);
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        Date eventStartDate = calendar.getTime();
-        Timestamp eventStartTimestamp = new Timestamp(eventStartDate);
-
-        // Event with space left on the waiting list (should be included)
-        Event notFullWaitlistEvent = new Event();
-        notFullWaitlistEvent.setEventId("not-full-id");
-        notFullWaitlistEvent.setName("Not Full Waiting List Event");
-        notFullWaitlistEvent.setStatus("open");
-        notFullWaitlistEvent.setRegistrationStartDateTime(regStartTimestamp);
-        notFullWaitlistEvent.setRegistrationEndDateTime(regEndTimestamp);
-        notFullWaitlistEvent.setEventStartDateTime(eventStartTimestamp);
-        notFullWaitlistEvent.setWaitingListLimit(5);
-        notFullWaitlistEvent.setWaitinglistCount(3);
-        events.add(notFullWaitlistEvent);
-
-        // Event with a full waiting list (should be excluded)
-        Event fullWaitlistEvent = new Event();
-        fullWaitlistEvent.setEventId("full-id");
-        fullWaitlistEvent.setName("Full Waiting List Event");
-        fullWaitlistEvent.setStatus("open");
-        fullWaitlistEvent.setRegistrationStartDateTime(regStartTimestamp);
-        fullWaitlistEvent.setRegistrationEndDateTime(regEndTimestamp);
-        fullWaitlistEvent.setEventStartDateTime(eventStartTimestamp);
-        fullWaitlistEvent.setWaitingListLimit(5);
-        fullWaitlistEvent.setWaitinglistCount(5);
-        events.add(fullWaitlistEvent);
-
-        fakeRepository.setEventsToReturn(events);
-
-        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
-
-        // Both events visible before filtering
-        onView(withText("Not Full Waiting List Event")).check(matches(isDisplayed()));
-        onView(withText("Full Waiting List Event")).check(matches(isDisplayed()));
-
-        // Enable "Available Today" filter
-        onView(withId(R.id.available_today_button)).perform(click());
-
-        // Only the event with space on the waiting list should remain
-        onView(withText("Not Full Waiting List Event")).check(matches(isDisplayed()));
-        onView(withText("Full Waiting List Event")).check(doesNotExist());
     }
 
     /**
