@@ -36,6 +36,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     @Override
     public LiveData<String> getMessage() { return _userMessage; }
 
+    /**
+     * Fetches event details and capacity status from the database.
+     * @param eventId the ID of the event to fetch
+     */
     @Override
     public void fetchEventAndCapacityStatus(String eventId) {
         _isLoading.postValue(true);
@@ -59,6 +63,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                 });
     }
 
+    /**
+     * Finalizes an event by updating its status in the database.
+     * @param eventId the ID of the event to finalize
+     */
     @Override
     public void finalizeEvent(String eventId) {
         _isLoading.setValue(true);
@@ -113,6 +121,12 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
         });
     }
 
+    /**
+     * Checks the capacity of an event and updates the button state accordingly.
+     * If the event has no capacity set, the button is enabled by default.
+     * @param eventId the ID of the event to check
+     * @param event the Event object to check the capacity of
+     */
     private void checkCapacity(String eventId, Event event) {
         if (event == null || event.getCapacity() == null || event.getCapacity() == 0) {
             _isRunDrawButtonEnabled.postValue(true); // Default to enabled if no capacity is set
@@ -131,7 +145,7 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                 _isRunDrawButtonEnabled.postValue(currentCount < event.getCapacity());
             } else {
                 _isRunDrawButtonEnabled.postValue(true); // Default to enabled on failure
-                _message.postValue("Could not verify event capacity.");
+                _userMessage.postValue("Could not verify event capacity.");
             }
             _isLoading.postValue(false); // All loading is now finished.
         });

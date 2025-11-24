@@ -254,7 +254,7 @@ public class OrganizerEventFragment extends Fragment {
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
         };
         btnViewEntrantMap.setOnClickListener(notImplementedListener);
-        btnFinalize.setOnClickListener(notImplementedListener);
+        btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
     }
 
     // --- UI Helper Methods ---
@@ -339,7 +339,7 @@ public class OrganizerEventFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Finalize Event")
                 .setMessage("Are you sure you want to finalize this event? \n\n" +
-                        "This will prevent further entrants from joining and lock the event details. " +
+                        "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
                         "This action cannot be undone.")
                 .setPositiveButton("Finalize", (dialog, which) -> {
                     // Call the ViewModel to execute the logic
