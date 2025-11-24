@@ -222,9 +222,11 @@ public class MainActivity extends AppCompatActivity {
 
         navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
 
-        // hide profile icon on UserProfileFragment
+        // all fragments we want to hide profile icon from
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            boolean show = destination.getId() != R.id.userProfileFragment;
+            boolean show =
+                    destination.getId() != R.id.userProfileFragment &&
+                            destination.getId() != R.id.registrationHistoryFragment;
             if (show != showProfileIcon){
                 showProfileIcon = show;
                 supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
