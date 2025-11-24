@@ -10,7 +10,7 @@ import com.example.lotteryevent.ui.AvailableEventsFragment;
 import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Collections;
 import java.util.List;
 
@@ -135,10 +135,6 @@ public class AvailableEventsViewModel extends ViewModel {
         String keywordLower = (currentKeyword == null ? "" : currentKeyword.trim().toLowerCase());
         boolean filterByKeyword = !keywordLower.isEmpty();
 
-        Calendar today = Calendar.getInstance();
-        int todayYear = today.get(Calendar.YEAR);
-        int todayDayOfYear = today.get(Calendar.DAY_OF_YEAR);
-
         List<Event> result = new ArrayList<>();
 
         for (Event event : source) {
@@ -153,24 +149,9 @@ public class AvailableEventsViewModel extends ViewModel {
                 }
             }
 
-            // "Available today" filter
-            if (filterAvailableToday) {
-                Timestamp startTs = event.getEventStartDateTime();
-                if (startTs == null) {
-                    // No start date, cannot be "available today"
-                    continue;
-                }
-
-                Calendar eventCal = Calendar.getInstance();
-                eventCal.setTime(startTs.toDate());
-
-                int eventYear = eventCal.get(Calendar.YEAR);
-                int eventDayOfYear = eventCal.get(Calendar.DAY_OF_YEAR);
-
-                if (eventYear != todayYear || eventDayOfYear != todayDayOfYear) {
-                    // Event is not today
-                    continue;
-                }
+            // Available Today filter: only include events that you can still register for
+            if (filterAvailableToday && !isEventCurrentlyAvailable(event)) {
+                continue;
             }
 
             result.add(event);
@@ -178,6 +159,85 @@ public class AvailableEventsViewModel extends ViewModel {
 
         filteredEvents.setValue(result);
     }
+
+    /**
+     * Rules:
+     * 1. Event must be open (not finalized).
+     * 2. Registration start date has passed.
+     * 3. Registration end date has not passed.
+     * 4. Event start date has not passed.
+     * 5. Waiting list is not at capacity.
+     * @param event
+     * @return boolean: true if event is available, false otherwise
+     */
+    private boolean isEventCurrentlyAvailable(Event event) {
+        // 1. Event is open (not finalized)
+        String status = event.getStatus();
+        if (status != null && status.equalsIgnoreCase("finalized")) {
+            return false;
+        }
+
+        // Check registration and event dates
+        Timestamp regStartTs = event.getRegistrationStartDateTime();
+        Timestamp regEndTs = event.getRegistrationEndDateTime();
+        Timestamp eventStartTs = event.getEventStartDateTime();
+
+        // If any of these are missing, assume the event is not available
+        if (regStartTs == null || regEndTs == null || eventStartTs == null) {
+            return false;
+        }
+
+        Date now = new Date();
+        Date regStart = regStartTs.toDate();
+        Date regEnd = regEndTs.toDate();
+        Date eventStart = eventStartTs.toDate();
+
+        // 2. Has the registration start date passed? (regStart <= now)
+        if (now.before(regStart)) {
+            return false;
+        }
+
+        // 3. Has the registration end date not passed? (now <= regEnd)
+        if (now.after(regEnd)) {
+            return false;
+        }
+
+        // 4. Has the event's start date not passed? (now <= eventStart)
+        if (now.after(eventStart)) {
+            return false;
+        }
+
+        // 5. Waiting list is not at capacity
+        if (isWaitingListAtCapacity(event)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks if waiting list is at capacity
+     * @param event
+     * @return boolean: true if waiting list is at capacity, false otherwise
+     */
+    private boolean isWaitingListAtCapacity(Event event) {
+        Integer waitingListLimit = event.getWaitingListLimit();
+        Integer waitingListCount = event.getWaitinglistCount();
+
+        // Capacity not enforced if no limit is given
+        if (waitingListLimit == null || waitingListLimit <= 0) {
+            return false;
+        }
+
+        // Field doesn't exist (no one has joined waiting list yet)
+        if (waitingListCount == null) {
+            return false;
+        }
+
+        // Capacity reached
+        return waitingListCount >= waitingListLimit;
+    }
+
 
     @Override
     protected void onCleared() {
