@@ -153,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
         MenuItem adminNotificationsItem = menu.findItem(R.id.adminSentNotificationsFragment);
         MenuItem adminImagesItem = menu.findItem(R.id.adminImagesFragment);
         MenuItem adminProfilesItem = menu.findItem(R.id.adminProfilesFragment);
-        MenuItem adminEventsItem = menu.findItem(R.id.adminEventsFragment);
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
@@ -171,7 +170,6 @@ public class MainActivity extends AppCompatActivity {
                                 adminNotificationsItem.setVisible(true);
                                 adminImagesItem.setVisible(true);
                                 adminProfilesItem.setVisible(true);
-                                adminEventsItem.setVisible(true);
                             }
                         }
                     });

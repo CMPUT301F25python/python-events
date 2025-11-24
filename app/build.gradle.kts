@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.uiautomator.v18)
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.play.services.location)
     implementation(libs.androidx.legacy.support.v4)
@@ -83,4 +84,9 @@ dependencies {
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
+
+    // --- Image Dependencies ---
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
 }
