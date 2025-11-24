@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * Stack is updated if user is not already on the fragment.
      * @param item The menu item that was selected.
      * @return boolean value indicating success of action
      */
@@ -117,7 +118,11 @@ public class MainActivity extends AppCompatActivity {
             NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
             if (navHostFragment != null) {
                 NavController navController = navHostFragment.getNavController();
-                navController.navigate(R.id.userProfileFragment);
+
+                // navigating only if not already on UserProfileFragment
+                if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.userProfileFragment){
+                    navController.navigate(R.id.userProfileFragment);
+                }
             }
             return true;
         }
