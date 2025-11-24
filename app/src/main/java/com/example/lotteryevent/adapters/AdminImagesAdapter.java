@@ -1,5 +1,8 @@
 package com.example.lotteryevent.adapters;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,8 +45,20 @@ public class AdminImagesAdapter extends RecyclerView.Adapter<AdminImagesAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ImageHolder holder, int position) {
-        String url = images.get(position);
-        holder.bind(url, listener);
+        String base64Image = images.get(position);
+
+        try {
+            // Decode Base64 string to Bitmap
+            byte[] decodedString = android.util.Base64.decode(base64Image, android.util.Base64.DEFAULT);
+            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            holder.imageView.setImageBitmap(decodedByte);
+        } catch (Exception e) {
+            // Fallback if decoding fails
+            holder.imageView.setImageResource(android.R.drawable.ic_menu_report_image);
+        }
+
+        // Set click listener using the interface method 'onClick'
+        holder.itemView.setOnClickListener(v -> listener.onClick(base64Image));
     }
 
     @Override
