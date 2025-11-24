@@ -2,6 +2,7 @@ package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
@@ -23,6 +24,10 @@ public class EventDetailsViewModel extends ViewModel {
     // --- LiveData exposed to the Fragment ---
     public LiveData<Event> eventDetails;
     public LiveData<String> message;
+
+    // Signal to the Fragment that we need location permission
+    private final MutableLiveData<Boolean> _requestLocationPermission = new MutableLiveData<>();
+    public LiveData<Boolean> requestLocationPermission = _requestLocationPermission;
 
     // This MediatorLiveData observes other LiveData objects
     // and calculates a new UI state whenever one of them changes.
@@ -139,8 +144,16 @@ public class EventDetailsViewModel extends ViewModel {
         // Based on the button text, decide which repository action to call.
         String action = currentState.positiveButtonText;
         if (action.equals("Join Waiting List")) {
-            repository.joinWaitingList(eventId);
-        } else if (action.equals("Accept Invitation")) {
+            Event event = repository.getEventDetails().getValue();
+            // Check if location is required
+            if (event != null && event.getGeoLocationRequired()) {
+                // Signal the Fragment to handle permission/GPS
+                _requestLocationPermission.setValue(true);
+            } else {
+                // No location needed, join immediately with nulls
+                repository.joinWaitingList(eventId, null, null);
+            }
+        }  else if (action.equals("Accept Invitation")) {
             repository.updateInvitationStatus(eventId, "accepted");
         } else if (action.equals("Leave Waiting List")) {
             repository.leaveWaitingList(eventId);
@@ -155,5 +168,23 @@ public class EventDetailsViewModel extends ViewModel {
         if (action.equals("Decline Invitation")) {
             repository.updateInvitationStatus(eventId, "declined");
         }
+    }
+
+    // --- Location Methods ---
+    /**
+     * Called by the Fragment after it successfully retrieves the location.
+     */
+    public void onLocationRetrieved(double latitude, double longitude) {
+        _requestLocationPermission.setValue(false);
+        // Call repository with the new data
+        repository.joinWaitingList(eventId, latitude, longitude);
+    }
+
+    /**
+     * Called by the Fragment if the user denied permission.
+     */
+    public void onLocationPermissionDenied() {
+        // Reset the signal
+        _requestLocationPermission.setValue(false);
     }
 }
