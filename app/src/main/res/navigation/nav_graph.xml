@@ -164,6 +164,11 @@
     <fragment
         android:id="@+id/adminEventsFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
-        android:label="Admin Events" />
+        android:label="Admin Events" >
+
+        <action
+            android:id="@+id/action_adminEventsFragment_to_eventDetailsFragment"
+            app:destination="@+id/eventDetailsFragment"/>
+    </fragment>
 
 </navigation>
