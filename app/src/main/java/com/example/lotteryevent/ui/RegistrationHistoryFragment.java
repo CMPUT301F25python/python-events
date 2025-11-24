@@ -190,9 +190,9 @@ public class RegistrationHistoryFragment extends Fragment {
 
             // setting status text color
             if (statusText.equals("Selected")) {
-                statusTextView.setTextColor(getResources().getColor(R.color.red));
-            } else if (statusText.equals("Not Selected")) {
                 statusTextView.setTextColor(getResources().getColor(R.color.primary_green));
+            } else if (statusText.equals("Not Selected")) {
+                statusTextView.setTextColor(getResources().getColor(R.color.red));
             } else {
                 statusTextView.setTextColor(getResources().getColor(R.color.grey));
             }
