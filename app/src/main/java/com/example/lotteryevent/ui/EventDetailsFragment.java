@@ -1,7 +1,8 @@
 package com.example.lotteryevent.ui;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +13,17 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.provider.Settings;
+import android.content.Intent;
+import android.net.Uri;
+import android.app.AlertDialog;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -24,7 +34,10 @@ import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.Timestamp;
+
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -54,6 +67,32 @@ public class EventDetailsFragment extends Fragment {
     private EventDetailsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
 
+    // --- Location Services ---
+    private FusedLocationProviderClient fusedLocationClient;
+
+    /**
+     * Handles the result of the system permission dialog.
+     */
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    fetchLocationAndJoin();
+                } else {
+                    // The user denied the system dialog just now.
+                    // We need to inform the ViewModel to reset the state so the button works again next time.
+                    viewModel.onLocationPermissionDenied();
+
+                    // Check if we should show a manual "Go to Settings" dialog
+                    // If shouldShowRequestPermissionRationale is false after a denial,
+                    // it means "Don't ask again" was checked.
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        showSettingsDialog();
+                    } else {
+                        Toast.makeText(getContext(), "Location is required to join this event.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
     /**
      * Default constructor for production use by the Android Framework.
      */
@@ -77,6 +116,10 @@ public class EventDetailsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // --- Initialize Location Client ---
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+
 
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
@@ -136,6 +179,13 @@ public class EventDetailsFragment extends Fragment {
                 renderBottomUi(uiState);
             }
         });
+
+        // Listener for location permission requests
+        viewModel.requestLocationPermission.observe(getViewLifecycleOwner(), shouldRequest -> {
+            if (shouldRequest != null && shouldRequest) {
+                checkPermissionAndAct();
+            }
+        });
     }
 
     /**
@@ -171,6 +221,7 @@ public class EventDetailsFragment extends Fragment {
         addAny("Description", event.getDescription());
         addAny("Lottery Guidelines", event.getLotteryGuidelines());
         addAny("Max Attendees", event.getCapacity());
+        addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
 
@@ -218,5 +269,73 @@ public class EventDetailsFragment extends Fragment {
         v = v.trim();
         if (v.isEmpty() || "null".equalsIgnoreCase(v)) return;
         dataList.add(label + ": " + v);
+    }
+
+    // --- Location Logic ---
+    private void checkPermissionAndAct() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            fetchLocationAndJoin();
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Case 2: User denied it before. Show an explanation dialog BEFORE launching the system dialog.
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Location Required")
+                    .setMessage("This event requires geolocation verification to join. Please grant location permission.")
+                    .setPositiveButton("OK", (dialog, which) -> {
+                        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> {
+                        viewModel.onLocationPermissionDenied();
+                        dialog.dismiss();
+                    })
+                    .create()
+                    .show();
+        } else {
+            // Case 3: First time asking, OR user checked "Don't ask again" previously.
+            // The system handles which one it is.
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+    }
+
+    /**
+     * Shows a dialog directing the user to Settings if they permanently denied permission
+     */
+    private void showSettingsDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Permission Denied")
+                .setMessage("You have permanently denied location permission. To join this event, you must enable it in the app settings.")
+                .setPositiveButton("Go to Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", requireActivity().getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
+    private void fetchLocationAndJoin() {
+        // Double-check permission before calling location services (Linter requirement)
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(requireActivity(), location -> {
+                    if (location != null) {
+                        // Pass data back to ViewModel
+                        viewModel.onLocationRetrieved(location.getLatitude(), location.getLongitude());
+                    } else {
+                        // Edge case: GPS is on but no location cached.
+                        Toast.makeText(getContext(), "Unable to determine location. Try opening Google Maps first.", Toast.LENGTH_LONG).show();
+                        viewModel.onLocationPermissionDenied();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error getting location.", Toast.LENGTH_SHORT).show();
+                    viewModel.onLocationPermissionDenied();
+                });
     }
 }
