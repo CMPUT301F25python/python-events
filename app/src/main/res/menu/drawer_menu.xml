@@ -20,11 +20,6 @@
 
         <!-- Admin-only Options -->
         <item
-            android:id="@+id/adminEventsFragment"
-            android:icon="@drawable/edit_calendar_24px"
-            android:title="@string/admin_events"
-            android:visible="false" />
-        <item
             android:id="@+id/adminProfilesFragment"
             android:icon="@drawable/groups_24px"
             android:title="@string/profiles"

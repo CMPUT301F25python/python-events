@@ -117,4 +117,5 @@
     <string name="no_draw_results">You have not joined the waitlist for any events.</string>
     <string name="draw_result">Draw Result</string>
     <string name="draw_results">Draw Results</string>
+    <string name="delete_event">Delete Event</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.R;
@@ -55,7 +56,7 @@ public class EventDetailsFragment extends Fragment {
 
     // --- UI Components ---
     private ListView detailsList;
-    private Button btnActionPositive, btnActionNegative;
+    private Button btnActionPositive, btnActionNegative, btnDeleteEvent;
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
     private LinearLayout buttonActionsContainer;
@@ -136,6 +137,26 @@ public class EventDetailsFragment extends Fragment {
         setupClickListeners();
         setupObservers();
 
+        // Check if user is an admin before showing the delete button
+        viewModel.checkAdminStatus();
+
+        viewModel.getIsAdmin().observe(getViewLifecycleOwner(), isAdmin -> {
+            if (isAdmin) {
+                btnDeleteEvent.setVisibility(View.VISIBLE);
+            } else {
+                btnDeleteEvent.setVisibility(View.GONE);
+            }
+        });
+
+        btnDeleteEvent.setOnClickListener(v -> {
+            if (getArguments() != null) {
+                String eventId = getArguments().getString("eventId");
+                if (eventId != null) {
+                    showDeleteConfirmationDialog(eventId);
+                }
+            }
+        });
+
         // --- Initial Action ---
         if (getArguments() != null) {
             String eventId = getArguments().getString("eventId");
@@ -148,6 +169,7 @@ public class EventDetailsFragment extends Fragment {
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
         btnActionPositive = v.findViewById(R.id.btn_action_positive);
         btnActionNegative = v.findViewById(R.id.btn_action_negative);
+        btnDeleteEvent = v.findViewById(R.id.btn_remove_event);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
     }
@@ -169,6 +191,12 @@ public class EventDetailsFragment extends Fragment {
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getIsDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
+            if (isDeleted) {
+                Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
@@ -219,7 +247,6 @@ public class EventDetailsFragment extends Fragment {
         addAny("Date and Time", event.getEventStartDateTime());
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
-        addAny("Lottery Guidelines", event.getLotteryGuidelines());
         addAny("Max Attendees", event.getCapacity());
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
@@ -338,4 +365,28 @@ public class EventDetailsFragment extends Fragment {
                     viewModel.onLocationPermissionDenied();
                 });
     }
+
+    /**
+     * Displays a confirmation dialog to the user before deleting an event.
+     * <p>
+     * If the user selects "Delete", the event deletion process is initiated via the ViewModel.
+     * If the user selects "Cancel", the dialog is dismissed without any action.
+     *
+     * @param eventId The unique identifier of the event to be deleted.
+     */
+    private void showDeleteConfirmationDialog(String eventId) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Event")
+                .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // User confirmed, proceed with deletion
+                    viewModel.deleteEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
 }

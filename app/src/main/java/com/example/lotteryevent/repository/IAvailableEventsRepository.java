@@ -34,6 +34,9 @@ public interface IAvailableEventsRepository {
      */
     void fetchAvailableEvents();
 
+    /**
+     * Removes the listener used to fetch events from the data source.
+     */
     void removeListener();
 
 }
