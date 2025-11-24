@@ -24,6 +24,13 @@ import com.example.lotteryevent.viewmodels.RegistrationHistoryViewModel;
 
 import java.util.List;
 
+/**
+ * Fragment responsible for displaying the current user's registration history
+ * for lottery events. Observes a {@link RegistrationHistoryViewModel} to render
+ * a list of past registrations and their statuses in a vertical layout, and
+ * shows error or info messages via Toasts.
+ */
+
 public class RegistrationHistoryFragment extends Fragment {
 
     private RegistrationHistoryViewModel viewModel;
@@ -104,12 +111,23 @@ public class RegistrationHistoryFragment extends Fragment {
      * This is the core of the reactive UI.
      */
     private void setupObservers(){
-        // Observe the current user's registration history
+        /**
+         * Callback invoked whenever the registration history list changes. Delegates
+         * to {@link #showRegistrationHistory(List)} to render the updated list in the UI.
+         * @param historyList the latest list of {@link RegistrationHistoryItem} objects
+         *                    representing the user's registration history
+         */
         viewModel.getUserHistory().observe(getViewLifecycleOwner(), historyList ->{
             showRegistrationHistory(historyList);
         });
 
-        // Observe messages (for errors or success confirmations)
+        /**
+         * Callback invoked when the ViewModel emits a user-facing message. Displays
+         * the message as a Toast if it is not null or empty, providing feedback about
+         * loading states, errors, or other events.
+         * @param message the text message to show to the user, or null/empty if no
+         *                message should be displayed
+         */
         viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
@@ -118,8 +136,13 @@ public class RegistrationHistoryFragment extends Fragment {
     }
 
     /**
-     * This class shows the list of registration history entries for a user in the LinearLayout
-     * @param historyList the list of events a user has waitlisted
+     * Renders the user's registration history inside the container layout. Clears
+     * any existing rows, maps each valid {@link RegistrationHistoryItem} to a user
+     * friendly status label, inflates a row view for each, and sets the appropriate
+     * text and color styling.
+     * <p>If the list is null or empty, or if no items meet the display criteria,
+     * the "no history" message is shown instead.</p>
+     * @param historyList the list of registration history records for the current user
      */
     private void showRegistrationHistory(List<RegistrationHistoryItem> historyList){
         containerDrawResults.removeAllViews(); // reset
