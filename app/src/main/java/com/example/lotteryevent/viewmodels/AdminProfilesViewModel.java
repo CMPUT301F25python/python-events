@@ -42,7 +42,7 @@ public class AdminProfilesViewModel extends ViewModel {
 
             @Override
             public void onFailure(Exception e) {
-                _message.postValue("Failed to load profiles: " + e.getMessage());
+                _message.postValue("Failed to load profiles");
             }
         });
     }

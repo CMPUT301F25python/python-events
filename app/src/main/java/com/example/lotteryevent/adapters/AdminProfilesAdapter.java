@@ -1,5 +1,6 @@
 package com.example.lotteryevent.adapters;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,7 +83,13 @@ public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdap
         }
 
         public void bind(User user, OnItemClickListener listener) {
-            name.setText(user.getName());
+            String displayName = user.getName();
+
+            if(TextUtils.isEmpty(displayName)) {
+                displayName = "Unnamed User";
+            }
+
+            name.setText(displayName);
             itemView.setOnClickListener(v -> listener.onClick(user));
         }
     }

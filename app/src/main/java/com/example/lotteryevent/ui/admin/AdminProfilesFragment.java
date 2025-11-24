@@ -78,6 +78,7 @@ public class AdminProfilesFragment extends Fragment {
         recycler = view.findViewById(R.id.entrants_recycler_view);
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        // Add navigation to user profile details
         adapter = new AdminProfilesAdapter(user ->
             Toast.makeText(requireContext(), "Selected: " + user.getName(), Toast.LENGTH_SHORT).show());
 
