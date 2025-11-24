@@ -251,48 +251,223 @@ public class AvailableEventsFragmentTest {
     }
 
     /**
-     * This test verifies that when the "Available Today" button is clicked, only events that start
-     * today are shown in the RecyclerView.
+     * This test verifies that when the "Available Today" button is clicked, only events that are
+     * currently available to register (open, registration window active, event not started, and
+     * waiting list not at capacity) are shown in the RecyclerView.
      */
     @Test
-    public void availableTodayButton_filtersEventsToThoseStartingToday() {
+    public void availableTodayButton_filtersEventsToCurrentlyAvailableEvents() {
         List<Event> events = new ArrayList<>();
 
         Date now = new Date();
-        Timestamp todayTimestamp = new Timestamp(now);
-
         Calendar calendar = Calendar.getInstance();
+
+        // Registration start: yesterday
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        Date regStartDate = calendar.getTime();
+        Timestamp regStartTimestamp = new Timestamp(regStartDate);
+
+        // Registration end: tomorrow
         calendar.setTime(now);
         calendar.add(Calendar.DAY_OF_YEAR, 1);
-        Date tomorrowDate = calendar.getTime();
-        Timestamp tomorrowTimestamp = new Timestamp(tomorrowDate);
+        Date regEndDate = calendar.getTime();
+        Timestamp regEndTimestamp = new Timestamp(regEndDate);
 
-        Event todayEvent = new Event();
-        todayEvent.setEventId("today-id");
-        todayEvent.setName("Today Event");
-        todayEvent.setEventStartDateTime(todayTimestamp);
-        events.add(todayEvent);
+        // Event start: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date eventStartDate = calendar.getTime();
+        Timestamp eventStartTimestamp = new Timestamp(eventStartDate);
 
-        Event tomorrowEvent = new Event();
-        tomorrowEvent.setEventId("tomorrow-id");
-        tomorrowEvent.setName("Tomorrow Event");
-        tomorrowEvent.setEventStartDateTime(tomorrowTimestamp);
-        events.add(tomorrowEvent);
+        // Event that IS currently available
+        Event availableEvent = new Event();
+        availableEvent.setEventId("available-id");
+        availableEvent.setName("Available Event");
+        availableEvent.setStatus("open");
+        availableEvent.setRegistrationStartDateTime(regStartTimestamp);
+        availableEvent.setRegistrationEndDateTime(regEndTimestamp);
+        availableEvent.setEventStartDateTime(eventStartTimestamp);
+        availableEvent.setWaitingListLimit(10);
+        availableEvent.setWaitinglistCount(2);
+        events.add(availableEvent);
+
+        // Event that is NOT currently available: registration has already ended
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -2);
+        Date pastRegEndDate = calendar.getTime();
+        Timestamp pastRegEndTimestamp = new Timestamp(pastRegEndDate);
+
+        Event closedRegistrationEvent = new Event();
+        closedRegistrationEvent.setEventId("closed-reg-id");
+        closedRegistrationEvent.setName("Closed Registration Event");
+        closedRegistrationEvent.setStatus("open");
+        closedRegistrationEvent.setRegistrationStartDateTime(regStartTimestamp);
+        closedRegistrationEvent.setRegistrationEndDateTime(pastRegEndTimestamp);
+        closedRegistrationEvent.setEventStartDateTime(eventStartTimestamp);
+        closedRegistrationEvent.setWaitingListLimit(10);
+        closedRegistrationEvent.setWaitinglistCount(2);
+        events.add(closedRegistrationEvent);
 
         fakeRepository.setEventsToReturn(events);
 
         FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
 
         // Both events should be visible before applying the filter
-        onView(withText("Today Event")).check(matches(isDisplayed()));
-        onView(withText("Tomorrow Event")).check(matches(isDisplayed()));
+        onView(withText("Available Event")).check(matches(isDisplayed()));
+        onView(withText("Closed Registration Event")).check(matches(isDisplayed()));
 
         // Click "Available Today" button to enable the availability filter
         onView(withId(R.id.available_today_button)).perform(click());
 
-        // Assert: only the event starting today remains visible
-        onView(withText("Today Event")).check(matches(isDisplayed()));
-        onView(withText("Tomorrow Event")).check(doesNotExist());
+        // Assert: only the currently available event remains visible
+        onView(withText("Available Event")).check(matches(isDisplayed()));
+        onView(withText("Closed Registration Event")).check(doesNotExist());
+    }
+
+    /**
+     * This test verifies that when the "Available Today" button is clicked, events whose waiting
+     * list is at capacity (waitinglistCount >= waitingListLimit) are excluded from the results.
+     */
+    @Test
+    public void availableTodayButton_excludesEventsWithFullWaitingList() {
+        List<Event> events = new ArrayList<>();
+
+        Date now = new Date();
+        Calendar calendar = Calendar.getInstance();
+
+        // Registration start: yesterday
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        Date regStartDate = calendar.getTime();
+        Timestamp regStartTimestamp = new Timestamp(regStartDate);
+
+        // Registration end: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date regEndDate = calendar.getTime();
+        Timestamp regEndTimestamp = new Timestamp(regEndDate);
+
+        // Event start: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date eventStartDate = calendar.getTime();
+        Timestamp eventStartTimestamp = new Timestamp(eventStartDate);
+
+        // Event with space left on the waiting list (should be included)
+        Event notFullWaitlistEvent = new Event();
+        notFullWaitlistEvent.setEventId("not-full-id");
+        notFullWaitlistEvent.setName("Not Full Waiting List Event");
+        notFullWaitlistEvent.setStatus("open");
+        notFullWaitlistEvent.setRegistrationStartDateTime(regStartTimestamp);
+        notFullWaitlistEvent.setRegistrationEndDateTime(regEndTimestamp);
+        notFullWaitlistEvent.setEventStartDateTime(eventStartTimestamp);
+        notFullWaitlistEvent.setWaitingListLimit(5);
+        notFullWaitlistEvent.setWaitinglistCount(3);
+        events.add(notFullWaitlistEvent);
+
+        // Event with a full waiting list (should be excluded)
+        Event fullWaitlistEvent = new Event();
+        fullWaitlistEvent.setEventId("full-id");
+        fullWaitlistEvent.setName("Full Waiting List Event");
+        fullWaitlistEvent.setStatus("open");
+        fullWaitlistEvent.setRegistrationStartDateTime(regStartTimestamp);
+        fullWaitlistEvent.setRegistrationEndDateTime(regEndTimestamp);
+        fullWaitlistEvent.setEventStartDateTime(eventStartTimestamp);
+        fullWaitlistEvent.setWaitingListLimit(5);
+        fullWaitlistEvent.setWaitinglistCount(5);
+        events.add(fullWaitlistEvent);
+
+        fakeRepository.setEventsToReturn(events);
+
+        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
+
+        // Both events visible before filtering
+        onView(withText("Not Full Waiting List Event")).check(matches(isDisplayed()));
+        onView(withText("Full Waiting List Event")).check(matches(isDisplayed()));
+
+        // Enable "Available Today" filter
+        onView(withId(R.id.available_today_button)).perform(click());
+
+        // Only the event with space on the waiting list should remain
+        onView(withText("Not Full Waiting List Event")).check(matches(isDisplayed()));
+        onView(withText("Full Waiting List Event")).check(doesNotExist());
+    }
+
+    /**
+     * This test verifies that when the "Available Today" button is clicked, events that do not have
+     * a waitinglistCount field (null) are still considered available, and therefore shown, as long
+     * as all other availability conditions are satisfied.
+     */
+    @Test
+    public void availableTodayButton_includesEventsWhenWaitingListCountMissing() {
+        List<Event> events = new ArrayList<>();
+
+        Date now = new Date();
+        Calendar calendar = Calendar.getInstance();
+
+        // Registration start: yesterday
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        Date regStartDate = calendar.getTime();
+        Timestamp regStartTimestamp = new Timestamp(regStartDate);
+
+        // Registration end: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date regEndDate = calendar.getTime();
+        Timestamp regEndTimestamp = new Timestamp(regEndDate);
+
+        // Event start: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date eventStartDate = calendar.getTime();
+        Timestamp eventStartTimestamp = new Timestamp(eventStartDate);
+
+        // Event with no waitinglistCount set (field missing / null) - should be treated as available
+        Event missingCountEvent = new Event();
+        missingCountEvent.setEventId("missing-count-id");
+        missingCountEvent.setName("Missing Count Event");
+        missingCountEvent.setStatus("open");
+        missingCountEvent.setRegistrationStartDateTime(regStartTimestamp);
+        missingCountEvent.setRegistrationEndDateTime(regEndTimestamp);
+        missingCountEvent.setEventStartDateTime(eventStartTimestamp);
+        missingCountEvent.setWaitingListLimit(5);
+        // Intentionally do NOT call setWaitinglistCount(...) so it remains null
+        events.add(missingCountEvent);
+
+        // Event that is otherwise identical but registration has not started yet (should be excluded)
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date futureRegStart = calendar.getTime();
+        Timestamp futureRegStartTimestamp = new Timestamp(futureRegStart);
+
+        Event futureRegEvent = new Event();
+        futureRegEvent.setEventId("future-reg-id");
+        futureRegEvent.setName("Future Registration Event");
+        futureRegEvent.setStatus("open");
+        futureRegEvent.setRegistrationStartDateTime(futureRegStartTimestamp);
+        futureRegEvent.setRegistrationEndDateTime(regEndTimestamp);
+        futureRegEvent.setEventStartDateTime(eventStartTimestamp);
+        futureRegEvent.setWaitingListLimit(5);
+        // Also no waitinglistCount, but fails the registration-start condition
+        events.add(futureRegEvent);
+
+        fakeRepository.setEventsToReturn(events);
+
+        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
+
+        // Both events visible before filtering
+        onView(withText("Missing Count Event")).check(matches(isDisplayed()));
+        onView(withText("Future Registration Event")).check(matches(isDisplayed()));
+
+        // Enable "Available Today" filter
+        onView(withId(R.id.available_today_button)).perform(click());
+
+        // The event with missing waitinglistCount but valid dates remains;
+        // the event whose registration has not started is filtered out.
+        onView(withText("Missing Count Event")).check(matches(isDisplayed()));
+        onView(withText("Future Registration Event")).check(doesNotExist());
     }
 
     /**
