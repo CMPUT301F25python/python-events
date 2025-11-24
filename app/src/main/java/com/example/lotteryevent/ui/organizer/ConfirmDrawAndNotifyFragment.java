@@ -24,8 +24,15 @@ import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.gson.Gson;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
+
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * This fragment allows the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
@@ -49,6 +56,10 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     // --- ViewModel ---
     private ConfirmDrawAndNotifyViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
+
+    private Map<String, String> oldEntrantsStatus;
+    private ArrayList<String> newChosenEntrants;
+    private ArrayList<String> newUnchosenEntrants;
 
     /**
      * Default constructor for production use by the Android Framework.
@@ -113,6 +124,19 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         // --- Initial Action ---
         if (getArguments() != null) {
             String eventId = getArguments().getString("eventId");
+            String oldEntrantsStatusString = getArguments().getString("oldEntrantsStatus");
+            String newChosenEntrantsString = getArguments().getString("newChosenEntrants");
+            String newUnchosenEntrantsString = getArguments().getString("newUnchosenEntrants");
+
+            Gson gson = new Gson();
+
+            Type mapType = new TypeToken<Map<String, String>>(){}.getType();
+            oldEntrantsStatus = gson.fromJson(oldEntrantsStatusString, mapType);
+
+            Type listType = new TypeToken<ArrayList<String>>(){}.getType();
+            newChosenEntrants = gson.fromJson(newChosenEntrantsString, listType);
+            newUnchosenEntrants = gson.fromJson(newUnchosenEntrantsString, listType);
+
             viewModel.loadEventAndEntrants(eventId);
         }
     }

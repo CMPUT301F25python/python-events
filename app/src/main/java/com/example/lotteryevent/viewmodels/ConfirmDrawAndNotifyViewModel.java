@@ -128,18 +128,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         } else {
             _availableSpaceCount.postValue(String.valueOf(0));
         }
-//
-//        Integer capacity = event.getCapacity();
-//        if (capacity == null) {
-//            _availableSpaceCount.postValue("No Limit");
-//        } else {
-//            Integer spaceLeft = capacity - selectedUsersCount;
-//            if (spaceLeft > 0) {
-//                _availableSpaceCount.postValue(String.valueOf(spaceLeft));
-//            } else {
-//                _availableSpaceCount.postValue("0");
-//            }
-//        }
     }
 
     /**

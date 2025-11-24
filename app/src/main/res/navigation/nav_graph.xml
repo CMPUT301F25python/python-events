@@ -59,6 +59,15 @@
         <argument
             android:name="eventId"
             app:argType="string"/>
+        <argument
+            android:name="oldEntrantsStatus"
+            app:argType="string"/>
+        <argument
+            android:name="newChosenEntrants"
+            app:argType="string"/>
+        <argument
+            android:name="newUnchosenEntrants"
+            app:argType="string"/>
 
         <action
             android:id="@+id/action_confirmDrawAndNotifyFragment_to_organizerEventPageFragment"
