@@ -260,6 +260,26 @@ public class OrganizerEventFragment extends Fragment {
     // --- UI Helper Methods ---
 
     /**
+     * Shows a confirmation dialog ensuring the user wants to finalize the event.
+     */
+    private void showFinalizeConfirmationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Finalize Event")
+                .setMessage("Are you sure you want to finalize this event? \n\n" +
+                        "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
+                        "This action cannot be undone.")
+                .setPositiveButton("Finalize", (dialog, which) -> {
+                    // Call the ViewModel to execute the logic
+                    viewModel.finalizeEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .create()
+                .show();
+    }
+
+    /**
      * Displays a dialog containing the generated QR code bitmap.
      * @param qrCodeBitmap The QR code image to display.
      */
@@ -332,23 +352,5 @@ public class OrganizerEventFragment extends Fragment {
         return null;
     }
 
-    /**
-     * Shows a confirmation dialog ensuring the user wants to finalize the event.
-     */
-    private void showFinalizeConfirmationDialog() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Finalize Event")
-                .setMessage("Are you sure you want to finalize this event? \n\n" +
-                        "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
-                        "This action cannot be undone.")
-                .setPositiveButton("Finalize", (dialog, which) -> {
-                    // Call the ViewModel to execute the logic
-                    viewModel.finalizeEvent(eventId);
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    dialog.dismiss();
-                })
-                .create()
-                .show();
-    }
+
 }

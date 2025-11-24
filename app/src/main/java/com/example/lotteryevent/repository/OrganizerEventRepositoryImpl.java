@@ -95,6 +95,13 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                             .addOnSuccessListener(aVoid -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Event finalized successfully!");
+
+                                Event currentEvent = _event.getValue();
+                                if (currentEvent != null) {
+                                    currentEvent.setStatus("finalized");
+                                    _event.postValue(currentEvent); // This triggers the ViewModel observer
+                                }
+
                             })
                             .addOnFailureListener(e -> {
                                 _isLoading.setValue(false);
