@@ -165,6 +165,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
             if (notification.getSeen() == true) {
                 notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
+            } else {
+                notifications_material_card.setCardBackgroundColor(Color.rgb(255, 251, 254));
             }
 
             this.message.setText(message);
