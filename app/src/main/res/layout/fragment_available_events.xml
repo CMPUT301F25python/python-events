@@ -29,21 +29,6 @@
         app:strokeWidth="2dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/new_event_button"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="2dp"
-        android:text="New Event"
-        android:textSize="20sp"
-        app:cornerRadius="30dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/available_today_button"
-        app:strokeColor="@color/primary_green"
-        app:strokeWidth="2dp" />
-
-    <com.google.android.material.button.MaterialButton
         android:id="@+id/filter_button"
         style="@style/Widget.Material3.Button.IconButton"
         android:layout_width="50dp"
@@ -56,6 +41,6 @@
         app:iconSize="50dp"
         app:iconTint="@color/primary_green"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/new_event_button" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
