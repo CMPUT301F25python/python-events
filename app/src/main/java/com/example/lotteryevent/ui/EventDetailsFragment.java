@@ -175,7 +175,6 @@ public class EventDetailsFragment extends Fragment {
         btnDeleteEvent = v.findViewById(R.id.btn_remove_event);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
-        textWaitingListCount = v.findViewById(R.id.text_waiting_list_count);
     }
 
     private void setupClickListeners() {
@@ -209,19 +208,6 @@ public class EventDetailsFragment extends Fragment {
         viewModel.bottomUiState.observe(getViewLifecycleOwner(), uiState -> {
             if (uiState != null) {
                 renderBottomUi(uiState);
-            }
-        });
-
-        /**
-         * Observe the waiting list count and display it
-         */
-        viewModel.getWaitingListCount().observe(getViewLifecycleOwner(), count -> {
-            if(count != null){
-                String label = "Number of entrants on waiting list:" + count;
-                textWaitingListCount.setText(label);
-                textWaitingListCount.setVisibility(View.VISIBLE);
-            } else {
-                textWaitingListCount.setVisibility(View.GONE);
             }
         });
 
@@ -265,6 +251,7 @@ public class EventDetailsFragment extends Fragment {
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
         addAny("Max Attendees", event.getCapacity());
+        addAny("Entrants on Waiting List",event.getWaitingListCount());
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }

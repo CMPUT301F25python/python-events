@@ -30,6 +30,7 @@ public class Event {
     private Integer waitingListLimit;
     private boolean geoLocationRequired;
     private String status;
+    private transient Integer waitingListCount;
 
     // @ServerTimestamp tells Firestore to automatically populate this field with the
     // server's timestamp when the document is first created. It will be null until then.
@@ -241,4 +242,20 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    /**
+     * Gets the count of entrants on the waiting list for an event
+     * @return waitingListCount The count of entrants on the waiting list
+     */
+    public Integer getWaitingListCount() {
+        return waitingListCount;
+    }
+
+    /**
+     * Sets the waiting list count
+     * @param waitingListCount count of entrants on the waiting list for an event
+     */
+    public void setWaitingListCount(Integer waitingListCount) {
+        this.waitingListCount = waitingListCount;
+    }
 }
