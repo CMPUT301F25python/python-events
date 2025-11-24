@@ -119,7 +119,6 @@ public class HomeFragment extends Fragment {
         if (getActivity() instanceof AppCompatActivity) {
             ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Your Events");
         }
-        setupMenu();
 
         // Setup main UI components
         setupRecyclerView(view);
@@ -201,52 +200,5 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    /**
-     * Sets up the fragment-specific options menu in the toolbar.
-     * <p>
-     * This method uses the modern {@link MenuProvider} API, which is lifecycle-aware. The menu is
-     * associated with the fragment's view lifecycle, ensuring it is only created and visible when
-     * the fragment is in the {@link Lifecycle.State#RESUMED} state. This prevents menu items from
-     * persisting when navigating to other fragments.
-     * <p>
-     * It inflates the {@code R.menu.home_fragment_menu} and handles click events on the profile icon
-     * item ({@code R.id.profile_icon}).
-     *
-     * @see MenuProvider
-     * @see Lifecycle.State
-     */
-    private void setupMenu() {
-        requireActivity().addMenuProvider(new MenuProvider() {
-
-            /**
-             * Called by the MenuHost to allow the MenuProvider to inflate its menu items into the given Menu.
-             *
-             * @param menu         The menu to inflate items into.
-             * @param menuInflater The inflater to be used to inflate the menu.
-             */
-            @Override
-            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                // Use the menu file created for the profile icon
-                menuInflater.inflate(R.menu.home_fragment_menu, menu);
-            }
-
-            /**
-             * Called by the MenuHost to handle selection of a menu item.
-             *
-             * @param menuItem The menu item that was selected.
-             * @return {@code true} if the menu item selection was handled, {@code false} otherwise.
-             */
-            @Override
-            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-                // Handle clicks on the profile icon
-                if (menuItem.getItemId() == R.id.profile_icon) {
-                    NavHostFragment.findNavController(HomeFragment.this).navigate(R.id.action_homeFragment_to_userProfileFragment);
-                    return true;
-                }
-                return false;
-            }
-        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 }
