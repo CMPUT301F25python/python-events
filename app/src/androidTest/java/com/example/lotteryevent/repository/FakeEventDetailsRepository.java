@@ -5,6 +5,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.GeoPoint;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -65,7 +67,7 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     }
 
     @Override
-    public void joinWaitingList(String eventId) {
+    public void joinWaitingList(String eventId, Double latitude, Double longitude) {
         _isLoading.postValue(true);
         if (shouldReturnError) { /* ... error handling ... */ return; }
 
@@ -80,6 +82,12 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
         newEntrant.setUserName("Test User");
         newEntrant.setStatus("waiting");
         newEntrant.setDateRegistered(Timestamp.now());
+
+        if (latitude != null && longitude != null) {
+            newEntrant.setGeoLocation(new GeoPoint(latitude, longitude));
+        } else {
+            newEntrant.setGeoLocation(null);
+        }
 
         inMemoryEntrants.add(newEntrant); // Add to the full list
         _entrantStatus.postValue(newEntrant); // Update the current user's status

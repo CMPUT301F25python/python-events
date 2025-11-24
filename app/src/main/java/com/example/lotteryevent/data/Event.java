@@ -31,6 +31,7 @@ public class Event {
     private Integer waitingListLimit;
     private Integer waitinglistCount;
     private boolean isGeoLocationRequired;
+    private boolean geoLocationRequired;
     private String status;
 
     // @ServerTimestamp tells Firestore to automatically populate this field with the
@@ -231,12 +232,12 @@ public class Event {
      * Checks if geolocation is required for the event.
      * @return True if geolocation is required, false otherwise.
      */
-    public boolean isGeoLocationRequired() { return isGeoLocationRequired; }
+    public boolean getGeoLocationRequired() { return geoLocationRequired; }
     /**
      * Sets whether geolocation is required for the event.
-     * @param isGeoLocationRequired True if geolocation is required, false otherwise.
+     * @param geoLocationRequired True if geolocation is required, false otherwise.
      */
-    public void setIsGeoLocationRequired(boolean isGeoLocationRequired) { this.isGeoLocationRequired = isGeoLocationRequired; }
+    public void setGeoLocationRequired(boolean geoLocationRequired) { this.geoLocationRequired = geoLocationRequired; }
 
     /**
      * Gets the status of the event.
