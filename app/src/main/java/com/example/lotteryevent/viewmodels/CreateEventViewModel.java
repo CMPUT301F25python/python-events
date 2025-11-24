@@ -44,8 +44,7 @@ public class CreateEventViewModel extends ViewModel {
      */
     public String attemptToCreateEvent(String eventName, String description, String location,
                                        String priceStr, String maxAttendeesStr, String waitingListLimitStr,
-                                       String lotteryGuidelinesStr, boolean isGeoLocationRequired,
-                                       Calendar eventStartCalendar, Calendar eventEndCalendar,
+                                       boolean isGeoLocationRequired, Calendar eventStartCalendar, Calendar eventEndCalendar,
                                        Calendar registrationStartCalendar, Calendar registrationEndCalendar,
                                        String startDateText, String startTimeText, String endDateText, String endTimeText,
                                        String regStartDateText, String regStartTimeText, String regEndDateText, String regEndTimeText) {
@@ -78,7 +77,6 @@ public class CreateEventViewModel extends ViewModel {
         newEvent.setPrice(price);
         newEvent.setCapacity(capacity);
         newEvent.setWaitingListLimit(waitingListLimit);
-        newEvent.setLotteryGuidelines(lotteryGuidelinesStr);
         newEvent.setGeoLocationRequired(isGeoLocationRequired);
         newEvent.setEventStartDateTime(eventStartTimestamp);
         newEvent.setEventEndDateTime(eventEndTimestamp);

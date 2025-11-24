@@ -2,6 +2,8 @@ package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 
 /**
@@ -19,6 +21,9 @@ public class FakeUserRepository implements IUserRepository {
     // --- LiveData to be observed by the ViewModel ---
     private final MutableLiveData<User> _currentUser = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
+
+    private final MutableLiveData<Boolean> _notifPreference = new MutableLiveData<>();
+
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
     // --- In-memory data source ---
@@ -43,6 +48,9 @@ public class FakeUserRepository implements IUserRepository {
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
+
+    @Override
+    public LiveData<Boolean> getNotifPreference() { return _notifPreference; }
 
     @Override
     public LiveData<String> getMessage() {
@@ -90,6 +98,10 @@ public class FakeUserRepository implements IUserRepository {
         _isLoading.setValue(false);
     }
 
+    @Override
+    public void updateNotifPreference(Boolean enabled, boolean systemNotifPreference, NotificationCustomManager notificationCustomManager) {
+        _notifPreference.postValue(enabled && systemNotifPreference);
+    }
 
     // --- Test Control Methods ---
 

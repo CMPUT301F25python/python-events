@@ -247,7 +247,6 @@ public class EventDetailsFragment extends Fragment {
         addAny("Date and Time", event.getEventStartDateTime());
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
-        addAny("Lottery Guidelines", event.getLotteryGuidelines());
         addAny("Max Attendees", event.getCapacity());
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();

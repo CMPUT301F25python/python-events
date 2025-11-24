@@ -170,45 +170,56 @@ public class NotificationCustomManager {
     }
 
     /**
-     * Checks db for unread notifs once and either geneerates one notif if only one or a bulk notif
-     * of a number of unread notifs
+     * Checks db for unread notifs once and either generates one notif if only one or a bulk notif
+     * of a number of unread notifs if user has notifs enabled in db
      * @param uid recipient user's id
      */
     public void checkAndDisplayUnreadNotifications(String uid) {
-        db.collection("notifications")
-            .whereEqualTo("recipientId", uid)
-            .whereEqualTo("seen", false).get()
-            .addOnSuccessListener(notifs -> {
-                // One notif, can notify with its contents
-                int size = notifs.size();
-                if (size == 1) {
-                    Notification notification = notifs.getDocuments().get(0).toObject(Notification.class);
-                    String title = notification.getTitle();
-                    String message = notification.getMessage();
-
-                    Timestamp timestampRaw = notification.getTimestamp();
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                    String timestamp = dateFormat.format(timestampRaw.toDate());
-
-                    String fullMessage = message + "\n" + timestamp;
-
-                    generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
-                } else if (size > 1) {
-                    // many notifs, just tell multiple unread
-                    String title = "You have " + String.valueOf(size) + " unread notifications";
-                    String message = "Click here or go to the notifications section to see all messages you missed!";
-
-                    generateNotification(title, message, null, null, null);
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener(doc -> {
+                Boolean optOut = doc.getBoolean("optOutNotifications");
+                if (optOut != null && optOut) {
+                    Log.w(TAG, "User has opted out of receiving notifications");
+                    return;
                 }
+                db.collection("notifications")
+                    .whereEqualTo("recipientId", uid)
+                    .whereEqualTo("seen", false).get()
+                    .addOnSuccessListener(notifs -> {
+                        // One notif, can notify with its contents
+                        int size = notifs.size();
+                        if (size == 1) {
+                            Notification notification = notifs.getDocuments().get(0).toObject(Notification.class);
+                            String title = notification.getTitle();
+                            String message = notification.getMessage();
+
+                            Timestamp timestampRaw = notification.getTimestamp();
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                            String timestamp = dateFormat.format(timestampRaw.toDate());
+
+                            String fullMessage = message + "\n" + timestamp;
+
+                            generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                        } else if (size > 1) {
+                            // many notifs, just tell multiple unread
+                            String title = "You have " + String.valueOf(size) + " unread notifications";
+                            String message = "Click here or go to the notifications section to see all messages you missed!";
+
+                            generateNotification(title, message, null, null, null);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Failed to get notifications for user " + uid, e);
+                        Toast.makeText(myContext, "Failed to get notification for user", Toast.LENGTH_SHORT).show();
+                    });
             })
             .addOnFailureListener(e -> {
-                Log.w(TAG, "Failed to get notifications for user " + uid, e);
-                Toast.makeText(myContext, "Failed to get notification for user", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Failed to get user information for user ID " + uid + " to determine whether to send notifications: ", e);
             });
     }
 
     /**
-     * listens for new notifs while on the app, if found generates notif
+     * listens for new notifs while on the app, if found generates notif if user has notifs enabled in db
      * @param uid recipient user's id
      */
     public void listenForNotifications(String uid) {
@@ -231,21 +242,32 @@ public class NotificationCustomManager {
                             return;
                         }
 
-                        for (DocumentChange dc : value.getDocumentChanges()) {
-                            if (dc.getType() == ADDED) {
-                                Notification notification = dc.getDocument().toObject(Notification.class);
-                                String title = notification.getTitle();
-                                String message = notification.getMessage();
+                        db.collection("users").document(uid).get()
+                            .addOnSuccessListener(doc -> {
+                                Boolean optOut = doc.getBoolean("optOutNotifications");
+                                if (optOut == null || optOut) {
+                                    Log.w(TAG, "User has opted out of receiving notifications");
+                                    return;
+                                }
+                                for (DocumentChange dc : value.getDocumentChanges()) {
+                                    if (dc.getType() == ADDED) {
+                                        Notification notification = dc.getDocument().toObject(Notification.class);
+                                        String title = notification.getTitle();
+                                        String message = notification.getMessage();
 
-                                Timestamp timestampRaw = notification.getTimestamp();
-                                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                                String timestamp = dateFormat.format(timestampRaw.toDate());
+                                        Timestamp timestampRaw = notification.getTimestamp();
+                                        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                                        String timestamp = dateFormat.format(timestampRaw.toDate());
 
-                                String fullMessage = message + "\n" + timestamp;
+                                        String fullMessage = message + "\n" + timestamp;
 
-                                generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
-                            }
-                        }
+                                        generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                    }
+                                }
+                            })
+                            .addOnFailureListener(e2 -> {
+                                Log.e(TAG, "Failed to get user information for user ID " + uid + " to determine whether to send notifications: ", e2);
+                            });
                     }
                 });
     }
