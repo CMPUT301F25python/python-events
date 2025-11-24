@@ -47,9 +47,13 @@ public class RegistrationHistoryFragmentTest {
     private void launchFragment() {
         navController = new TestNavHostController(ApplicationProvider.getApplicationContext());
 
-        FragmentScenario<UserProfileFragment> scenario =
-                FragmentScenario.launchInContainer(UserProfileFragment.class, null, R.style.Theme_LotteryEvent, fragmentFactory);
+        FragmentScenario<UserProfileFragment> scenario = FragmentScenario.launchInContainer(UserProfileFragment.class, null, R.style.Theme_LotteryEvent, fragmentFactory);
 
+        /**
+         * Callback invoked when the {@link UserProfileFragment} instance becomes available.
+         * Configures the {@link TestNavHostController}.
+         * @param fragment the fragment instance created by FragmentScenario
+         */
         scenario.onFragment(fragment -> {
             navController.setGraph(R.navigation.nav_graph);
             navController.setCurrentDestination(R.id.userProfileFragment);
