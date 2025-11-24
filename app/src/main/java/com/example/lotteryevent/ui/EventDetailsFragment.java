@@ -17,6 +17,10 @@ import android.provider.Settings;
 import android.content.Intent;
 import android.net.Uri;
 import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -59,6 +63,7 @@ public class EventDetailsFragment extends Fragment {
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
     private LinearLayout buttonActionsContainer;
+    private ImageView eventPosterImage;
 
     private ArrayAdapter<String> listAdapter;
     private final ArrayList<String> dataList = new ArrayList<>();
@@ -150,6 +155,7 @@ public class EventDetailsFragment extends Fragment {
         btnActionNegative = v.findViewById(R.id.btn_action_negative);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
+        eventPosterImage = v.findViewById(R.id.event_poster_image);
     }
 
     private void setupClickListeners() {
@@ -162,6 +168,7 @@ public class EventDetailsFragment extends Fragment {
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 bindEventDetails(event);
+                bindEventPoster(event);
             }
         });
 
@@ -187,6 +194,37 @@ public class EventDetailsFragment extends Fragment {
             }
         });
     }
+
+    /**
+     * Binds the event poster image (if available) to the header ImageView.
+     * The poster is stored as a Base64-encoded string on the Event model.
+     *
+     * @param event The event whose poster should be displayed.
+     */
+    private void bindEventPoster(Event event) {
+        if (eventPosterImage == null) {
+            return;
+        }
+
+        String posterBase64 = event.getPosterBase64();
+        if (posterBase64 == null || posterBase64.trim().isEmpty()) {
+            // No poster set; you can either hide the ImageView or leave a placeholder
+            // eventPosterImage.setVisibility(View.GONE);
+            return;
+        }
+
+        try {
+            byte[] bytes = Base64.decode(posterBase64, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            eventPosterImage.setImageBitmap(bitmap);
+            // eventPosterImage.setVisibility(View.VISIBLE);
+        } catch (IllegalArgumentException e) {
+            // Invalid Base64; keep default/placeholder image
+            // Log if you want:
+            // Log.e("EventDetailsFragment", "Invalid poster Base64", e);
+        }
+    }
+
 
     /**
      * Renders the state that the ViewModel has already calculated.
