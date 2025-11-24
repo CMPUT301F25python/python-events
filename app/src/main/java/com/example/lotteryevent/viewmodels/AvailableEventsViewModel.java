@@ -182,6 +182,11 @@ public class AvailableEventsViewModel extends ViewModel {
         Timestamp regEndTs = event.getRegistrationEndDateTime();
         Timestamp eventStartTs = event.getEventStartDateTime();
 
+        // If any of these are missing, assume the event is not available
+        if (regStartTs == null || regEndTs == null || eventStartTs == null) {
+            return false;
+        }
+
         Date now = new Date();
         Date regStart = regStartTs.toDate();
         Date regEnd = regEndTs.toDate();
