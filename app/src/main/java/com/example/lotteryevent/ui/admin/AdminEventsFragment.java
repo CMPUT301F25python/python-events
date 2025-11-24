@@ -119,10 +119,8 @@ public class AdminEventsFragment extends Fragment {
      */
     private void hideParticipantsButtons(View view) {
         MaterialButton availableToday = view.findViewById(R.id.available_today_button);
-        MaterialButton newEvent = view.findViewById(R.id.new_event_button);
 
         availableToday.setVisibility(view.GONE);
-        newEvent.setVisibility(View.GONE);
 
         // Filter button depending on what we decide later
         view.findViewById(R.id.filter_button).setVisibility(View.GONE);

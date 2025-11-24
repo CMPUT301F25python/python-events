@@ -21,6 +21,7 @@ public class Event {
     private String organizerName;
     private String location;
     private Double price;
+    private String lotteryGuidelines;
     private String posterImageUrl;
     private String posterBase64;
     private Timestamp eventStartDateTime;
