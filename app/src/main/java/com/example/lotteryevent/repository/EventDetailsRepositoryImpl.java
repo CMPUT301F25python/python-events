@@ -119,6 +119,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
                     _attendeeCount.postValue((int) attendees);
                     _waitingListCount.postValue((int) waiting);
+
+                    Event current = _eventDetails.getValue();
+                    if (current != null) {
+                        current.setWaitingListCount((int) waiting);
+                        _eventDetails.postValue(current);
+                    }
                 });
     }
 
