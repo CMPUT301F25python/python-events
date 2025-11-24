@@ -129,11 +129,11 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     entrants.add(entrant);
                 }
 
-                Map<String, String> oldEntrantStatuses = new HashMap<>();
+                Map<String, String> oldEntrantsStatuses = new HashMap<>();
                 for (Entrant entrant : entrants) {
-                    oldEntrantStatuses.put(entrant.getUserId(), entrant.getStatus());
+                    oldEntrantsStatuses.put(entrant.getUserId(), entrant.getStatus());
                 }
-                _oldEntrantsStatus.postValue(gson.toJson(oldEntrantStatuses));
+                _oldEntrantsStatus.postValue(gson.toJson(oldEntrantsStatuses));
 
 
                 db.collection("events")

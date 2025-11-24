@@ -40,9 +40,7 @@ public class EventRepositoryImpl implements IEventRepository {
     // Private MutableLiveData that will be updated by this repository
     private final MutableLiveData<List<Event>> _events = new MutableLiveData<>();
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
-//    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
-    private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
@@ -56,12 +54,8 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Event> getUserEvent() {
         return _event;
     }
-//    @Override
-//    public LiveData<List<Entrant>> getEventEntrantCounts() { return _entrants; }
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
-    @Override
-    public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
     @Override
@@ -119,16 +113,6 @@ public class EventRepositoryImpl implements IEventRepository {
 
                         fetchEntrantsCountsTask(eventId);
                         _isLoading.postValue(false);
-
-//                        // After fetching the event, kick off the subcollection fetches.
-//                        // We use Tasks.whenAllComplete to know when all of them are done.
-//                        Task<QuerySnapshot> entrantsTask = fetchEntrantsTask(eventId);
-//
-//                        Tasks.whenAllComplete(entrantsTask)
-//                                .addOnCompleteListener(allTasks -> {
-//                                    _isLoading.postValue(false); // All loading is now finished.
-//                                });
-
                     } else {
                         _isLoading.postValue(false);
                         _userMessage.postValue("Error: Event not found.");
@@ -141,23 +125,12 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
-//    private Task<QuerySnapshot> fetchEntrantsTask(String eventId) {
-//        return db.collection("events").document(eventId).collection("entrants").get()
-//                .addOnSuccessListener(collection -> {
-//                    ArrayList<Entrant> entrantList = new ArrayList<>();
-//                    for (DocumentSnapshot doc : collection.getDocuments()) {
-//                        entrantList.add(doc.toObject(Entrant.class));
-//                    }
-//                    _entrants.postValue(entrantList);
-//                });
-//    }
-
     private void fetchEntrantsCountsTask(String eventId) {
         FireStoreUtilities.fillEntrantMetrics(
                 db,
                 eventId,
                 count -> _waitingListCount.postValue(count),
-                count -> _selectedUsersCount.postValue(count),
+                count -> {},
                 count -> _availableSpaceCount.postValue(count),
                 msg -> _userMessage.postValue(msg)
         );

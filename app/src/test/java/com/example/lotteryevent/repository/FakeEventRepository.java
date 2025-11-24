@@ -5,6 +5,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -23,7 +25,6 @@ public class FakeEventRepository implements IEventRepository {
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
     private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
-    private final MutableLiveData<Integer> _selectedUsersCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
@@ -78,13 +79,7 @@ public class FakeEventRepository implements IEventRepository {
     public LiveData<Event> getUserEvent() { return _event; }
 
     @Override
-    public LiveData<List<Entrant>> getEventEntrants() {return _entrants; }
-
-    @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
-
-    @Override
-    public LiveData<Integer> getSelectedUsersCount() { return _selectedUsersCount; }
 
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
@@ -130,7 +125,7 @@ public class FakeEventRepository implements IEventRepository {
      * current state of the in-memory list.
      */
     @Override
-    public void fetchEventAndEntrants(String eventId) {
+    public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
 
         if (shouldReturnError) {
@@ -164,7 +159,6 @@ public class FakeEventRepository implements IEventRepository {
                 }
             }
             _waitingListCount.postValue(waitingListCount);
-            _selectedUsersCount.postValue(selectedUsersCount);
             if (event.getCapacity() == null) {
                 _availableSpaceCount.postValue(null);
             } else {
@@ -178,18 +172,20 @@ public class FakeEventRepository implements IEventRepository {
     /**
      * Simulates updating attribute of entrants who have a specified old value
      * @param eventId event to access its entrants
+     * @param entrantId entrant of given ID to update
      * @param fieldName attribute of entrants to modify
-     * @param oldValue old value for only updating specific entrants
      * @param newValue new value to set
      */
     @Override
-    public void updateEntrantsAttributes(String eventId, String fieldName, Object oldValue, Object newValue) {
+    public Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue) {
+
         for (Entrant entrant : inMemoryEntrants) {
             // add the other fields as needed
-            if (Objects.equals(fieldName, "status") && Objects.equals(entrant.getStatus(), String.valueOf(oldValue))) {
+            if (Objects.equals(fieldName, "status") && Objects.equals(entrant.getUserId(), entrantId)) {
                 entrant.setStatus(String.valueOf(newValue));
             }
         }
+        return Tasks.forResult(null);
     }
 
     /**
@@ -237,4 +233,6 @@ public class FakeEventRepository implements IEventRepository {
     public void setInMemoryEvents(List<Event> events) {
         inMemoryEvents = (ArrayList<Event>) events;
     }
+
+    public ArrayList<Entrant> getInMemoryEntrants() { return inMemoryEntrants; }
 }

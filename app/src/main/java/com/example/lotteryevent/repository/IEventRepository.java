@@ -32,14 +32,6 @@ public interface IEventRepository {
      */
     LiveData<Event> getUserEvent();
 
-//    /**
-//
-//     Returns a LiveData object holding a list of entrants of a specific event which is specified through calling fetchEventAndEntrants().
-//     The UI can observe this to get real-time updates.
-//     @return LiveData list of Entrants.
-//     */
-//    LiveData<List<Entrant>> getEventEntrants();
-
     /**
 
      Returns a LiveData object holding the current loading state (true if loading, false otherwise).
@@ -61,15 +53,6 @@ public interface IEventRepository {
      @return LiveData Event.
      */
     LiveData<Integer> getWaitingListCount();
-
-    /**
-
-     Returns a LiveData object holding the count of the number of selected entrants invited from the
-     waiting list of a specified event which is specified through calling fetchEventAndEntrants().
-     The UI can observe this to get real-time updates.
-     @return LiveData Event.
-     */
-    LiveData<Integer> getSelectedUsersCount();
 
     /**
 

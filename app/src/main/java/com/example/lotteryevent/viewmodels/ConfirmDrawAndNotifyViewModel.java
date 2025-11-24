@@ -28,8 +28,9 @@ import java.util.Objects;
 public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private final NotificationCustomManager notifManager;
     private final IEventRepository repository;
+
     public LiveData<Event> event;
-//    public LiveData<List<Entrant>> eventEntrants;
+
     public LiveData<String> message;
 
     private final MediatorLiveData<String> _waitingListCount = new MediatorLiveData<>();
@@ -64,22 +65,17 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         this.repository = repository;
         this.event = repository.getUserEvent();
-//        this.eventEntrants = repository.getEventEntrants();
         this.message = repository.getMessage();
 
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
         _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
 
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
-//        _bottomUiState.addSource(repository.getEventEntrants(), event -> {
-//            calculateEntrantCounts();
-//            calculateUiState();
-//        });
         _bottomUiState.addSource(repository.isLoading(), isLoading -> {
             calculateEntrantCounts();
             calculateUiState();
         });
-        _bottomUiState.addSource(repository.getSelectedUsersCount(), count -> calculateUiState());
+        _bottomUiState.addSource(repository.getAvailableSpaceCount(), count -> calculateUiState());
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
 
@@ -100,7 +96,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private void calculateEntrantCounts() {
         Boolean isLoading = repository.isLoading().getValue();
         Event event = repository.getUserEvent().getValue();
-        Integer selectedUsersCount = repository.getSelectedUsersCount().getValue();
         Integer waitingListCount = repository.getWaitingListCount().getValue();
         Integer availableSpaceCount = repository.getAvailableSpaceCount().getValue();
 
@@ -129,7 +124,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
      */
     private void calculateUiState() {
         Event event = repository.getUserEvent().getValue();
-//        List<Entrant> entrants = repository.getEventEntrants().getValue();
         Boolean isLoading = repository.isLoading().getValue();
         if (isLoading != null && isLoading) {
             _bottomUiState.setValue(BottomUiState.loading());
@@ -173,16 +167,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             Task<DocumentReference> task = notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
             tasks.add(task);
         }
-//        for (Entrant entrant : Objects.requireNonNull(eventEntrants.getValue())) {
-//            String eventName = Objects.requireNonNull(event.getValue()).getName();
-//            String organizerId = event.getValue().getOrganizerId();
-//            String organizerName = event.getValue().getOrganizerName();
-//            String title = "Congratulations!";
-//            String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
-//            String type = "lottery_win";
-//            Task<DocumentReference> task = notifManager.sendNotification(entrant.getUserId(), title, message, type, eventId, eventName, organizerId, organizerName);
-//            tasks.add(task);
-//        }
 
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
