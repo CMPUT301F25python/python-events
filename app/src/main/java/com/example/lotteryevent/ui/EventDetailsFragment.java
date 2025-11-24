@@ -248,7 +248,6 @@ public class EventDetailsFragment extends Fragment {
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
         addAny("Max Attendees", event.getCapacity());
-        addAny("Waiting List Count", event.getWaitingListCount());
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
