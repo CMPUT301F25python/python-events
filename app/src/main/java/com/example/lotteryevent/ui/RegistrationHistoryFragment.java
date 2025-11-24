@@ -140,12 +140,18 @@ public class RegistrationHistoryFragment extends Fragment {
 
             String databaseStatus = item.getStatus();
 
-            // assigning user facing statusText (showing only invited or waiting)
+            // assigning user facing statusText
             String statusText;
             if ("invited".equalsIgnoreCase(databaseStatus)){
                 statusText = "Selected";
             } else if("waiting".equalsIgnoreCase(databaseStatus)){
                 statusText = "Not Selected";
+            } else if("cancelled".equalsIgnoreCase(databaseStatus)){
+                statusText = "Cancelled";
+            } else if("declined".equalsIgnoreCase(databaseStatus)){
+                statusText = "Declined";
+            } else if("accepted".equalsIgnoreCase(databaseStatus)){
+                statusText = "Accepted";
             } else {
                 continue; // skip all other statuses
             }
@@ -174,7 +180,7 @@ public class RegistrationHistoryFragment extends Fragment {
                 statusTextView.setTextColor(getResources().getColor(R.color.red));
             } else if (statusText.equals("Not Selected")) {
                 statusTextView.setTextColor(getResources().getColor(R.color.primary_green));
-            } else { // for future use
+            } else {
                 statusTextView.setTextColor(getResources().getColor(R.color.grey));
             }
 
