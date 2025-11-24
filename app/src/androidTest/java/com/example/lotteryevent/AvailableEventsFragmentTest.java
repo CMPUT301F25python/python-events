@@ -237,62 +237,78 @@ public class AvailableEventsFragmentTest {
     }
 
     /**
-     * This test verifies that when the fragment is destroyed, the ViewModel's onCleared method is
-     * called, which in turn calls the repository's removeListener method.
+     * This test verifies that when the "Available Today" button is clicked, only events that are
+     * currently available to register (open, registration window active, event not started, and
+     * waiting list not at capacity) are shown in the RecyclerView.
      */
     @Test
-    public void onCleared_callsRemoveListenerOnRepository() {
-        FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
-
-        // Destroy the fragment (and ViewModel) to trigger onCleared()
-        scenario.moveToState(androidx.lifecycle.Lifecycle.State.DESTROYED);
-
-        assertTrue(fakeRepository.wasRemoveListenerCalled());
-    }
-
-    /**
-     * This test verifies that when the "Available Today" button is clicked, only events that start
-     * today are shown in the RecyclerView.
-     */
-    @Test
-    public void availableTodayButton_filtersEventsToThoseStartingToday() {
+    public void availableTodayButton_filtersEventsToCurrentlyAvailableEvents() {
         List<Event> events = new ArrayList<>();
 
         Date now = new Date();
-        Timestamp todayTimestamp = new Timestamp(now);
-
         Calendar calendar = Calendar.getInstance();
+
+        // Registration start: yesterday
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
+        Date regStartDate = calendar.getTime();
+        Timestamp regStartTimestamp = new Timestamp(regStartDate);
+
+        // Registration end: tomorrow
         calendar.setTime(now);
         calendar.add(Calendar.DAY_OF_YEAR, 1);
-        Date tomorrowDate = calendar.getTime();
-        Timestamp tomorrowTimestamp = new Timestamp(tomorrowDate);
+        Date regEndDate = calendar.getTime();
+        Timestamp regEndTimestamp = new Timestamp(regEndDate);
 
-        Event todayEvent = new Event();
-        todayEvent.setEventId("today-id");
-        todayEvent.setName("Today Event");
-        todayEvent.setEventStartDateTime(todayTimestamp);
-        events.add(todayEvent);
+        // Event start: tomorrow
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date eventStartDate = calendar.getTime();
+        Timestamp eventStartTimestamp = new Timestamp(eventStartDate);
 
-        Event tomorrowEvent = new Event();
-        tomorrowEvent.setEventId("tomorrow-id");
-        tomorrowEvent.setName("Tomorrow Event");
-        tomorrowEvent.setEventStartDateTime(tomorrowTimestamp);
-        events.add(tomorrowEvent);
+        // Event that IS currently available
+        Event availableEvent = new Event();
+        availableEvent.setEventId("available-id");
+        availableEvent.setName("Available Event");
+        availableEvent.setStatus("open");
+        availableEvent.setRegistrationStartDateTime(regStartTimestamp);
+        availableEvent.setRegistrationEndDateTime(regEndTimestamp);
+        availableEvent.setEventStartDateTime(eventStartTimestamp);
+        availableEvent.setWaitingListLimit(10);
+        availableEvent.setWaitinglistCount(2);
+        events.add(availableEvent);
+
+        // Event that is NOT currently available: registration has already ended
+        calendar.setTime(now);
+        calendar.add(Calendar.DAY_OF_YEAR, -2);
+        Date pastRegEndDate = calendar.getTime();
+        Timestamp pastRegEndTimestamp = new Timestamp(pastRegEndDate);
+
+        Event closedRegistrationEvent = new Event();
+        closedRegistrationEvent.setEventId("closed-reg-id");
+        closedRegistrationEvent.setName("Closed Registration Event");
+        closedRegistrationEvent.setStatus("open");
+        closedRegistrationEvent.setRegistrationStartDateTime(regStartTimestamp);
+        closedRegistrationEvent.setRegistrationEndDateTime(pastRegEndTimestamp);
+        closedRegistrationEvent.setEventStartDateTime(eventStartTimestamp);
+        closedRegistrationEvent.setWaitingListLimit(10);
+        closedRegistrationEvent.setWaitinglistCount(2);
+        events.add(closedRegistrationEvent);
 
         fakeRepository.setEventsToReturn(events);
 
         FragmentScenario<AvailableEventsFragment> scenario = launchFragment();
 
         // Both events should be visible before applying the filter
-        onView(withText("Today Event")).check(matches(isDisplayed()));
-        onView(withText("Tomorrow Event")).check(matches(isDisplayed()));
+        onView(withText("Available Event")).check(matches(isDisplayed()));
+        onView(withText("Closed Registration Event")).check(matches(isDisplayed()));
 
         // Click "Available Today" button to enable the availability filter
         onView(withId(R.id.available_today_button)).perform(click());
 
-        // Assert: only the event starting today remains visible
-        onView(withText("Today Event")).check(matches(isDisplayed()));
-        onView(withText("Tomorrow Event")).check(doesNotExist());
+        // Assert: only the currently available event remains visible
+        onView(withText("Available Event")).check(matches(isDisplayed()));
+        onView(withText("Closed Registration Event")).check(doesNotExist());
     }
 
     /**

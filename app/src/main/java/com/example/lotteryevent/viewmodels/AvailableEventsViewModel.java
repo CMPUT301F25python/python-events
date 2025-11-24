@@ -165,8 +165,7 @@ public class AvailableEventsViewModel extends ViewModel {
      * 1. Event must be open (not finalized).
      * 2. Registration start date has passed.
      * 3. Registration end date has not passed.
-     * 4. Event start date has not passed.
-     * 5. Waiting list is not at capacity.
+     * 4. Event end date has not passed.
      * @param event
      * @return boolean: true if event is available, false otherwise
      */
@@ -180,68 +179,34 @@ public class AvailableEventsViewModel extends ViewModel {
         // Check registration and event dates
         Timestamp regStartTs = event.getRegistrationStartDateTime();
         Timestamp regEndTs = event.getRegistrationEndDateTime();
-        Timestamp eventStartTs = event.getEventStartDateTime();
-
-        // If any of these are missing, assume the event is not available
-        if (regStartTs == null || regEndTs == null || eventStartTs == null) {
-            return false;
-        }
+        Timestamp eventEndTs = event.getEventEndDateTime();
 
         Date now = new Date();
-        Date regStart = regStartTs.toDate();
-        Date regEnd = regEndTs.toDate();
-        Date eventStart = eventStartTs.toDate();
 
-        // 2. Has the registration start date passed? (regStart <= now)
-        if (now.before(regStart)) {
-            return false;
+        // 2. Registration start date: if specified and in the future, registration hasn't opened yet
+        if (regStartTs != null) {
+            Date regStart = regStartTs.toDate();
+            if (now.before(regStart)) {
+                return false;
+            }
         }
 
-        // 3. Has the registration end date not passed? (now <= regEnd)
-        if (now.after(regEnd)) {
-            return false;
+        // 3. Registration end date: if specified and in the past, registration has closed
+        if (regEndTs != null) {
+            Date regEnd = regEndTs.toDate();
+            if (now.after(regEnd)) {
+                return false;
+            }
         }
 
-        // 4. Has the event's start date not passed? (now <= eventStart)
-        if (now.after(eventStart)) {
-            return false;
-        }
-
-        // 5. Waiting list is not at capacity
-        if (isWaitingListAtCapacity(event)) {
-            return false;
+        // 4. Event end date: if specified and in the past, the event is over
+        if (eventEndTs != null) {
+            Date eventEnd = eventEndTs.toDate();
+            if (now.after(eventEnd)) {
+                return false;
+            }
         }
 
         return true;
-    }
-
-    /**
-     * Checks if waiting list is at capacity
-     * @param event
-     * @return boolean: true if waiting list is at capacity, false otherwise
-     */
-    private boolean isWaitingListAtCapacity(Event event) {
-        Integer waitingListLimit = event.getWaitingListLimit();
-        Integer waitingListCount = event.getWaitinglistCount();
-
-        // Capacity not enforced if no limit is given
-        if (waitingListLimit == null || waitingListLimit <= 0) {
-            return false;
-        }
-
-        // Field doesn't exist (no one has joined waiting list yet)
-        if (waitingListCount == null) {
-            return false;
-        }
-
-        // Capacity reached
-        return waitingListCount >= waitingListLimit;
-    }
-
-
-    @Override
-    protected void onCleared() {
-        super.onCleared();
-        availableEventsRepository.removeListener();
     }
 }

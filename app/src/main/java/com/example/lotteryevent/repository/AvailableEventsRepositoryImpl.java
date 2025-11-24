@@ -33,7 +33,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
      * Returns a LiveData object holding the list of available events.
      * The UI can observe this to get real-time updates.
      *
-     * @return
+     * @return LiveData list of Events.
      */
     @Override
     public LiveData<List<Event>> getAvailableEvents() {
@@ -43,7 +43,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
     /**
      * Returns a LiveData object holding the current loading state (true if loading, false otherwise).
      *
-     * @return
+     * @return LiveData Boolean representing the loading state.
      */
     @Override
     public LiveData<Boolean> isLoading() {
@@ -53,7 +53,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
     /**
      * Returns a LiveData object holding any messages (success or error) that occur during data fetching.
      *
-     * @return
+     * @return LiveData String containing an message.
      */
     @Override
     public LiveData<String> getMessage() {

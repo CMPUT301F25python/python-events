@@ -27,10 +27,7 @@ public class Event {
     private Timestamp registrationStartDateTime;
     private Timestamp registrationEndDateTime;
     private Integer capacity;
-    private String lotteryGuidelines;
     private Integer waitingListLimit;
-    private Integer waitinglistCount;
-    private boolean isGeoLocationRequired;
     private boolean geoLocationRequired;
     private String status;
 
@@ -213,22 +210,6 @@ public class Event {
     public void setWaitingListLimit(Integer waitingListLimit) { this.waitingListLimit = waitingListLimit; }
 
     /**
-     * Gets the current number of people on the waiting list.
-     * This is populated from the Firestore field "waitinglistCount".
-     */
-    public Integer getWaitinglistCount() {
-        return waitinglistCount;
-    }
-
-    /**
-     * Sets the current number of people on the waiting list.
-     */
-    public void setWaitinglistCount(Integer waitinglistCount) {
-        this.waitinglistCount = waitinglistCount;
-    }
-
-
-    /**
      * Checks if geolocation is required for the event.
      * @return True if geolocation is required, false otherwise.
      */
@@ -260,19 +241,4 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
-    /**
-     * Gets the organizer-defined guidelines for the lottery selection process.
-     * @return The lottery guidelines.
-     */
-    public String getLotteryGuidelines() {
-        return lotteryGuidelines;
-    }
-
-    /**
-     * Sets the organizer-defined guidelines for the lottery selection process.
-     * @param lotteryGuidelines The lottery guidelines.
-     */
-    public void setLotteryGuidelines(String lotteryGuidelines) {
-        this.lotteryGuidelines = lotteryGuidelines;
-    }
 }

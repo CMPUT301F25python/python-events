@@ -1,8 +1,12 @@
 package com.example.lotteryevent.repository;
 
 import android.util.Log;
+
+import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -13,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 import java.util.HashMap;
 import java.util.Map;
+import android.content.Context;
 
 public class UserRepositoryImpl implements IUserRepository {
 
@@ -21,6 +26,7 @@ public class UserRepositoryImpl implements IUserRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private final MutableLiveData<User> _currentUser = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _notifPreference = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -30,11 +36,11 @@ public class UserRepositoryImpl implements IUserRepository {
      * If a user is signed in, it fetches their profile from Firestore.
      * If the user signs out, it updates the current user LiveData to null.
      */
-    public UserRepositoryImpl() {
+    public UserRepositoryImpl(boolean systemNotifEnabled) {
         mAuth.addAuthStateListener(firebaseAuth -> {
             FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
             if (firebaseUser != null) {
-                fetchFirestoreUserProfile(firebaseUser.getUid());
+                fetchFirestoreUserProfile(firebaseUser.getUid(), systemNotifEnabled);
             } else {
                 _currentUser.postValue(null);
             }
@@ -42,15 +48,17 @@ public class UserRepositoryImpl implements IUserRepository {
     }
 
     /**
-     * Fetches a user's profile from Firestore using their UID.
+     * Fetches a user's profile from Firestore using their UID and their notification preference
+     * (based on their preference stored in db as well as device's setting).
      * <p>
      * On success, updates {@code _currentUser} LiveData with the {@link User} object.
      * On failure, posts an error to {@code _userMessage} and logs the exception.
      * The loading state is managed via {@code _isLoading}.
      *
      * @param uid The unique identifier for the user's profile.
+     * @param systemNotifEnabled device's system level app notif setting
      */
-    private void fetchFirestoreUserProfile(String uid) {
+    private void fetchFirestoreUserProfile(String uid, boolean systemNotifEnabled) {
         _isLoading.setValue(true);
         db.collection("users").document(uid).get()
                 .addOnCompleteListener(task -> {
@@ -58,6 +66,14 @@ public class UserRepositoryImpl implements IUserRepository {
                     if (task.isSuccessful() && task.getResult() != null) {
                         User user = task.getResult().toObject(User.class);
                         _currentUser.postValue(user);
+                        if (user != null) {
+                            Boolean optOut = user.getOptOutNotifications();
+                            if (optOut == null) {
+                                optOut = true;
+                            }
+                            boolean userNotifEnabled = !optOut;
+                            fetchNotifPreference(userNotifEnabled, systemNotifEnabled);
+                        }
                     } else {
                         _userMessage.postValue("Failed to load user profile.");
                         Log.e(TAG, "Error fetching user profile", task.getException());
@@ -65,10 +81,27 @@ public class UserRepositoryImpl implements IUserRepository {
                 });
     }
 
+    /**
+     * sets notification preference of user depending on the user's db doc's preference
+     * and system's preference
+     * @param userNotifEnabled user's preference set in db
+     * @param systemNotifEnabled device's system level notif preference for the app
+     */
+    private void fetchNotifPreference(boolean userNotifEnabled, boolean systemNotifEnabled) {
+        if (userNotifEnabled && systemNotifEnabled) {
+            _notifPreference.postValue(true);
+        } else {
+            _notifPreference.postValue(false);
+        }
+    }
+
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
+
+    @Override
+    public LiveData<Boolean> getNotifPreference() { return _notifPreference; }
 
     @Override
     public LiveData<String> getMessage() {
@@ -247,6 +280,45 @@ public class UserRepositoryImpl implements IUserRepository {
                         batch.delete(eventDoc.getReference());
                     }
                     return batch.commit();
+                });
+    }
+
+    /**
+     * Updates a user's notif preference in db, clears notifs if now disabled,
+     * notifies of missing notifs if db preference and system level preference
+     * are both true, and sends error if trying to enable but system level is disabled.
+     * @param enabled checkbox value (user's preference for db)
+     * @param systemNotifPreference system level notif preference
+     * @param notificationCustomManager manager for notifs needed to notify/clear notifs
+     */
+    @Override
+    public void updateNotifPreference(Boolean enabled, boolean systemNotifPreference, NotificationCustomManager notificationCustomManager) {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser == null) {
+            _userMessage.postValue("No user is signed in to update.");
+            return;
+        }
+        _isLoading.setValue(true);
+
+        db.collection("users").document(firebaseUser.getUid()).update("optOutNotifications", !enabled)
+                .addOnSuccessListener(aVoid -> {
+                    _isLoading.setValue(false);
+                    fetchNotifPreference(enabled, systemNotifPreference);
+                    if (!enabled) {
+                        _userMessage.postValue("Notifications disabled.");
+                        notificationCustomManager.clearNotifications();
+                    } else if (systemNotifPreference) {
+                        _userMessage.postValue("Notifications enabled.");
+                        notificationCustomManager.checkAndDisplayUnreadNotifications(firebaseUser.getUid());
+                    } else {
+                        _userMessage.postValue("ERROR: Please allow notifications for the app in settings!");
+                    }
+                    Log.d(TAG, "Notification preferences updated successfully in db.");
+                })
+                .addOnFailureListener(e -> {
+                    _isLoading.setValue(false);
+                    _userMessage.postValue("Notification preference update failed: " + e.getMessage());
+                    Log.e(TAG, "Error updating notification preference", e);
                 });
     }
 }
