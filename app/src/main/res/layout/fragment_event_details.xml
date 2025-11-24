@@ -12,7 +12,9 @@
         android:layout_height="200dp"
         android:adjustViewBounds="true"
         android:scaleType="centerCrop"
-        tools:src="@drawable/ic_image_placeholder"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/empty_poster_image"
+        tools:src="@drawable/empty_poster_image"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
