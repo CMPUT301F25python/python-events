@@ -11,4 +11,11 @@ public interface IOrganizerEventRepository {
     LiveData<String> getMessage();
 
     void fetchEventAndCapacityStatus(String eventId);
+
+    /**
+     * Updates the poster image (Base64) for the specified event.
+     * @param eventId The ID of the event to update.
+     * @param posterBase64 The Base64-encoded poster image data.
+     */
+    void updateEventPoster(String eventId, String posterBase64);
 }

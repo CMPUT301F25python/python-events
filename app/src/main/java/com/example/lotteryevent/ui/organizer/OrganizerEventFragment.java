@@ -1,12 +1,15 @@
 package com.example.lotteryevent.ui.organizer;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +33,7 @@ import com.example.lotteryevent.repository.OrganizerEventRepositoryImpl;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.OrganizerEventViewModel;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 /**
@@ -43,12 +47,16 @@ import java.io.OutputStream;
 public class OrganizerEventFragment extends Fragment {
 
     private static final String TAG = "OrganizerEventPage";
+    private static final int REQUEST_POSTER_IMAGE = 2001;
+
     private OrganizerEventViewModel viewModel;
     private String eventId;
     private ViewModelProvider.Factory viewModelFactory;
 
     // UI Components
     private TextView eventNameLabel;
+    private ImageView posterImage;
+    private Button uploadPosterButton;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
     private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
@@ -140,8 +148,22 @@ public class OrganizerEventFragment extends Fragment {
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 eventNameLabel.setText(event.getName());
+
+                // Display poster image if Base64 data is available
+                String posterBase64 = event.getPosterBase64();
+                if (posterBase64 != null && !posterBase64.isEmpty()) {
+                    try {
+                        byte[] bytes = Base64.decode(posterBase64, Base64.DEFAULT);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        posterImage.setImageBitmap(bitmap);
+                    } catch (IllegalArgumentException e) {
+                        Log.e(TAG, "Invalid poster Base64 data", e);
+                        // Leave placeholder image
+                    }
+                }
             }
         });
+
 
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
@@ -195,6 +217,8 @@ public class OrganizerEventFragment extends Fragment {
      */
     private void initializeViews(View view) {
         eventNameLabel = view.findViewById(R.id.event_name_label);
+        posterImage = view.findViewById(R.id.poster_image);
+        uploadPosterButton = view.findViewById(R.id.upload_poster_button);
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         buttonContainer = view.findViewById(R.id.organizer_button_container);
         btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
@@ -211,7 +235,7 @@ public class OrganizerEventFragment extends Fragment {
      */
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(v -> viewModel.generateQrCode(eventId));
-
+        uploadPosterButton.setOnClickListener(v -> openPosterPicker());
         btnRunDraw.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("eventId", eventId);
@@ -257,7 +281,59 @@ public class OrganizerEventFragment extends Fragment {
         btnFinalize.setOnClickListener(notImplementedListener);
     }
 
-    // --- UI Helper Methods ---
+    /**
+     * Launches an image picker so the organizer can select a poster image for the event.
+     */
+    private void openPosterPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_POSTER_IMAGE);
+    }
+
+    /**
+     * Handles results from started activities, including the image picker for the event poster.
+     * @param requestCode The original request code used to start the activity.
+     * @param resultCode The result code returned by the activity.
+     * @param data The returned intent data, which may contain the selected image Uri.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_POSTER_IMAGE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+
+                // Update the UI preview
+                posterImage.setImageBitmap(bitmap);
+
+                // Encode to Base64 and send to ViewModel to save on the event
+                String posterBase64 = encodeBitmapToBase64(bitmap);
+                if (eventId != null && !eventId.isEmpty()) {
+                    viewModel.updateEventPoster(eventId, posterBase64);
+                    Toast.makeText(getContext(), "Event poster updated.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Unable to update poster: missing event ID.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load poster image", e);
+                Toast.makeText(getContext(), "Failed to load image", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Encodes the given {@link Bitmap} as a Base64 string.
+     * @param bitmap The bitmap to encode.
+     * @return A Base64-encoded representation of the bitmap.
+     */
+    private String encodeBitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+        byte[] bytes = baos.toByteArray();
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
 
     /**
      * Displays a dialog containing the generated QR code bitmap.

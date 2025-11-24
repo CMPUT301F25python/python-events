@@ -258,4 +258,17 @@ public class Event {
     public void setLotteryGuidelines(String lotteryGuidelines) {
         this.lotteryGuidelines = lotteryGuidelines;
     }
+
+    /**
+     * Gets the Base64-encoded contents of the event poster image.
+     * @return The Base64 poster image data, or {@code null} if none is set.
+     */
+    public String getPosterBase64() { return posterBase64; }
+
+    /**
+     * Sets the Base64-encoded contents of the event poster image.
+     * @param posterBase64 The Base64 poster image data.
+     */
+    public void setPosterBase64(String posterBase64) { this.posterBase64 = posterBase64; }
+
 }

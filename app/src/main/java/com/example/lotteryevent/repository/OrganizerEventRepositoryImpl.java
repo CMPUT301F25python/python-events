@@ -77,4 +77,21 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
             _isLoading.postValue(false); // All loading is now finished.
         });
     }
+
+    @Override
+    public void updateEventPoster(String eventId, String posterBase64) {
+        if (eventId == null || eventId.isEmpty()) {
+            Log.e("OrganizerEventRepo", "updateEventPoster: invalid eventId");
+            return;
+        }
+
+        db.collection("events")
+                .document(eventId)
+                .update("posterBase64", posterBase64)
+                .addOnSuccessListener(aVoid ->
+                        Log.d("OrganizerEventRepo", "Poster updated successfully for event: " + eventId))
+                .addOnFailureListener(e ->
+                        Log.e("OrganizerEventRepo", "Failed to update poster for event: " + eventId, e));
+    }
+
 }

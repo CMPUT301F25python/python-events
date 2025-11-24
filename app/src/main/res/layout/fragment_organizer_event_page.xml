@@ -27,8 +27,8 @@
 
         <ImageView
             android:id="@+id/poster_image"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="175dp"
+            android:layout_height="175dp"
             android:layout_marginTop="10dp"
             android:contentDescription="Event Poster"
             android:scaleType="centerCrop"
@@ -57,11 +57,11 @@
             style="@style/PinkButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="20dp"
             android:text="@string/qr_code"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/event_name_label" />
+            app:layout_constraintTop_toBottomOf="@+id/upload_poster_button" />
 
         <LinearLayout
             android:id="@+id/organizer_button_container"
