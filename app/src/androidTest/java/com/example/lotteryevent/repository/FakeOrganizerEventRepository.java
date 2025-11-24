@@ -79,4 +79,17 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
 
         _isLoading.postValue(false);
     }
+
+    /**
+     * No-op implementation for updating the event poster.
+     * Fragment tests don't need to inspect this behavior; they only
+     * require the method to exist so the interface compiles.
+     *
+     * @param eventId The ID of the event.
+     * @param posterBase64 The Base64-encoded poster image.
+     */
+    @Override
+    public void updateEventPoster(String eventId, String posterBase64) {
+        // No-op for fragment tests
+    }
 }

@@ -87,7 +87,7 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
 
         db.collection("events")
                 .document(eventId)
-                .update("posterBase64", posterBase64)
+                .update("posterImageUrl", posterBase64)
                 .addOnSuccessListener(aVoid ->
                         Log.d("OrganizerEventRepo", "Poster updated successfully for event: " + eventId))
                 .addOnFailureListener(e ->

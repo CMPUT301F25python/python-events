@@ -23,7 +23,6 @@ public class Event {
     private Double price;
     private String lotteryGuidelines;
     private String posterImageUrl;
-    private String posterBase64;
     private Timestamp eventStartDateTime;
     private Timestamp eventEndDateTime;
     private Timestamp registrationStartDateTime;
@@ -263,12 +262,12 @@ public class Event {
      * Gets the Base64-encoded contents of the event poster image.
      * @return The Base64 poster image data, or {@code null} if none is set.
      */
-    public String getPosterBase64() { return posterBase64; }
+    public String getPosterBase64() { return posterImageUrl; }
 
     /**
      * Sets the Base64-encoded contents of the event poster image.
      * @param posterBase64 The Base64 poster image data.
      */
-    public void setPosterBase64(String posterBase64) { this.posterBase64 = posterBase64; }
+    public void setPosterBase64(String posterBase64) { this.posterImageUrl = posterBase64; }
 
 }

@@ -9,10 +9,15 @@ import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.firebase.Timestamp;
+import android.widget.ImageView;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -305,4 +310,72 @@ public class EventDetailsFragmentTest {
         // Since no permission was needed, the join happened immediately.
         onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
     }
+
+    /**
+     * Test Case 13: When an event has no poster image set, the details page
+     * shows a placeholder image in the poster ImageView.
+     */
+    @Test
+    public void eventWithoutPoster_showsPlaceholderImage() {
+        // Arrange: ensure the in-memory event has no poster image.
+        fakeRepository.resetToDefaultState();
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(null);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView is present and has a drawable (placeholder).
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Placeholder drawable should be set when no poster is available", drawable);
+        });
+    }
+
+    /**
+     * Test Case 14: When an event has a poster image set (Base64),
+     * the details page displays it as a bitmap in the poster ImageView.
+     */
+    @Test
+    public void eventWithPoster_showsPosterBitmap() {
+        // Arrange: give the in-memory event a small valid Base64 PNG.
+        fakeRepository.resetToDefaultState();
+        // 1x1 transparent PNG (small, valid Base64)
+        String base64Png =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAA" +
+                        "AAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(base64Png);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView now has a BitmapDrawable.
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Poster drawable should be set for events with a poster", drawable);
+            assertTrue(
+                    "Poster drawable should be a BitmapDrawable when Base64 poster is provided",
+                    drawable instanceof BitmapDrawable
+            );
+        });
+    }
+
 }
