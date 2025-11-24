@@ -90,4 +90,5 @@
     <string name="profiles">Profiles</string>
     <string name="admin_events">Admin Events</string>
     <string name="sent_notifications">Sent Notifications</string>
+    <string name="delete_event">Delete Event</string>
 </resources>

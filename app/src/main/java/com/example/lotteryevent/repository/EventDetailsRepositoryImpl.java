@@ -16,6 +16,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     private static final String TAG = "EventDetailsRepository";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private final MutableLiveData<Boolean> _isAdmin = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> _isDeleted = new MutableLiveData<>(false);
 
     private final MutableLiveData<Event> _eventDetails = new MutableLiveData<>();
     private final MutableLiveData<Entrant> _entrantStatus = new MutableLiveData<>();
@@ -44,7 +47,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     public LiveData<Integer> getAttendeeCount() { return _attendeeCount; }
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
-
+    @Override
+    public LiveData<Boolean> getIsAdmin() { return _isAdmin; }
+    @Override
+    public LiveData<Boolean> getIsDeleted() { return _isDeleted; }
 
     @Override
     public void fetchEventAndEntrantDetails(String eventId) {
@@ -201,5 +207,91 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
      */
     private DocumentReference getEntrantDocRef(String eventId, String userId) {
         return db.collection("events").document(eventId).collection("entrants").document(userId);
+    }
+
+    /**
+     * Verifies if the specified user holds administrative privileges by querying the "users" collection.
+     * <p>
+     * The result of this check updates the {@link #getIsAdmin()} LiveData observable.
+     * If the user ID is null, the document does not exist, or the "admin" field is missing,
+     * the status is set to false.
+     *
+     * @param userId The unique identifier (UID) of the user to verify.
+     */
+    @Override
+    public void checkAdminStatus(String userId) {
+        if (userId == null) {
+            _isAdmin.postValue(false);
+            return;
+        }
+
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Boolean admin = documentSnapshot.getBoolean("admin");
+                        // Update the LiveData so the UI observes the change
+                        _isAdmin.postValue(admin != null && admin);
+                    } else {
+                        _isAdmin.postValue(false);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "checkAdminStatus failed", e);
+                    _isAdmin.postValue(false);
+                });
+    }
+
+    /**
+     * Permanently deletes the specified event and its associated subcollections (e.g., 'entrants').
+     * <p>
+     * This operation performs a batch write to ensure data consistency:
+     * <ol>
+     *     <li>Fetches all documents in the 'entrants' subcollection.</li>
+     *     <li>Adds delete operations for each entrant to a batch.</li>
+     *     <li>Adds the delete operation for the parent event document to the batch.</li>
+     *     <li>Commits the batch atomically.</li>
+     * </ol>
+     * On success, the {@link #getIsDeleted()} LiveData is set to true to trigger navigation.
+     *
+     * @param eventId The unique identifier of the event to be deleted.
+     */
+    @Override
+    public void deleteEvent(String eventId) {
+        _isLoading.postValue(true);
+
+        CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
+
+        // 1. First, get all entrants
+        entrantsRef.get().addOnSuccessListener(querySnapshot -> {
+            // Create a batch writer
+            WriteBatch batch = db.batch();
+
+            // Add every entrant delete to the batch
+            for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                batch.delete(doc.getReference());
+            }
+
+            // 2. Add the Parent Event delete to the batch
+            DocumentReference eventRef = db.collection("events").document(eventId);
+            batch.delete(eventRef);
+
+            // 3. Commit everything at once
+            batch.commit()
+                    .addOnSuccessListener(aVoid -> {
+                        _isLoading.postValue(false);
+                        _isDeleted.postValue(true);
+                        _message.postValue("Event deleted successfully.");
+                    })
+                    .addOnFailureListener(e -> {
+                        _isLoading.postValue(false);
+                        _isDeleted.postValue(false);
+                        _message.postValue("Failed to delete event data.");
+                        Log.e(TAG, "deleteEvent batch failed", e);
+                    });
+
+        }).addOnFailureListener(e -> {
+            _isLoading.postValue(false);
+            Log.e(TAG, "Failed to fetch entrants for deletion", e);
+        });
     }
 }
