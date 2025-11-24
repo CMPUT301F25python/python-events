@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.play.services.location)
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
