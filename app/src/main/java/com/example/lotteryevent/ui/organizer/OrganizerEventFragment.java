@@ -252,11 +252,16 @@ public class OrganizerEventFragment extends Fragment {
         btnInvitedParticipants.setOnClickListener(entrantListNavListener);
         btnCancelledParticipants.setOnClickListener(entrantListNavListener);
 
+        btnViewEntrantMap.setOnClickListener(v -> {
+            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
+                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
+            Navigation.findNavController(v).navigate(action);
+        });
+
         View.OnClickListener notImplementedListener = v -> {
             Button b = (Button) v;
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
         };
-        btnViewEntrantMap.setOnClickListener(notImplementedListener);
         btnFinalize.setOnClickListener(notImplementedListener);
     }
 
