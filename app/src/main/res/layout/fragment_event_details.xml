@@ -26,6 +26,15 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+        <!-- Waiting list count -->
+        <TextView
+            android:id="@+id/text_waiting_list_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"
+            tools:text="Waiting list: " />
+
         <ProgressBar
             android:id="@+id/bottom_progress_bar"
             android:layout_width="wrap_content"
