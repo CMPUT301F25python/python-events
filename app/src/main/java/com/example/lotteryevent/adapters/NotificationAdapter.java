@@ -141,7 +141,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             // Set a click listener on the entire tile view.
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
-                v.setBackgroundColor(Color.rgb(230, 232, 230));
+                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
                 // Ensure the position is valid and a listener is registered before triggering the callback.
                 if (listener != null && position != RecyclerView.NO_POSITION) {
                     listener.onItemClick(notificationsList.get(position));
@@ -164,7 +164,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             String timestamp = dateFormat.format(timestampRaw.toDate());
 
             if (notification.getSeen() == true) {
-                notifications_material_card.setBackgroundColor(Color.rgb(230, 232, 230));
+                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
             }
 
             this.message.setText(message);
