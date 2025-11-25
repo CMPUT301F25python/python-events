@@ -21,13 +21,16 @@ import org.junit.runner.RunWith;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Instrumented UI Test for {@link OrganizerEventFragment}.
@@ -117,6 +120,53 @@ public class OrganizerEventFragmentTest {
         onView(withId(R.id.organizer_button_container)).check(matches(isDisplayed()));
         onView(withId(R.id.btnRunDraw)).check(matches(not(isDisplayed())));
         onView(withId(R.id.btnFinalize)).check(matches(not(isDisplayed())));
+        onView(withId(R.id.btnExportCSV)).check(matches(isDisplayed()));
+    }
+
+    @Test
+    public void clickFinalizeButton_showsDialogAndFinalizesEvent() {
+        // Arrange: Event is open
+        Event openEvent = new Event();
+        openEvent.setStatus("open");
+        fakeRepository.setEventToReturn(openEvent);
+        launchFragment();
+
+        // Act: Click Finalize
+        onView(withId(R.id.btnFinalize)).perform(click());
+
+        // Assert: Dialog appears
+        onView(withText("Finalize Event")).check(matches(isDisplayed()));
+        onView(withText("Are you sure you want to finalize this event? \n\n" +
+                "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
+                "This action cannot be undone."))
+                .check(matches(isDisplayed()));
+
+        // Act: Click "Finalize" inside the dialog
+        onView(withId(android.R.id.button1))
+                .inRoot(isDialog())
+                .perform(click());
+
+        // Assert: Repository method was called
+        assertTrue("Repository finalizeEvent should have been called", fakeRepository.wasFinalizeCalled);
+    }
+
+    @Test
+    public void clickFinalizeButton_cancelDialog_doesNotFinalize() {
+        // Arrange
+        Event openEvent = new Event();
+        openEvent.setStatus("open");
+        fakeRepository.setEventToReturn(openEvent);
+        launchFragment();
+
+        // Act
+        onView(withId(R.id.btnFinalize)).perform(click());
+        // Click Cancel (Standard Negative Button is android.R.id.button2)
+        onView(withId(android.R.id.button2))
+                .inRoot(isDialog())
+                .perform(click());
+
+        // Assert
+        assertFalse("Repository finalizeEvent should NOT have been called", fakeRepository.wasFinalizeCalled);
     }
 
     @Test
