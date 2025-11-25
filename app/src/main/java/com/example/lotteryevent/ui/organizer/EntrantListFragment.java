@@ -178,7 +178,13 @@ public class EntrantListFragment extends Fragment {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
-                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
+                sendNotificationButton.setOnClickListener(v -> {
+                    if (list.isEmpty()) {
+                        Toast.makeText(getContext(), "No entrants to notify.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showNotificationDialog();
+                    }
+                });
             }
         });
         // observe user message LiveData and display it as a Toast
