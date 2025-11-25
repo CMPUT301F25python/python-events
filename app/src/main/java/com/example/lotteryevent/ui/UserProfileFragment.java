@@ -49,6 +49,7 @@ public class UserProfileFragment extends Fragment {
     private CheckBox toggleAllowNotifs;
     private Button updateInfoButton;
     private Button deleteProfileButton;
+    private Button registrationHistoryButton;
 
     // --- ViewModel ---
     private UserProfileViewModel viewModel;
@@ -142,6 +143,7 @@ public class UserProfileFragment extends Fragment {
         toggleAllowNotifs = view.findViewById(R.id.notifications_checkbox);
         updateInfoButton = view.findViewById(R.id.update_button);
         deleteProfileButton = view.findViewById(R.id.delete_button);
+        registrationHistoryButton = view.findViewById(R.id.history_button);
 
         // Add text formatting watcher
         phoneField.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
@@ -200,9 +202,13 @@ public class UserProfileFragment extends Fragment {
     private void setupClickListeners() {
         updateInfoButton.setOnClickListener(v -> handleUpdateProfile());
         deleteProfileButton.setOnClickListener(v -> confirmProfileDeletion());
+        registrationHistoryButton.setOnClickListener(v -> viewRegistrationHistory(v));
         toggleAllowNotifs.setOnClickListener(v -> handleNotifToggle());
     }
 
+    private void viewRegistrationHistory(View v){
+        Navigation.findNavController(v).navigate(R.id.action_userProfileFragment_to_registrationHistoryFragment);
+    }
     /**
      * Gathers user input and asks the ViewModel to perform the update.
      */

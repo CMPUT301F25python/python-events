@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
     // flag to check user is initialized (only then should rest of app be set up)
     private boolean userInitialized = false;
 
+    // flag to check whether profile icon should be visible
+    private boolean showProfileIcon = true;
+
     /**
      * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
      * <p>
@@ -98,6 +101,48 @@ public class MainActivity extends AppCompatActivity {
         } else {
             onUserInitialized(currentUser); // now we have a user, initialize the app
         }
+    }
+
+    /**
+     * Inflates home menu so the profile icon appears across all fragments except where indicated.
+     * @param menu The options menu in which you place your items.
+     * @return true if initialized correctly
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_fragment_menu, menu); // this has profile_icon
+
+        // hiding profile icon where we don't want it
+        MenuItem profileItem = menu.findItem(R.id.profile_icon);
+        if(profileItem != null){
+            profileItem.setVisible(showProfileIcon);
+        }
+        return true;
+    }
+
+    /**
+     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * Stack is updated if user is not already on the fragment.
+     * @param item The menu item that was selected.
+     * @return boolean value indicating success of action
+     */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.profile_icon) {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+
+                // navigating only if not already on UserProfileFragment
+                if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.userProfileFragment){
+                    navController.navigate(R.id.userProfileFragment);
+                }
+            }
+            return true;
+        }
+
+        // default handling
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -179,6 +224,17 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = navHostFragment.getNavController();
 
         navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
+
+        // all fragments we want to hide profile icon from
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            boolean show =
+                    destination.getId() != R.id.userProfileFragment &&
+                            destination.getId() != R.id.registrationHistoryFragment;
+            if (show != showProfileIcon){
+                showProfileIcon = show;
+                supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
+            }
+        });
 
         appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
                 .setOpenableLayout(drawerLayout)

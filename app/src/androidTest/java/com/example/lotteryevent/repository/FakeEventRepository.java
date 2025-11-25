@@ -197,7 +197,6 @@ public class FakeEventRepository implements IEventRepository {
         _isLoading.postValue(false);
     }
 
-
     public void setShouldReturnError(boolean value) {
         this.shouldReturnError = value;
     }
