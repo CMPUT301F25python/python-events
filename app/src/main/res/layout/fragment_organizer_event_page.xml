@@ -111,6 +111,11 @@
                 style="@style/FinalizeButton"
                 android:text="@string/finalize" />
 
+            <Button
+                android:id="@+id/btnExportCSV"
+                style="@style/FinalizeButton"
+                android:text="@string/export_csv_of_entrants" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

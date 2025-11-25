@@ -35,7 +35,6 @@ public class EventDetailsViewModel extends ViewModel {
     // and calculates a new UI state whenever one of them changes.
     private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<BottomUiState> bottomUiState = _bottomUiState;
-    public MutableLiveData<Boolean> isAdmin = new MutableLiveData<>(false);
 
     public EventDetailsViewModel(IEventDetailsRepository repository) {
         this.repository = repository;
@@ -212,6 +211,26 @@ public class EventDetailsViewModel extends ViewModel {
      */
     public LiveData<Boolean> getIsDeleted() {
         return repository.getIsDeleted();
+    }
+
+    /**
+     * Requests the deletion of a specific organizer through the repository.
+     * This action is generally restricted to users with administrative privileges.
+     *
+     * @param organizerId The unique ID of the organizer to be deleted.
+     */
+    public void deleteOrganizer(String organizerId) {
+        repository.deleteOrganizer(organizerId);
+    }
+
+    /**
+     * Exposes a status flag indicating whether the organizer has been successfully deleted.
+     * The Fragment can observe this to trigger navigation away from the screen (e.g., popping the back stack).
+     *
+     * @return A LiveData Boolean that becomes true when the deletion operation completes successfully.
+     */
+    public LiveData<Boolean> getIsOrganizerDeleted() {
+        return repository.getIsOrganizerDeleted();
     }
 
 

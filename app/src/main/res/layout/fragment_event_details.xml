@@ -83,16 +83,36 @@
 
         </LinearLayout>
 
-        <!-- Admin Remove Button -->
-        <Button
-            android:id="@+id/btn_remove_event"
-            style="@style/PinkButton"
+        <!-- Admin Remove Buttons -->
+        <LinearLayout
+            android:id="@+id/admin_actions_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/design_default_color_error"
-            android:text="@string/delete_event"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="visible">
+
+            <Button
+                android:id="@+id/btn_remove_event"
+                style="@style/PinkButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@color/design_default_color_error"
+                android:text="@string/delete_event" />
+
+            <Button
+                android:id="@+id/btn_remove_organizer"
+                style="@style/PinkButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@color/design_default_color_error"
+                android:text="@string/delete_organizer" />
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

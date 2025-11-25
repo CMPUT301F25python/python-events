@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.example.lotteryevent.data.Entrant;
@@ -507,6 +508,68 @@ public class EventDetailsFragmentTest {
                     drawable instanceof BitmapDrawable
             );
         });
+    /**
+     * Test Case 15: A regular (non-admin) user CANNOT see the delete organizer button.
+     */
+    @Test
+    public void nonAdmin_cannotSeeDeleteOrganizerButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(false);        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_organizer)).check(matches(not(isDisplayed())));
+    }
+
+    /**
+     * Test Case 16: An admin user CAN see the delete organizer button.
+     */
+    @Test
+    public void admin_seesDeleteOrganizerButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_organizer)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 17: Admin clicks delete organizer and the confirmation dialog appears.
+     * Simplified to avoid brittle UIAutomator clicks on system dialogs.
+     */
+    @Test
+    public void admin_clicksDeleteOrganizer_dialogAppears() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // Act: Click the button
+        onView(withId(R.id.btn_remove_organizer)).perform(click());
+
+        // Assert: Check if a view with the dialog text exists in the hierarchy.
+        onView(withText("Delete Organizer")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 18: Admin deletes organizer (Logical Test).
+     */
+    @Test
+    public void repository_deleteOrganizer_logicWorks() throws InterruptedException {
+        // Arrange
+        String testOrganizerId = "test_organizer_123";
+
+        // Act
+        fakeRepository.deleteOrganizer(testOrganizerId);
+
+        // Wait for postValue() to finish
+        Thread.sleep(100);
+
+        // Assert
+        Boolean isDeleted = fakeRepository.getIsOrganizerDeleted().getValue();
+        assert(isDeleted != null && isDeleted);
     }
 
 }

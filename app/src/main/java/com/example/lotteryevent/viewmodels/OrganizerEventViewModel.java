@@ -5,10 +5,12 @@ import android.graphics.Color;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
+import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IOrganizerEventRepository;
 import com.google.firebase.Timestamp;
@@ -16,6 +18,10 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * ViewModel for the OrganizerEventFragment.
@@ -36,11 +42,12 @@ public class OrganizerEventViewModel extends ViewModel {
     private final LiveData<Event> event;
     private final LiveData<Boolean> isRunDrawButtonEnabled;
     private final LiveData<Boolean> isLoading;
-    private final LiveData<String> message;
+    private final MediatorLiveData<String> message = new MediatorLiveData<>();
 
     // --- UI State LiveData ---
     private final MutableLiveData<UiState> _uiState = new MutableLiveData<>();
     private final MutableLiveData<Bitmap> _qrCodeBitmap = new MutableLiveData<>();
+    private final MutableLiveData<String> _csvContent = new MutableLiveData<>();
 
     // --- Exposed LiveData ---
     public LiveData<Event> getEvent() { return event; }
@@ -49,6 +56,8 @@ public class OrganizerEventViewModel extends ViewModel {
     public LiveData<String> getMessage() { return message; }
     public LiveData<UiState> getUiState() { return _uiState; }
     public LiveData<Bitmap> getQrCodeBitmap() { return _qrCodeBitmap; }
+    public LiveData<String> getCsvContent() { return _csvContent; }
+
 
     private final Observer<Event> eventObserver;
 
@@ -75,7 +84,9 @@ public class OrganizerEventViewModel extends ViewModel {
         event = repository.getEvent();
         isRunDrawButtonEnabled = repository.isRunDrawButtonEnabled();
         isLoading = repository.isLoading();
-        message = repository.getMessage();
+        message.addSource(repository.getMessage(), serverMsg -> {
+            message.setValue(serverMsg);
+        });
 
         // Define the observer logic that will translate event data into a UI state.
         this.eventObserver = this::determineUiState;
@@ -85,12 +96,13 @@ public class OrganizerEventViewModel extends ViewModel {
     }
 
     /**
-     * Initiates the process of fetching the event details and capacity status from the repository.
+     * Initiates the process of fetching the event details, capacity status, and entrants from the repository.
      *
      * @param eventId The unique identifier for the event to load.
      */
     public void loadEvent(String eventId) {
         repository.fetchEventAndCapacityStatus(eventId);
+        repository.fetchEntrants(eventId);
     }
 
     /**
@@ -154,6 +166,83 @@ public class OrganizerEventViewModel extends ViewModel {
      */
     public void onQrCodeShown() {
         _qrCodeBitmap.setValue(null);
+    }
+
+    /**
+     * Triggers the event finalization process in the repository.
+     * The repository will handle the logic of checking if the user is the organizer.
+     *
+     * @param eventId The ID of the event to finalize.
+     */
+    public void finalizeEvent(String eventId) {
+        if (eventId == null || eventId.isEmpty()) return;
+        repository.finalizeEvent(eventId);
+    }
+
+    /**
+     * Transforms the current list of entrants into a CSV string.
+     * The result is posted to _csvContent.
+     */
+    public void generateEntrantCsv() {
+        // Retrieve the data directly from the repository's LiveData current value
+        List<Entrant> entrants = repository.getEntrants().getValue();
+
+        if (entrants == null || entrants.isEmpty()) {
+            message.setValue("No entrants found to export.");
+            Log.w(TAG, "generateEntrantCsv: No entrants found to export.");
+            return;
+        }
+
+        StringBuilder csvBuilder = new StringBuilder();
+        // CSV Header
+        csvBuilder.append("User ID,Name,Status,Date Registered,Latitude,Longitude\n");
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
+        for (Entrant entrant : entrants) {
+            // 1. Handle Name (escape quotes/commas)
+            String name = entrant.getUserName() != null ? entrant.getUserName() : "Unknown";
+            if (name.contains(",")) {
+                name = "\"" + name + "\"";
+            }
+
+            // 2. Handle Date
+            String dateStr = "";
+            if (entrant.getDateRegistered() != null) {
+                dateStr = dateFormat.format(entrant.getDateRegistered().toDate());
+            }
+
+            // 3. Handle GeoLocation
+            String lat = "";
+            String lon = "";
+            if (entrant.getGeoLocation() != null) {
+                lat = String.valueOf(entrant.getGeoLocation().getLatitude());
+                lon = String.valueOf(entrant.getGeoLocation().getLongitude());
+            }
+
+            // 4. Handle Status
+            String status = entrant.getStatus() != null ? entrant.getStatus() : "unknown";
+
+            // Append Line
+            csvBuilder.append(entrant.getUserId()).append(",")
+                    .append(name).append(",")
+                    .append(status).append(",")
+                    .append(dateStr).append(",")
+                    .append(lat).append(",")
+                    .append(lon).append("\n");
+        }
+
+        // Post the result
+        _csvContent.setValue(csvBuilder.toString());
+    }
+
+    /**
+     * Resets the CSV content LiveData.
+     * Call this after the Fragment has successfully handled the file save
+     * to prevent re-saving on configuration changes.
+     */
+    public void onCsvExported() {
+        _csvContent.setValue(null);
     }
 
     /**
