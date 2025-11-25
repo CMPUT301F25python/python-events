@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.firestore.GeoPoint;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
@@ -29,6 +30,7 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final MutableLiveData<Boolean> _isAdmin = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> _isDeleted = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> _isUserDeleted = new MutableLiveData<>(false);
 
     private final MutableLiveData<Event> _eventDetails = new MutableLiveData<>();
     private final MutableLiveData<Entrant> _entrantStatus = new MutableLiveData<>();
@@ -326,4 +328,181 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
             Log.e(TAG, "Failed to fetch entrants for deletion", e);
         });
     }
+
+    /**
+     * Permanently removes the specified user (organizer) and all their associated data.
+     * <p>
+     * This performs a cascade delete operation to ensure database integrity:     * <ol>
+     *     <li>Deletes the User profile document.</li>
+     *     <li>Deletes all notifications received by this user.</li>
+     *     <li><b>Deletes all Events</b> organized by this user (including their entrant subcollections).</li>
+     *     <li><b>Removes this user</b> from the waiting lists (entrants) of any other events they joined.</li>
+     * </ol>
+     *
+     * @param userId The unique identifier of the user/organizer to delete.
+     */
+    @Override
+    public void deleteOrganizer(String userId) {
+        if (userId == null || userId.isEmpty()) {
+            _message.postValue("Invalid User ID.");
+            return;
+        }
+        _isLoading.postValue(true);
+
+        // 1. Delete the User Document
+        Task<Void> deleteUserDoc = db.collection("users").document(userId).delete();
+
+        // 2. Delete all Notifications received by this user
+        Task<Void> deleteNotifications = deleteUserNotifications(userId);
+
+        // 3. Delete all Events organized by this user (and their subcollections)
+        Task<Void> deleteOrganizedEvents = deleteEventsOrganizedByUser(userId);
+
+        // 4. Remove this user from 'entrants' lists of other events
+        Task<Void> deleteFromEntrants = removeUserFromAllWaitingLists(userId);
+
+        // Wait for all cleanup tasks to finish
+        Tasks.whenAllComplete(deleteUserDoc, deleteNotifications, deleteOrganizedEvents, deleteFromEntrants)
+                .addOnCompleteListener(task -> {
+                    _isLoading.postValue(false);
+                    // Check if ANY of the tasks failed
+                    if (deleteUserDoc.isSuccessful() && deleteNotifications.isSuccessful()
+                            && deleteOrganizedEvents.isSuccessful() && deleteFromEntrants.isSuccessful()) {
+                        Log.d(TAG, "Admin successfully deleted user and all associated data: " + userId);
+                        _message.postValue("Organizer deleted successfully.");
+                        _isUserDeleted.postValue(true);
+                    } else {
+                        Log.e(TAG, "One or more delete tasks failed.");
+                        if (deleteOrganizedEvents.getException() != null) Log.e(TAG, "Events delete failed", deleteOrganizedEvents.getException());
+                        if (deleteFromEntrants.getException() != null) Log.e(TAG, "Entrants delete failed", deleteFromEntrants.getException());
+
+                        _message.postValue("Failed to delete user data completely.");
+                        _isUserDeleted.postValue(false);
+                    }
+                });
+    }
+
+    @Override
+    public LiveData<Boolean> getIsOrganizerDeleted() {
+        return _isUserDeleted;
+    }
+
+    // --- Helper Methods for User Deletion ---
+
+    /**
+     * Deletes all notification documents where 'recipientId' matches the user.
+     *
+     * @param userId The ID of the user whose notifications should be deleted.
+     * @return A Task representing the batch write operation.
+     */
+    private Task<Void> deleteUserNotifications(String userId) {
+        return db.collection("notifications")
+                .whereEqualTo("recipientId", userId)
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
+                        return Tasks.forResult(null);
+                    }
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        batch.delete(doc.getReference());
+                    }
+                    return batch.commit();
+                });
+    }
+
+    /**
+     * Queries all events where organizerId matches the user and deletes them.
+     * <p>
+     * Crucially, this method first fetches and queues deletion for the 'entrants' subcollection
+     * of every event to ensure no orphaned data remains. It waits for all subcollection
+     * fetches to resolve before committing the batch.
+     *
+     * @param userId The organizer's ID.
+     * @return A Task representing the completion of the batch delete.
+     */
+    private Task<Void> deleteEventsOrganizedByUser(String userId) {
+        return db.collection("events")
+                .whereEqualTo("organizerId", userId)
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
+                        return Tasks.forResult(null);
+                    }
+
+                    WriteBatch batch = db.batch();
+                    List<Task<Void>> subcollectionTasks = new ArrayList<>();
+
+                    // Iterate through every event organized by this user
+                    for (DocumentSnapshot eventDoc : task.getResult().getDocuments()) {
+                        // 1. Queue a task to fetch and add entrant deletions to the batch
+                        Task<Void> cleanSubcollection = deleteSubcollectionToBatch(eventDoc.getId(), "entrants", batch);
+                        subcollectionTasks.add(cleanSubcollection);
+
+                        // 2. Add the deletion of the Event document itself to the batch
+                        batch.delete(eventDoc.getReference());
+                    }
+
+                    // Wait for all subcollection queries to finish adding to the batch BEFORE committing.
+                    return Tasks.whenAllComplete(subcollectionTasks)
+                            .continueWithTask(t -> batch.commit());
+                });
+    }
+
+    /**
+     * Helper method that fetches a subcollection and adds delete operations to the provided batch.
+     *
+     * @param eventId           The parent event ID.
+     * @param subcollectionName The name of the subcollection (e.g., "entrants").
+     * @param batch             The WriteBatch to add operations to.
+     * @return A Task that completes when the documents have been added to the batch.
+     */
+    private Task<Void> deleteSubcollectionToBatch(String eventId, String subcollectionName, WriteBatch batch) {
+        return db.collection("events").document(eventId).collection(subcollectionName).get()
+                .continueWith(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                            batch.delete(doc.getReference());
+                        }
+                    }
+                    return null;
+                });
+    }
+
+    /**
+     * Removes the user from the waiting list (entrants) of ALL events they have joined.
+     * <p>
+     * This uses a {@code collectionGroup} query to scan all "entrants" collections.
+     * Since the entrants document ID is the User ID, we iterate the results to find matches.
+     *
+     * @param userId The ID of the user to remove.
+     * @return A Task representing the completion of the batch delete.
+     */
+    private Task<Void> removeUserFromAllWaitingLists(String userId) {
+        return db.collectionGroup("entrants")
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.e(TAG, "Collection Group Query failed", task.getException());
+                        return Tasks.forResult(null);
+                    }
+
+                    WriteBatch batch = db.batch();
+                    boolean hasDeletions = false;
+
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        if (doc.getId().equals(userId)) {
+                            batch.delete(doc.getReference());
+                            hasDeletions = true;
+                        }
+                    }
+
+                    if (hasDeletions) {
+                        return batch.commit();
+                    } else {
+                        return Tasks.forResult(null);
+                    }
+                });
+    }
+
 }

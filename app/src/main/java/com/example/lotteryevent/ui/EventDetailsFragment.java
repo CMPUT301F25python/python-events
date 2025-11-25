@@ -56,10 +56,10 @@ public class EventDetailsFragment extends Fragment {
 
     // --- UI Components ---
     private ListView detailsList;
-    private Button btnActionPositive, btnActionNegative, btnDeleteEvent;
+    private Button btnActionPositive, btnActionNegative, btnDeleteEvent, btnDeleteOrganizer;
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
-    private LinearLayout buttonActionsContainer;
+    private LinearLayout buttonActionsContainer, adminActionsContainer;
 
     private ArrayAdapter<String> listAdapter;
     private final ArrayList<String> dataList = new ArrayList<>();
@@ -142,9 +142,9 @@ public class EventDetailsFragment extends Fragment {
 
         viewModel.getIsAdmin().observe(getViewLifecycleOwner(), isAdmin -> {
             if (isAdmin) {
-                btnDeleteEvent.setVisibility(View.VISIBLE);
+                adminActionsContainer.setVisibility(View.VISIBLE);
             } else {
-                btnDeleteEvent.setVisibility(View.GONE);
+                adminActionsContainer.setVisibility(View.GONE);
             }
         });
 
@@ -153,6 +153,21 @@ public class EventDetailsFragment extends Fragment {
                 String eventId = getArguments().getString("eventId");
                 if (eventId != null) {
                     showDeleteConfirmationDialog(eventId);
+                }
+            }
+        });
+
+        btnDeleteOrganizer.setOnClickListener(v -> {
+            // Get the current event data from the ViewModel
+            Event currentEvent = viewModel.eventDetails.getValue();
+
+            if (currentEvent != null) {
+                String organizerId = currentEvent.getOrganizerId();
+
+                if (organizerId != null && !organizerId.isEmpty()) {
+                    showDeleteOrganizerConfirmationDialog(organizerId);
+                } else {
+                    Toast.makeText(getContext(), "Error: Organizer ID not found.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -169,7 +184,9 @@ public class EventDetailsFragment extends Fragment {
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
         btnActionPositive = v.findViewById(R.id.btn_action_positive);
         btnActionNegative = v.findViewById(R.id.btn_action_negative);
+        adminActionsContainer = v.findViewById(R.id.admin_actions_container);
         btnDeleteEvent = v.findViewById(R.id.btn_remove_event);
+        btnDeleteOrganizer = v.findViewById(R.id.btn_remove_organizer);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
     }
@@ -197,6 +214,12 @@ public class EventDetailsFragment extends Fragment {
 
         viewModel.getIsDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
             if (isDeleted) {
+                Navigation.findNavController(requireView()).navigateUp();
+            }
+        });
+
+        viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isOrganizerDeleted -> {
+            if (isOrganizerDeleted) {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
@@ -396,6 +419,29 @@ public class EventDetailsFragment extends Fragment {
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // User confirmed, proceed with deletion
                     viewModel.deleteEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    /**
+     * Displays a confirmation dialog to the user before deleting an organizer.
+     * <p>
+     * If the user selects "Delete", the organizer deletion process is initiated via the ViewModel.
+     * If the user selects "Cancel", the dialog is dismissed without any action.
+     *
+     * @param organizerId The unique identifier of the organizer to be deleted.
+     */
+    private void showDeleteOrganizerConfirmationDialog(String organizerId) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Organizer")
+                .setMessage("Are you sure you want to delete this organizer? This action cannot be undone. This action will also delete all events organized by this organizer.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // User confirmed, proceed with deletion
+                    viewModel.deleteOrganizer(organizerId);
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     // User cancelled, do nothing

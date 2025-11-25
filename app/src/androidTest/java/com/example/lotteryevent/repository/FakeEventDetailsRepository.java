@@ -28,6 +28,7 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     private final MutableLiveData<Integer> _attendeeCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isDeleted = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> _isUserDeleted = new MutableLiveData<>(false);
     private boolean isAdmin = false;
 
     // --- In-memory "database" ---
@@ -241,4 +242,21 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
         return _isDeleted;
     }
 
+    /**
+     * Simulates the deletion of a user.
+     * Sets the isUserDeleted LiveData to true to signal success.
+     */
+    @Override
+    public void deleteOrganizer(String userId) {
+        // Simulate successful deletion immediately
+        _isUserDeleted.postValue(true);
+    }
+
+    /**
+     * Returns a LiveData indicating if the user has been successfully deleted.
+     */
+    @Override
+    public LiveData<Boolean> getIsOrganizerDeleted() {
+        return _isUserDeleted;
+    }
 }
