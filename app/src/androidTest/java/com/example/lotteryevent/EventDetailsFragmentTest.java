@@ -508,6 +508,7 @@ public class EventDetailsFragmentTest {
                     drawable instanceof BitmapDrawable
             );
         });
+    }
     /**
      * Test Case 15: A regular (non-admin) user CANNOT see the delete organizer button.
      */

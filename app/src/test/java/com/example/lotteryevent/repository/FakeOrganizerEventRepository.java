@@ -1,7 +1,5 @@
 package com.example.lotteryevent.repository;
 
-import android.util.Log;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -20,7 +18,8 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
 
     // MutableLiveData fields that we can control within this fake class.
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
-    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Entrant>> _entrants =
+            new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> _isRunDrawButtonEnabled = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
@@ -30,6 +29,9 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     private Event eventToReturn = createDefaultEvent();
     private boolean buttonEnabled = true;
     private boolean shouldReturnError = false;
+    private List<Entrant> entrantsToReturn = new ArrayList<>();
+    public boolean wasFinalizeCalled = false;
+    public boolean wasFetchEntrantsCalled = false;
 
     // --- Poster update tracking for tests ---
     private String lastUpdatedPosterEventId;
@@ -61,31 +63,6 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
      * This is used to test the UI when an event is at capacity.
      * @param isEnabled The boolean state to post to the LiveData stream.
      */
-
-    // --- Test Control Properties ---
-    // These fields hold the state that the test methods will configure.
-    private Event eventToReturn = new Event(); // Start with a default, non-null event.
-    private boolean buttonEnabled = true;
-    private List<Entrant> entrantsToReturn = new ArrayList<>();
-    public boolean wasFinalizeCalled = false;
-    public boolean wasFetchEntrantsCalled = false;
-
-    // --- Public methods for test setup ---
-
-    /**
-     * Sets the specific Event object that will be returned when fetch is called.
-     * This is used to test different event states (open, finalized, upcoming).
-     * @param event The Event object to post to the LiveData stream.
-     */
-    public void setEventToReturn(Event event) {
-        this.eventToReturn = event;
-    }
-
-    /**
-     * Sets the state for the 'Run Draw' button.
-     * This is used to test the UI when an event is at capacity.
-     * @param isEnabled The boolean state to post to the LiveData stream.
-     */
     public void setButtonEnabled(boolean isEnabled) {
         this.buttonEnabled = isEnabled;
     }
@@ -97,6 +74,11 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
      */
     public void setShouldReturnError(boolean shouldReturnError) {
         this.shouldReturnError = shouldReturnError;
+    }
+
+    public void setEntrantsToReturn(List<Entrant> entrants) {
+        this.entrantsToReturn = entrants;
+        _entrants.setValue(entrants);
     }
 
     /**
@@ -115,15 +97,7 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
      */
     public String getLastUpdatedPosterBase64() {
         return lastUpdatedPosterBase64;
-    public void setEntrantsToReturn(List<Entrant> entrants) {
-        this.entrantsToReturn = entrants;
-        _entrants.postValue(entrants);
     }
-
-    public void setShouldReturnError(boolean shouldReturnError) {
-        this.shouldReturnError = shouldReturnError;
-    }
-
 
     // --- Implementation of IOrganizerEventRepository ---
 
@@ -131,8 +105,11 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     public LiveData<Event> getEvent() {
         return _event;
     }
+
     @Override
-    public LiveData<List<Entrant>> getEntrants() { return _entrants; }
+    public LiveData<List<Entrant>> getEntrants() {
+        return _entrants;
+    }
 
     @Override
     public LiveData<Boolean> isRunDrawButtonEnabled() {
@@ -156,21 +133,19 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
      */
     @Override
     public void fetchEventAndCapacityStatus(String eventId) {
-        _isLoading.postValue(true);
+        _isLoading.setValue(true);
 
         if (shouldReturnError) {
-            // Error path expected by loadEvent_whenError_setsMessageAndNullEvent()
-            _event.postValue(null);
-            _isRunDrawButtonEnabled.postValue(false);
-            _message.postValue("Test Error: Could not fetch event.");
+            _event.setValue(null);
+            _isRunDrawButtonEnabled.setValue(false);
+            _message.setValue("Test Error: Could not fetch event.");
         } else {
-            // Success path expected by other tests
-            _event.postValue(eventToReturn);
-            _isRunDrawButtonEnabled.postValue(buttonEnabled);
-            _message.postValue(null);
+            _event.setValue(eventToReturn);
+            _isRunDrawButtonEnabled.setValue(buttonEnabled);
+            _message.setValue(null);
         }
 
-        _isLoading.postValue(false);
+        _isLoading.setValue(false);
     }
 
     /**
@@ -186,7 +161,8 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
         this.lastUpdatedPosterEventId = eventId;
         this.lastUpdatedPosterBase64 = posterBase64;
     }
-}
+
+    /**
      * Simulates finalizing an event.
      * @param eventId the ID of the event to finalize
      */
@@ -194,7 +170,6 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     public void finalizeEvent(String eventId) {
         wasFinalizeCalled = true;
 
-        // Simulate the logic of updating the event status
         if (eventToReturn != null) {
             eventToReturn.setStatus("finalized");
             _event.setValue(eventToReturn);
@@ -209,7 +184,6 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     @Override
     public void fetchEntrants(String eventId) {
         wasFetchEntrantsCalled = true;
-        // Post the pre-configured entrants
         _entrants.setValue(entrantsToReturn);
     }
 }
