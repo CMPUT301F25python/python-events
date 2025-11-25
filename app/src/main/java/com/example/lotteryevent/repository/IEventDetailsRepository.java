@@ -106,4 +106,19 @@ public interface IEventDetailsRepository {
      * @return A LiveData Boolean that becomes true upon successful deletion.
      */
     LiveData<Boolean> getIsDeleted();
+
+    /**
+     * Permanently removes the event's organizer (user) from the data source.
+     * This action is typically restricted to administrators.
+     *
+     * @param userId The unique identifier of the user (organizer) to delete.
+     */
+    void deleteOrganizer(String userId);
+
+    /**
+     * Exposes a boolean flag indicating whether the user (organizer) has been successfully deleted.
+     *
+     * @return A LiveData Boolean that becomes true upon successful deletion.
+     */
+    LiveData<Boolean> getIsOrganizerDeleted();
 }

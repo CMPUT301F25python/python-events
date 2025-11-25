@@ -119,4 +119,6 @@
     <string name="draw_result">Draw Result</string>
     <string name="draw_results">Draw Results</string>
     <string name="delete_event">Delete Event</string>
+    <string name="delete_organizer">Delete Organizer</string>
+    <string name="delete_user_profile">Delete User Profile</string>
 </resources>

@@ -163,7 +163,20 @@
     <fragment
         android:id="@+id/adminProfilesFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
-        android:label="Profiles" />
+        android:label="Profiles" >
+        <action
+            android:id="@+id/action_adminProfiles_to_userProfile"
+            app:destination="@id/adminUserProfileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminUserProfileFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminUserProfileFragment"
+        android:label="User Profile">
+        <argument
+            android:name="userId"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/adminEventsFragment"
