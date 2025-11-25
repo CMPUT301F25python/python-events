@@ -53,6 +53,7 @@ public class OrganizerEventFragment extends Fragment {
     private LinearLayout buttonContainer;
     private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
     private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
+    private Button btnExportEntrantCSV;
 
     public OrganizerEventFragment() { } // Required empty public constructor
 
@@ -150,6 +151,7 @@ public class OrganizerEventFragment extends Fragment {
             buttonContainer.setVisibility(View.VISIBLE);
             btnRunDraw.setVisibility(View.VISIBLE);
             btnFinalize.setVisibility(View.VISIBLE);
+            btnExportEntrantCSV.setVisibility(View.GONE);
 
             switch (state) {
                 case UPCOMING:
@@ -158,6 +160,7 @@ public class OrganizerEventFragment extends Fragment {
                 case FINALIZED:
                     btnRunDraw.setVisibility(View.GONE);
                     btnFinalize.setVisibility(View.GONE);
+                    btnExportEntrantCSV.setVisibility(View.VISIBLE);
                     break;
                 case OPEN:
                     btnFinalize.setEnabled(true);
@@ -187,6 +190,14 @@ public class OrganizerEventFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Observer for the CSV content to be exported
+        viewModel.getCsvContent().observe(getViewLifecycleOwner(), csvContent -> {
+            if (csvContent != null) {
+                saveCsvToDownloads(csvContent);
+                viewModel.onCsvExported(); // Reset the LiveData
+            }
+        });
     }
 
     /**
@@ -204,6 +215,7 @@ public class OrganizerEventFragment extends Fragment {
         btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
+        btnExportEntrantCSV = view.findViewById(R.id.btnExportCSV);
     }
 
     /**
@@ -254,10 +266,83 @@ public class OrganizerEventFragment extends Fragment {
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
         };
         btnViewEntrantMap.setOnClickListener(notImplementedListener);
-        btnFinalize.setOnClickListener(notImplementedListener);
+        btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
+        btnExportEntrantCSV.setOnClickListener(v -> viewModel.generateEntrantCsv());
     }
 
     // --- UI Helper Methods ---
+
+    /**
+     * Saves a text string as a .csv file in the public Downloads directory.
+     * Handles differences between Android 10+ (API 29) and older versions.
+     */
+    private void saveCsvToDownloads(String csvContent) {
+        String fileName = "entrants_" + eventId + "_" + System.currentTimeMillis() + ".csv";
+
+        // Check if we are running on Android 10 (Q) or higher
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            // --- API 29+ Logic (Scoped Storage) ---
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+            try {
+                Uri uri = requireContext().getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                        if (outputStream != null) {
+                            outputStream.write(csvContent.getBytes());
+                            Toast.makeText(getContext(), "Exported to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Could not create file in Downloads.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error saving CSV (API 29+)", e);
+                Toast.makeText(getContext(), "Failed to save CSV file.", Toast.LENGTH_SHORT).show();
+            }
+
+        } else {
+            // --- API < 29 Logic (Legacy Storage) ---
+            try {
+                java.io.File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdirs();
+                }
+                java.io.File file = new java.io.File(downloadsDir, fileName);
+
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                    fos.write(csvContent.getBytes());
+                    Toast.makeText(getContext(), "Exported to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error saving CSV (Legacy)", e);
+                Toast.makeText(getContext(), "Failed to save CSV. Check Permissions.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Shows a confirmation dialog ensuring the user wants to finalize the event.
+     */
+    private void showFinalizeConfirmationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Finalize Event")
+                .setMessage("Are you sure you want to finalize this event? \n\n" +
+                        "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
+                        "This action cannot be undone.")
+                .setPositiveButton("Finalize", (dialog, which) -> {
+                    // Call the ViewModel to execute the logic
+                    viewModel.finalizeEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .create()
+                .show();
+    }
 
     /**
      * Displays a dialog containing the generated QR code bitmap.
