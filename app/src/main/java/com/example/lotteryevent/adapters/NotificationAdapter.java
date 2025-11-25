@@ -185,10 +185,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             message = "\uD83C\uDF89 You've been selected for " + notification.getEventName() + "! Tap to accept or decline.";
         } else if (Objects.equals(notification.getType(), "lottery_loss")) {
             message = "❌ You weren't selected for " + notification.getEventName() + ".";
-        } else if (Objects.equals(notification.getType(), "event_update")) {
-            message = "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!";
         } else {
-            message = "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage();
+            message = "\uD83D\uDCAC " + notification.getMessage();
         }
 
         return message;

@@ -6,12 +6,15 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.List;
 
 /**
  * ViewModel for the EventDetailsFragment.
@@ -250,5 +253,25 @@ public class EventDetailsViewModel extends ViewModel {
     public void onLocationPermissionDenied() {
         // Reset the signal
         _requestLocationPermission.setValue(false);
+    }
+
+    /**
+     * Sends a notification message to all entrants in the provided list. Iterates
+     * through each entrant and delegates the notification sending to the repository.
+     * Only valid entrants with non-null user IDs are processed.
+     * @param organizerMessage the message content written by the event organizer
+     */
+    public void notifyEntrant(String userId, String organizerMessage, NotificationCustomManager manager) {
+        if (userId == null) {
+            repository.setMessage("No user given to notify.");
+            return;
+        }
+
+        if (organizerMessage == null || organizerMessage.trim().isEmpty()) {
+            repository.setMessage("No message provided.");
+            return;
+        }
+
+        repository.notifyEntrantFromAdmin(userId, organizerMessage, manager);
     }
 }

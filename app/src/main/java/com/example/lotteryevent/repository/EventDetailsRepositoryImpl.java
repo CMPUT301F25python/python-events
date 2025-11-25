@@ -3,6 +3,8 @@ package com.example.lotteryevent.repository;
 import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
@@ -55,6 +57,15 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     public LiveData<Boolean> getIsAdmin() { return _isAdmin; }
     @Override
     public LiveData<Boolean> getIsDeleted() { return _isDeleted; }
+
+    /**
+     * Allows user to write a custom message
+     * @param message set by the user
+     */
+    @Override
+    public void setMessage(String message) {
+        _message.postValue(message);
+    }
 
     @Override
     public void fetchEventAndEntrantDetails(String eventId) {
@@ -503,6 +514,40 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                         return Tasks.forResult(null);
                     }
                 });
+    }
+
+    /**
+     * Allows for admin user to send notifications to users
+     * @param userId reciepient user's ID
+     * @param adminMessage message to send
+     * @param manager notification custom manager used to send message
+     */
+    @Override
+    public void notifyEntrantFromAdmin(String userId, String adminMessage, NotificationCustomManager manager) {
+        FirebaseUser admin = FirebaseAuth.getInstance().getCurrentUser();
+        if (admin == null) {
+            _message.postValue("Admin not signed in.");
+            return;
+        }
+        String senderId = admin.getUid();
+
+        db.collection("users").document(senderId).get()
+            .addOnSuccessListener(doc -> {
+                String senderName = doc.getString("name");
+                if (senderName == null) {
+                    senderName = "Admin";
+                }
+
+                String title = "Message From Admin";
+                String message = "Message from the admin: " + adminMessage;
+                String type = "custom_message";
+
+                manager.sendNotification(userId, title, message, type, null, null, senderId, senderName);
+                _message.postValue("Notification Sent!");
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Failed to fetch admin user's profile", e);
+            });
     }
 
 }
