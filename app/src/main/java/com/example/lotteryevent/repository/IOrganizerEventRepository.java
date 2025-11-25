@@ -21,6 +21,13 @@ public interface IOrganizerEventRepository {
     void fetchEventAndCapacityStatus(String eventId);
 
     /**
+     * Updates the poster image (Base64) for the specified event.
+     * @param eventId The ID of the event to update.
+     * @param posterImageUrl The Base64-encoded poster image data.
+     */
+    void updateEventPoster(String eventId, String posterImageUrl);
+
+    /**
      * Finalizes an event by updating its status in the database.
      * @param eventId the ID of the event to finalize
      */

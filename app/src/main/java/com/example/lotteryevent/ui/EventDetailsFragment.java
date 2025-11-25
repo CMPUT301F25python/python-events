@@ -17,6 +17,10 @@ import android.provider.Settings;
 import android.content.Intent;
 import android.net.Uri;
 import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -59,6 +63,7 @@ public class EventDetailsFragment extends Fragment {
     private Button btnActionPositive, btnActionNegative, btnDeleteEvent, btnDeleteOrganizer;
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
+    private ImageView eventPosterImage;
     private LinearLayout buttonActionsContainer, adminActionsContainer;
 
     private ArrayAdapter<String> listAdapter;
@@ -80,7 +85,7 @@ public class EventDetailsFragment extends Fragment {
                     fetchLocationAndJoin();
                 } else {
                     // The user denied the system dialog just now.
-                    // We need to inform the ViewModel to reset the state so the button works again next time.
+                    // Inform the ViewModel to reset the state so the button works again next time.
                     viewModel.onLocationPermissionDenied();
 
                     // Check if we should show a manual "Go to Settings" dialog
@@ -120,7 +125,6 @@ public class EventDetailsFragment extends Fragment {
 
         // --- Initialize Location Client ---
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-
 
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
@@ -189,6 +193,7 @@ public class EventDetailsFragment extends Fragment {
         btnDeleteOrganizer = v.findViewById(R.id.btn_remove_organizer);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
+        eventPosterImage = v.findViewById(R.id.event_poster_image);
     }
 
     private void setupClickListeners() {
@@ -200,8 +205,9 @@ public class EventDetailsFragment extends Fragment {
         // Observer for the main event data.
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
-                Integer count = viewModel.waitingListCount.getValue();
-                bindEventDetails(event, count);
+              Integer count = viewModel.waitingListCount.getValue();
+              bindEventDetails(event, count);
+              bindEventPoster(event);
             }
         });
 
@@ -249,11 +255,33 @@ public class EventDetailsFragment extends Fragment {
     }
 
     /**
+     * Binds the event poster image (if available) to the header ImageView.
+     * The poster is stored as a Base64-encoded string on the Event model.
+     *
+     * @param event The event whose poster should be displayed.
+     */
+    private void bindEventPoster(Event event) {
+        if (eventPosterImage == null) {
+            return;
+        }
+
+        String posterImageUrl = event.getPosterImageUrl();
+        if (posterImageUrl == null || posterImageUrl.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            eventPosterImage.setImageBitmap(bitmap);
+        } catch (IllegalArgumentException e) {}
+    }
+
+    /**
      * Renders the state that the ViewModel has already calculated.
      */
     private void renderBottomUi(BottomUiState uiState) {
         hideAllBottomActions(); // Start by hiding everything.
-
 
         switch (uiState.type) {
             case LOADING:
@@ -289,8 +317,6 @@ public class EventDetailsFragment extends Fragment {
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
-
-    // --- UI Helper Methods  ---
 
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);

@@ -18,7 +18,8 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
 
     // MutableLiveData fields that we can control within this fake class.
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
-    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Entrant>> _entrants =
+            new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> _isRunDrawButtonEnabled = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
@@ -56,15 +57,17 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
         _entrants.postValue(entrants);
     }
 
-
     // --- Implementation of IOrganizerEventRepository ---
 
     @Override
     public LiveData<Event> getEvent() {
         return _event;
     }
+
     @Override
-    public LiveData<List<Entrant>> getEntrants() { return _entrants; }
+    public LiveData<List<Entrant>> getEntrants() {
+        return _entrants;
+    }
 
     @Override
     public LiveData<Boolean> isRunDrawButtonEnabled() {
@@ -82,7 +85,7 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     }
 
     /**
-     * Simulates fetching data. Instead of creating a hardcoded event, this method now
+     * Simulates fetching data. Instead of creating a hardcoded event, this method
      * uses the pre-configured state set by the test's Arrange block.
      */
     @Override
@@ -94,6 +97,19 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
         _isRunDrawButtonEnabled.postValue(buttonEnabled);
 
         _isLoading.postValue(false);
+    }
+
+    /**
+     * No-op implementation for updating the event poster.
+     * Fragment tests don't need to inspect this behavior; they only
+     * require the method to exist so the interface compiles.
+     *
+     * @param eventId The ID of the event.
+     * @param posterBase64 The Base64-encoded poster image.
+     */
+    @Override
+    public void updateEventPoster(String eventId, String posterBase64) {
+        // No-op for fragment tests
     }
 
     /**
