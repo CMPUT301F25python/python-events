@@ -2,6 +2,7 @@ package com.example.lotteryevent.ui.admin;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,8 @@ import androidx.navigation.Navigation;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModelFactory;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * A {@link Fragment} that displays the administrative view of a specific user profile.
@@ -34,6 +37,7 @@ public class AdminUserProfileFragment extends Fragment {
     private Button deleteButton;
     private String userId;
     private EventDetailsViewModel viewModel;
+    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
     /**
      * Required empty public constructor.
@@ -58,8 +62,9 @@ public class AdminUserProfileFragment extends Fragment {
     /**
      * Initializes the ViewModel, retrieves the User ID argument, and sets up the UI interactions.
      * <p>
-     * This method sets an observer on {@link EventDetailsViewModel#getIsOrganizerDeleted()} to
-     * navigate back to the previous screen upon successful deletion.
+     * This method performs a check against the currently logged-in user. If the administrator
+     * is viewing their own profile, the "Delete" button is hidden to prevent accidental
+     * self-deletion.
      * </p>
      *
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
@@ -80,9 +85,28 @@ public class AdminUserProfileFragment extends Fragment {
 
         // 3. Setup the Delete Button
         deleteButton = view.findViewById(R.id.btn_delete_user);
-        deleteButton.setOnClickListener(v -> showDeleteConfirmation());
 
-        // 4. Observe Delete Status
+        // 4. Get the current user's ID
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            // Should never reach this point
+            Log.w("AdminUserProfileFragment", "Cannot delete user: user is not signed in.");
+            return;
+        }
+
+        String currentUserId = currentUser.getUid();
+
+        // 5. Check if the profile being viewed belongs to the current user
+        if (userId != null && userId.equals(currentUserId)) {
+            // If it is the current user, hide the button
+            deleteButton.setVisibility(View.GONE);
+        } else {
+            // Otherwise, show it and enable the click listener
+            deleteButton.setVisibility(View.VISIBLE);
+            deleteButton.setOnClickListener(v -> showDeleteConfirmation());
+        }
+
+        // 6. Observe Delete Status
         viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
             if (Boolean.TRUE.equals(isDeleted)) {
                 Toast.makeText(getContext(), "User deleted successfully", Toast.LENGTH_SHORT).show();
