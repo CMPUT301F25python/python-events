@@ -30,6 +30,7 @@ public class Event {
     private Integer waitingListLimit;
     private boolean geoLocationRequired;
     private String status;
+    private Integer waitingListCount;
 
     // @ServerTimestamp tells Firestore to automatically populate this field with the
     // server's timestamp when the document is first created. It will be null until then.
@@ -49,13 +50,15 @@ public class Event {
      * @param organizerId The ID of the user who organized the event.
      * @param organizerName The name of the user who organized the event.
      * @param capacity The maximum number of attendees for the event.
+     * @param waitingListCount The number of entrants on the waiting list for the event
      */
-    public Event(String name, String description, String organizerId, String organizerName, Integer capacity) {
+    public Event(String name, String description, String organizerId, String organizerName, Integer capacity, Integer waitingListCount) {
         this.name = name;
         this.description = description;
         this.organizerId = organizerId;
         this.organizerName = organizerName;
         this.capacity = capacity;
+        this.waitingListCount = waitingListCount;
     }
 
     // --- Getters and Setters ---
@@ -197,6 +200,12 @@ public class Event {
      * @param capacity The event capacity.
      */
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
+
+    /**
+     * Gets the number of entrants on the waiting list for the event.
+     * @return The number of entrants on event waiting list.
+     */
+    public Integer getWaitingListCount() { return waitingListCount; }
 
     /**
      * Gets the waiting list limit for the event.
