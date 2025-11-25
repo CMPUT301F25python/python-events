@@ -257,7 +257,12 @@ public class EventDetailsFragment extends Fragment {
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
         addAny("Max Attendees", event.getCapacity());
-        addAny("Waiting List Count", waitingListCount);
+        // check if waiting list count has a value otherwise set to loading
+        if (waitingListCount == null){
+            dataList.add("Waiting List Count: Loading...");
+        } else {
+            addAny("Waiting List Count", waitingListCount);
+        }
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
