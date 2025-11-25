@@ -317,7 +317,7 @@ public class EventDetailsFragmentTest {
      * if the user has granted permission.
      */
     @Test
-    public void joinEvent_locationRequired_waitsForPermission() {
+    public void joinEvent_locationRequired_waitsForPermission() throws Exception {
         // 1. Arrange: Require Geolocation
         fakeRepository.getInMemoryEvent().setGeoLocationRequired(true);
 
@@ -328,6 +328,8 @@ public class EventDetailsFragmentTest {
         // 3. Act: Launch and Click
         FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
         onView(withId(R.id.btn_action_positive)).perform(click());
+
+        Thread.sleep(500); // Wait for async callback
 
         // 4. Assert
         onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));

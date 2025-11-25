@@ -20,7 +20,7 @@
             android:id="@+id/event_poster_image"
             android:layout_width="match_parent"
             android:layout_height="120dp"
-            android:scaleType="centerCrop"
+            android:scaleType="centerInside"
             tools:src="@tools:sample/backgrounds/scenic" />
 
         <TextView

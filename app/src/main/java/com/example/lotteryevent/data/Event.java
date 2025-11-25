@@ -21,7 +21,6 @@ public class Event {
     private String organizerName;
     private String location;
     private Double price;
-    private String lotteryGuidelines;
     private String posterImageUrl;
     private Timestamp eventStartDateTime;
     private Timestamp eventEndDateTime;
@@ -242,19 +241,4 @@ public class Event {
      * @param createdAt The creation timestamp.
      */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
-    /**
-     * Gets the organizer-defined guidelines for the lottery selection process.
-     * @return The lottery guidelines.
-     */
-    public String getLotteryGuidelines() {
-        return lotteryGuidelines;
-    }
-
-    /**
-     * Sets the organizer-defined guidelines for the lottery selection process.
-     * @param lotteryGuidelines The lottery guidelines.
-     */
-    public void setLotteryGuidelines(String lotteryGuidelines) {
-        this.lotteryGuidelines = lotteryGuidelines;
-    }
 }
