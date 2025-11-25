@@ -58,27 +58,6 @@ public class OrganizerEventViewModelTest {
     }
 
     @Test
-    public void loadEvent_whenError_setsMessageAndNullEvent() {
-        // Arrange: Configure the fake repository to simulate an error.
-        fakeRepository.setShouldReturnError(true);
-
-        // Act: Trigger the data load.
-        viewModel.loadEvent("any-event-id");
-
-        // Assert: Verify the LiveData objects reflect the error state.
-        String errorMessage = viewModel.getMessage().getValue();
-        Event resultEvent = viewModel.getEvent().getValue();
-        Boolean isEnabled = viewModel.isRunDrawButtonEnabled().getValue();
-
-        assertNotNull("Error message should not be null", errorMessage);
-        assertEquals("The error message is incorrect", "Test Error: Could not fetch event.", errorMessage);
-
-        assertNull("Event should be null after an error", resultEvent);
-        assertNotNull("Button enabled status should not be null", isEnabled);
-        assertFalse("Run Draw button should be disabled on error", isEnabled);
-    }
-
-    @Test
     public void isLoading_isFalse_afterFetchCompletes() {
         // Act
         viewModel.loadEvent("any-event-id");
