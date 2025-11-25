@@ -63,7 +63,6 @@ public class EventDetailsFragment extends Fragment {
     private Button btnActionPositive, btnActionNegative, btnDeleteEvent, btnDeleteOrganizer;
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
-    private LinearLayout buttonActionsContainer;
     private ImageView eventPosterImage;
     private LinearLayout buttonActionsContainer, adminActionsContainer;
 
