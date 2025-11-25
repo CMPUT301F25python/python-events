@@ -26,6 +26,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
@@ -46,6 +47,7 @@ public class NotificationCustomManager {
     private String channelDescription = "Notifications on winning the lottery.";
     private FirebaseFirestore db;
     private final static AtomicInteger c = new AtomicInteger(0);
+    private ListenerRegistration listener;
 
 
     /**
@@ -223,9 +225,13 @@ public class NotificationCustomManager {
      * @param uid recipient user's id
      */
     public void listenForNotifications(String uid) {
+        if (listener != null) {
+            Log.d(TAG, "Notification listener already exists for uid=" + uid + " instance=" + this.hashCode());
+            return;
+        }
         Log.d(TAG, "Attaching listener for uid=" + uid + " instance=" + this.hashCode());
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
-        db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
+        listener = db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value,
@@ -271,6 +277,16 @@ public class NotificationCustomManager {
                             });
                     }
                 });
+    }
+
+    /**
+     * Stops listening for notifications
+     */
+    public void stopListener() {
+        if (listener != null) {
+            listener.remove();
+            Log.d(TAG, "Stopped listening for notifications.");
+        }
     }
 
     /**

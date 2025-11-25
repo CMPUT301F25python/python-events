@@ -363,4 +363,15 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = navHostFragment.getNavController();
         return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
     }
+
+    /**
+     * When main activity gets destroyed, remove the listener to prevent multiple being open
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notificationCustomManager != null) {
+            notificationCustomManager.stopListener();
+        }
+    }
 }
