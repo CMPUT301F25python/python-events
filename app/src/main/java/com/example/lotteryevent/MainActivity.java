@@ -1,7 +1,7 @@
 package com.example.lotteryevent;
 
 import android.Manifest;
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
     // flag to check user is initialized (only then should rest of app be set up)
     private boolean userInitialized = false;
 
+    // flag to check whether profile icon should be visible
+    private boolean showProfileIcon = true;
+
     /**
      * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
      * <p>
@@ -98,6 +101,82 @@ public class MainActivity extends AppCompatActivity {
         } else {
             onUserInitialized(currentUser); // now we have a user, initialize the app
         }
+        Log.d("ActivityLifecycle", "onCreate called: " + this.hashCode());
+    }
+
+    /**
+     * Redirects user to the correct fragment when they click on a notification
+     * @param intent stores variables to dtm which fragment to navigate to
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Bundle extras = intent.getExtras();
+
+        if (extras != null) {
+            String notificationType = extras.getString("notificationType");
+            String eventId = extras.getString("eventId");
+            String notificationId = extras.getString("notificationId");
+
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            NavController navController = navHostFragment.getNavController();
+
+            // mark clicked notification as seen
+            if (notificationId != null) {
+                notificationCustomManager.markNotificationAsSeen(notificationId);
+            }
+
+            if (notificationType != null && notificationType.equals("lottery_win")) { // navigate to event
+                Bundle args = new Bundle();
+                args.putString("eventId", eventId);
+                navController.navigate(R.id.eventDetailsFragment, args);
+            } else { // navigate to notifications fragment
+                navController.navigate(R.id.notificationsFragment);
+            }
+        }
+    }
+
+    /**
+     * Inflates home menu so the profile icon appears across all fragments except where indicated.
+     * @param menu The options menu in which you place your items.
+     * @return true if initialized correctly
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_fragment_menu, menu); // this has profile_icon
+
+        // hiding profile icon where we don't want it
+        MenuItem profileItem = menu.findItem(R.id.profile_icon);
+        if(profileItem != null){
+            profileItem.setVisible(showProfileIcon);
+        }
+        return true;
+    }
+
+    /**
+     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * Stack is updated if user is not already on the fragment.
+     * @param item The menu item that was selected.
+     * @return boolean value indicating success of action
+     */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.profile_icon) {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+
+                // navigating only if not already on UserProfileFragment
+                if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.userProfileFragment){
+                    navController.navigate(R.id.userProfileFragment);
+                }
+            }
+            return true;
+        }
+
+        // default handling
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -179,6 +258,17 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = navHostFragment.getNavController();
 
         navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
+
+        // all fragments we want to hide profile icon from
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            boolean show =
+                    destination.getId() != R.id.userProfileFragment &&
+                            destination.getId() != R.id.registrationHistoryFragment;
+            if (show != showProfileIcon){
+                showProfileIcon = show;
+                supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
+            }
+        });
 
         appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
                 .setOpenableLayout(drawerLayout)
@@ -306,5 +396,16 @@ public class MainActivity extends AppCompatActivity {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
         return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
+    }
+
+    /**
+     * When main activity gets destroyed, remove the listener to prevent multiple being open
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notificationCustomManager != null) {
+            notificationCustomManager.stopListener();
+        }
     }
 }

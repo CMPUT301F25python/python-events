@@ -32,6 +32,11 @@ public class RunDrawViewModel extends ViewModel {
     public LiveData<Boolean> isLoading;
     public LiveData<String> message;
     public LiveData<Boolean> drawSuccess;
+
+    public LiveData<String> oldEntrantsStatus;
+    public LiveData<String> newChosenEntrants;
+    public LiveData<String> newUnchosenEntrants;
+
     public LiveData<Boolean> cancelSuccess;
 
     /**
@@ -47,6 +52,9 @@ public class RunDrawViewModel extends ViewModel {
         availableSpaceCount = repo.getAvailableSpaceCount();
         isLoading = repo.isLoading();
         message = repo.getMessage();
+        oldEntrantsStatus = repo.getOldEntrantsStatus();
+        newChosenEntrants = repo.getNewChosenEntrants();
+        newUnchosenEntrants = repo.getNewUnchosenEntrants();
         drawSuccess = repo.getDrawSuccess();
         cancelSuccess = repo.getCancelSuccess();
     }

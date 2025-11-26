@@ -25,8 +25,6 @@
             android:id="@+id/event_poster_image"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/calendar_today_24px"
-            app:tint="@color/primary_green"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />

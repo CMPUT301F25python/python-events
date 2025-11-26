@@ -1,12 +1,15 @@
 package com.example.lotteryevent.ui.organizer;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +33,7 @@ import com.example.lotteryevent.repository.OrganizerEventRepositoryImpl;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.OrganizerEventViewModel;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 /**
@@ -43,16 +47,21 @@ import java.io.OutputStream;
 public class OrganizerEventFragment extends Fragment {
 
     private static final String TAG = "OrganizerEventPage";
+    private static final int REQUEST_POSTER_IMAGE = 2001;
+
     private OrganizerEventViewModel viewModel;
     private String eventId;
     private ViewModelProvider.Factory viewModelFactory;
 
     // UI Components
     private TextView eventNameLabel;
+    private ImageView posterImage;
+    private Button uploadPosterButton;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
     private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
     private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
+    private Button btnExportEntrantCSV;
 
     public OrganizerEventFragment() { } // Required empty public constructor
 
@@ -140,8 +149,30 @@ public class OrganizerEventFragment extends Fragment {
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 eventNameLabel.setText(event.getName());
+
+                // Display poster image if Base64 data is available
+                String posterImageUrl = event.getPosterImageUrl();
+                if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
+                    try {
+                        byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        posterImage.setImageBitmap(bitmap);
+
+                        // Poster exists -> show "Update Poster"
+                        uploadPosterButton.setText("Update Poster");
+                    } catch (IllegalArgumentException e) {
+                        Log.e(TAG, "Invalid poster Base64 data", e);
+                        // Invalid data: keep placeholder and default label
+                        uploadPosterButton.setText("Upload Poster");
+                    }
+                } else {
+                    // No poster yet -> show default label and placeholder
+                    uploadPosterButton.setText("Upload Poster");
+                    posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
+                }
             }
         });
+
 
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
@@ -150,6 +181,7 @@ public class OrganizerEventFragment extends Fragment {
             buttonContainer.setVisibility(View.VISIBLE);
             btnRunDraw.setVisibility(View.VISIBLE);
             btnFinalize.setVisibility(View.VISIBLE);
+            btnExportEntrantCSV.setVisibility(View.GONE);
 
             switch (state) {
                 case UPCOMING:
@@ -158,6 +190,7 @@ public class OrganizerEventFragment extends Fragment {
                 case FINALIZED:
                     btnRunDraw.setVisibility(View.GONE);
                     btnFinalize.setVisibility(View.GONE);
+                    btnExportEntrantCSV.setVisibility(View.VISIBLE);
                     break;
                 case OPEN:
                     btnFinalize.setEnabled(true);
@@ -187,6 +220,14 @@ public class OrganizerEventFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Observer for the CSV content to be exported
+        viewModel.getCsvContent().observe(getViewLifecycleOwner(), csvContent -> {
+            if (csvContent != null) {
+                saveCsvToDownloads(csvContent);
+                viewModel.onCsvExported(); // Reset the LiveData
+            }
+        });
     }
 
     /**
@@ -195,6 +236,8 @@ public class OrganizerEventFragment extends Fragment {
      */
     private void initializeViews(View view) {
         eventNameLabel = view.findViewById(R.id.event_name_label);
+        posterImage = view.findViewById(R.id.poster_image);
+        uploadPosterButton = view.findViewById(R.id.upload_poster_button);
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         buttonContainer = view.findViewById(R.id.organizer_button_container);
         btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
@@ -204,6 +247,7 @@ public class OrganizerEventFragment extends Fragment {
         btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
+        btnExportEntrantCSV = view.findViewById(R.id.btnExportCSV);
     }
 
     /**
@@ -211,7 +255,7 @@ public class OrganizerEventFragment extends Fragment {
      */
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(v -> viewModel.generateQrCode(eventId));
-
+        uploadPosterButton.setOnClickListener(v -> openPosterPicker());
         btnRunDraw.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("eventId", eventId);
@@ -254,10 +298,135 @@ public class OrganizerEventFragment extends Fragment {
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
         };
         btnViewEntrantMap.setOnClickListener(notImplementedListener);
-        btnFinalize.setOnClickListener(notImplementedListener);
+        btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
+        btnExportEntrantCSV.setOnClickListener(v -> viewModel.generateEntrantCsv());
     }
 
-    // --- UI Helper Methods ---
+    /**
+     * Launches an image picker so the organizer can select a poster image for the event.
+     */
+    private void openPosterPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_POSTER_IMAGE);
+    }
+
+    /**
+     * Handles results from started activities, including the image picker for the event poster.
+     * @param requestCode The original request code used to start the activity.
+     * @param resultCode The result code returned by the activity.
+     * @param data The returned intent data, which may contain the selected image Uri.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_POSTER_IMAGE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+
+                // Update the UI preview
+                posterImage.setImageBitmap(bitmap);
+
+                // Encode to Base64 and send to ViewModel to save on the event
+                String posterImageUrl = encodeBitmapToBase64(bitmap);
+                if (eventId != null && !eventId.isEmpty()) {
+                    viewModel.updateEventPoster(eventId, posterImageUrl);
+                    Toast.makeText(getContext(), "Event poster updated.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "Unable to update poster: missing event ID.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load poster image", e);
+                Toast.makeText(getContext(), "Failed to load image", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Encodes the given {@link Bitmap} as a Base64 string.
+     * @param bitmap The bitmap to encode.
+     * @return A Base64-encoded representation of the bitmap.
+     */
+    private String encodeBitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+        byte[] bytes = baos.toByteArray();
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
+
+    /**
+     * Saves a text string as a .csv file in the public Downloads directory.
+     * Handles differences between Android 10+ (API 29) and older versions.
+     */
+    private void saveCsvToDownloads(String csvContent) {
+        String fileName = "entrants_" + eventId + "_" + System.currentTimeMillis() + ".csv";
+
+        // Check if we are running on Android 10 (Q) or higher
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            // --- API 29+ Logic (Scoped Storage) ---
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+            values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+            try {
+                Uri uri = requireContext().getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                        if (outputStream != null) {
+                            outputStream.write(csvContent.getBytes());
+                            Toast.makeText(getContext(), "Exported to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Could not create file in Downloads.", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error saving CSV (API 29+)", e);
+                Toast.makeText(getContext(), "Failed to save CSV file.", Toast.LENGTH_SHORT).show();
+            }
+
+        } else {
+            // --- API < 29 Logic (Legacy Storage) ---
+            try {
+                java.io.File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdirs();
+                }
+                java.io.File file = new java.io.File(downloadsDir, fileName);
+
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                    fos.write(csvContent.getBytes());
+                    Toast.makeText(getContext(), "Exported to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error saving CSV (Legacy)", e);
+                Toast.makeText(getContext(), "Failed to save CSV. Check Permissions.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Shows a confirmation dialog ensuring the user wants to finalize the event.
+     */
+    private void showFinalizeConfirmationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Finalize Event")
+                .setMessage("Are you sure you want to finalize this event? \n\n" +
+                        "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
+                        "This action cannot be undone.")
+                .setPositiveButton("Finalize", (dialog, which) -> {
+                    // Call the ViewModel to execute the logic
+                    viewModel.finalizeEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .create()
+                .show();
+    }
 
     /**
      * Displays a dialog containing the generated QR code bitmap.
