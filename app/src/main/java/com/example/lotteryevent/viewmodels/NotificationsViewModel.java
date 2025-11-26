@@ -54,6 +54,21 @@ public class NotificationsViewModel extends ViewModel {
     // --- Business Logic ---
 
     /**
+     * Marks all unseen notifications as seen
+     */
+    public void onMarkAllSeenClicked() {
+        List<Notification> notifs = getNotifications().getValue();
+        if (notifs != null) {
+            for (Notification notif : notifs) {
+                // If the notification hasn't been seen, tell the repository to update it.
+                if (notif.getSeen() != Boolean.TRUE) {
+                    notificationRepository.markNotificationAsSeen(notif.getNotificationId());
+                }
+            }
+        }
+    }
+
+    /**
      * This method contains the logic from the original fragment's `redirectOnNotificationClick`.
      * It marks the notification as seen and triggers navigation if necessary.
      *
