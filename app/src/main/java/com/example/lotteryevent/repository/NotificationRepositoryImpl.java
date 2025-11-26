@@ -119,6 +119,7 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Notification> result = new ArrayList<>();
+
                     for (DocumentSnapshot doc : query.getDocuments()) {
                         Notification eventNoti = doc.toObject(Notification.class);
                         result.add(eventNoti);

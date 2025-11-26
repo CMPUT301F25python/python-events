@@ -56,6 +56,12 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Get eventId for for admin
+        String eventIdFilter = null;
+        if (getArguments() != null) {
+            eventIdFilter = getArguments().getString("eventId");
+        }
+
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             // Production path: create dependencies manually.
@@ -93,12 +99,31 @@ public class NotificationsFragment extends Fragment {
      * Sets up observers on the ViewModel's LiveData to react to data and state changes.
      */
     private void setupObservers(@NonNull View view) {
-        // Observe the list of notifications and submit it to the adapter when it changes.
-        viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
-            if (notifications != null) {
-                adapter.setNotifications(notifications);
-            }
-        });
+        String eventIdFilter = null;
+        if (getArguments() != null) {
+            eventIdFilter = getArguments().getString("eventId");
+        }
+
+        if(eventIdFilter != null) {
+            // Show notifications for Admin
+            viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
+                if (notifications != null) {
+                    adapter.setNotifications(notifications);
+                }
+            });
+
+            // Get filtered list
+            viewModel.loadNotificationsForEvent(eventIdFilter);
+        } else {
+
+            // Observe the list of notifications and submit it to the adapter when it changes.
+            viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
+                if (notifications != null) {
+                    adapter.setNotifications(notifications);
+                }
+            });
+        }
+
 
         // Observe for user-facing messages (errors, etc.) and show them in a Toast.
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
