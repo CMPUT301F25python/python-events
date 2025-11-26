@@ -22,6 +22,7 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private final MutableLiveData<List<Notification>> _notifications = new MutableLiveData<>();
+    private final MutableLiveData<List<Notification>> _notificationsForEvent = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
@@ -36,6 +37,9 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     public LiveData<List<Notification>> getNotifications() {
         return _notifications;
     }
+
+    @Override
+    public LiveData<List<Notification>> getNotificationsForEvent() { return _notificationsForEvent; }
 
     @Override
     public LiveData<Boolean> isLoading() {
@@ -97,5 +101,24 @@ public class NotificationRepositoryImpl implements INotificationRepository {
             listenerRegistration.remove();
             listenerRegistration = null;
         }
+    }
+
+    @Override
+    public void fetchNotificationsForEvent(String eventId) {
+        _isLoading.postValue(true);
+
+        db.collection("notifications")
+                .whereEqualTo("eventId", eventId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(query -> {
+                    List<Notification> result = new ArrayList<>();
+                    for (DocumentSnapshot doc : query.getDocuments()) {
+                        Notification eventNoti = doc.toObject(Notification.class);
+                        result.add(eventNoti);
+                    }
+                    _notificationsForEvent.postValue(result);
+                    _isLoading.postValue(false);
+                });
     }
 }
