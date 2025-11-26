@@ -1,7 +1,7 @@
 package com.example.lotteryevent;
 
 import android.Manifest;
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -100,6 +100,40 @@ public class MainActivity extends AppCompatActivity {
             signInAnonymously();
         } else {
             onUserInitialized(currentUser); // now we have a user, initialize the app
+        }
+        Log.d("ActivityLifecycle", "onCreate called: " + this.hashCode());
+    }
+
+    /**
+     * Redirects user to the correct fragment when they click on a notification
+     * @param intent stores variables to dtm which fragment to navigate to
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Bundle extras = intent.getExtras();
+
+        if (extras != null) {
+            String notificationType = extras.getString("notificationType");
+            String eventId = extras.getString("eventId");
+            String notificationId = extras.getString("notificationId");
+
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            NavController navController = navHostFragment.getNavController();
+
+            // mark clicked notification as seen
+            if (notificationId != null) {
+                notificationCustomManager.markNotificationAsSeen(notificationId);
+            }
+
+            if (notificationType != null && notificationType.equals("lottery_win")) { // navigate to event
+                Bundle args = new Bundle();
+                args.putString("eventId", eventId);
+                navController.navigate(R.id.eventDetailsFragment, args);
+            } else { // navigate to notifications fragment
+                navController.navigate(R.id.notificationsFragment);
+            }
         }
     }
 

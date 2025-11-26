@@ -133,28 +133,23 @@ public class NotificationCustomManager {
     public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = null;
+        // for determining which fragment to redirect to from notification
         Bundle bundle = new Bundle();
-        bundle.putString("notificationId", notificationId); // used to mark notif as seen
-
-        // if one notif and is a lottery win, navigate to the event and mark notif
-        if (notifType != null && Objects.equals(notifType, "lottery_win")) {
+        bundle.putString("notificationId", notificationId);
+        bundle.putString("notificationType", notifType);
+        if (notifType != null && notifType.equals("lottery_win")) {
             bundle.putString("eventId", eventId);
-
-            pendingIntent = new NavDeepLinkBuilder(this.myContext)
-                    .setGraph(R.navigation.nav_graph)
-                    .setDestination(R.id.eventDetailsFragment)
-                    .setArguments(bundle)
-                    .createPendingIntent();
-        } else { // navigate to notifs screen
-            pendingIntent = new NavDeepLinkBuilder(this.myContext)
-                    .setGraph(R.navigation.nav_graph)
-                    .setDestination(R.id.notificationsFragment)
-                    .setArguments(bundle)
-                    .createPendingIntent();
         }
+        intent.putExtras(bundle);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                myContext,
+                getID(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this.myContext, channelID)
