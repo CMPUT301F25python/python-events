@@ -88,13 +88,11 @@ public class AdminUserProfileFragment extends Fragment {
 
         // 4. Get the current user's ID
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) {
-            // Should never reach this point
-            Log.w("AdminUserProfileFragment", "Cannot delete user: user is not signed in.");
-            return;
-        }
+        String currentUserId = "";
 
-        String currentUserId = currentUser.getUid();
+        if (currentUser != null) {
+            currentUserId = currentUser.getUid();
+        }
 
         // 5. Check if the profile being viewed belongs to the current user
         if (userId != null && userId.equals(currentUserId)) {
