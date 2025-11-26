@@ -49,6 +49,9 @@ public class RunDrawFragment extends Fragment {
 
     // EventId passed from previous fragment
     private String eventId = "temporary filler for event ID";
+    private String oldEntrantsStatus;
+    private String newChosenEntrants;
+    private String newUnchosenEntrants;
 
     // ViewModel
     private RunDrawViewModel viewModel;
@@ -149,11 +152,26 @@ public class RunDrawFragment extends Fragment {
             runDrawButton.setEnabled(!isLoading);
         });
 
+        viewModel.oldEntrantsStatus.observe(getViewLifecycleOwner(), oldEntrantsStatus -> {
+            this.oldEntrantsStatus = oldEntrantsStatus;
+        });
+
+        viewModel.newChosenEntrants.observe(getViewLifecycleOwner(), newChosenEntrants -> {
+            this.newChosenEntrants = newChosenEntrants;
+        });
+
+        viewModel.newUnchosenEntrants.observe(getViewLifecycleOwner(), newUnchosenEntrants -> {
+            this.newUnchosenEntrants = newUnchosenEntrants;
+        });
+
         // Navigation trigger on successful draw
         viewModel.drawSuccess.observe(getViewLifecycleOwner(), success -> {
             if (success != null && success) {
                 Bundle bundle = new Bundle();
                 bundle.putString("eventId", eventId);
+                bundle.putString("oldEntrantsStatus", oldEntrantsStatus);
+                bundle.putString("newChosenEntrants", newChosenEntrants);
+                bundle.putString("newUnchosenEntrants", newUnchosenEntrants);
 
                 Navigation.findNavController(requireView())
                         .navigate(R.id.action_runDrawFragment_to_confirmDrawAndNotifyFragment, bundle);

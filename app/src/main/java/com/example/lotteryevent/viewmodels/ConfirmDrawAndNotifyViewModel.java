@@ -18,6 +18,7 @@ import com.google.firebase.firestore.DocumentReference;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -27,18 +28,17 @@ import java.util.Objects;
 public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private final NotificationCustomManager notifManager;
     private final IEventRepository repository;
+
     public LiveData<Event> event;
-    public LiveData<List<Entrant>> eventEntrants;
+
     public LiveData<String> message;
 
     private final MediatorLiveData<String> _waitingListCount = new MediatorLiveData<>();
-    private final MediatorLiveData<String> _selectedUsersCount = new MediatorLiveData<>();
     private final MediatorLiveData<String> _availableSpaceCount = new MediatorLiveData<>();
     private final MutableLiveData<Boolean> _navigateBack = new MutableLiveData<>();
 
     public LiveData<Boolean> navigateBack = _navigateBack;
     public LiveData<String> waitingListCount = _waitingListCount;
-    public LiveData<String> selectedUsersCount = _selectedUsersCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
 
     public LiveData<Boolean> isLoading() {
@@ -65,33 +65,29 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         this.repository = repository;
         this.event = repository.getUserEvent();
-        this.eventEntrants = repository.getEventEntrants();
         this.message = repository.getMessage();
 
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
-        _selectedUsersCount.addSource(repository.getSelectedUsersCount(), event -> calculateEntrantCounts());
-        _availableSpaceCount.addSource(repository.getEventEntrants(), event -> calculateEntrantCounts());
-
+        _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
 
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
-        _bottomUiState.addSource(repository.getEventEntrants(), event -> calculateUiState());
         _bottomUiState.addSource(repository.isLoading(), isLoading -> {
             calculateEntrantCounts();
             calculateUiState();
         });
-        _bottomUiState.addSource(repository.getSelectedUsersCount(), count -> calculateUiState());
+        _bottomUiState.addSource(repository.getAvailableSpaceCount(), count -> calculateUiState());
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
 
     /**
      * The entry point for the Fragment to start loading event and entrants
      */
-    public void loadEventAndEntrants(String eventId) {
+    public void loadEventAndEntrantCounts(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
             _bottomUiState.setValue(BottomUiState.infoText("Error: Missing Event ID."));
             return;
         }
-        repository.fetchEventAndEntrants(eventId);
+        repository.fetchEventAndEntrantCounts(eventId);
     }
 
     /**
@@ -100,33 +96,26 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private void calculateEntrantCounts() {
         Boolean isLoading = repository.isLoading().getValue();
         Event event = repository.getUserEvent().getValue();
-        Integer selectedUsersCount = repository.getSelectedUsersCount().getValue();
         Integer waitingListCount = repository.getWaitingListCount().getValue();
+        Integer availableSpaceCount = repository.getAvailableSpaceCount().getValue();
 
         if (isLoading != null && isLoading) {
             return;
         }
-
-        if (waitingListCount == null) {
+        if (event == null) {
             return;
         }
-        _waitingListCount.postValue(String.valueOf(waitingListCount));
 
-        if (selectedUsersCount == null || event == null) {
-            return;
+        if (waitingListCount != null) {
+            _waitingListCount.postValue(String.valueOf(waitingListCount));
         }
-        _selectedUsersCount.postValue(String.valueOf(selectedUsersCount));
 
-        Integer capacity = event.getCapacity();
-        if (capacity == null) {
+        if (availableSpaceCount == null) {
             _availableSpaceCount.postValue("No Limit");
+        } else if (availableSpaceCount > 0) {
+            _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
         } else {
-            Integer spaceLeft = capacity - selectedUsersCount;
-            if (spaceLeft > 0) {
-                _availableSpaceCount.postValue(String.valueOf(spaceLeft));
-            } else {
-                _availableSpaceCount.postValue("0");
-            }
+            _availableSpaceCount.postValue(String.valueOf(0));
         }
     }
 
@@ -135,13 +124,12 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
      */
     private void calculateUiState() {
         Event event = repository.getUserEvent().getValue();
-        List<Entrant> entrants = repository.getEventEntrants().getValue();
         Boolean isLoading = repository.isLoading().getValue();
         if (isLoading != null && isLoading) {
             _bottomUiState.setValue(BottomUiState.loading());
             return;
         }
-        if (event == null || entrants == null) {
+        if (event == null) {
             return;
         }
         _bottomUiState.postValue(BottomUiState.twoButtons("Confirm and Notify", "Cancel"));
@@ -150,21 +138,33 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     /**
      * Notifies selected entrants to accept, navigates back to event details screen
      */
-    public void onPositiveButtonClicked() {
+    public void onPositiveButtonClicked(ArrayList<String> newChosenEntrants, ArrayList<String> newUnchosenEntrants) {
         if (notifManager == null) {
             _bottomUiState.setValue(BottomUiState.infoText("Error: Notifications not set up."));
             return;
         }
         String eventId = Objects.requireNonNull(event.getValue()).getEventId();
         ArrayList<Task<DocumentReference>> tasks = new ArrayList<>();
-        for (Entrant entrant : Objects.requireNonNull(eventEntrants.getValue())) {
+
+        for (String entrant : newChosenEntrants) {
             String eventName = Objects.requireNonNull(event.getValue()).getName();
             String organizerId = event.getValue().getOrganizerId();
             String organizerName = event.getValue().getOrganizerName();
             String title = "Congratulations!";
             String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
             String type = "lottery_win";
-            Task<DocumentReference> task = notifManager.sendNotification(entrant.getUserId(), title, message, type, eventId, eventName, organizerId, organizerName);
+            Task<DocumentReference> task = notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
+            tasks.add(task);
+        }
+
+        for (String entrant : newUnchosenEntrants) {
+            String eventName = Objects.requireNonNull(event.getValue()).getName();
+            String organizerId = event.getValue().getOrganizerId();
+            String organizerName = event.getValue().getOrganizerName();
+            String title = "Thank you for joining!";
+            String message = "You weren't selected for " + eventName + " in this draw, but you're still on the waiting list and may be chosen in a future redraw.";
+            String type = "lottery_loss";
+            Task<DocumentReference> task = notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
             tasks.add(task);
         }
 
@@ -177,8 +177,15 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     /**
      * Moves invited entrants back to waiting list and navigates back to event details screen
      */
-    public void onNegativeButtonClicked() {
-        repository.updateEntrantsAttributes(Objects.requireNonNull(event.getValue()).getEventId(), "status", "invited", "waiting");
-        _navigateBack.postValue(true);
+    public void onNegativeButtonClicked(Map<String, String> oldEntrantsStatus) {
+        ArrayList<Task<Void>> tasks = new ArrayList<>();
+        for (Map.Entry<String, String> entry : oldEntrantsStatus.entrySet()) {
+            Task<Void> task = repository.updateEntrantAttribute(Objects.requireNonNull(event.getValue()).getEventId(), entry.getKey(), "status", entry.getValue());
+            tasks.add(task);
+        }
+        Tasks.whenAllComplete(tasks)
+            .addOnCompleteListener(allTask -> {
+                _navigateBack.postValue(true);
+            });
     }
 }
