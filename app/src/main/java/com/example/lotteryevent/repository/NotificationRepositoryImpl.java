@@ -103,6 +103,12 @@ public class NotificationRepositoryImpl implements INotificationRepository {
         }
     }
 
+    /**
+     * This method fetches the notifications associated with a specific event
+     * ordering notis by timestamp in descending order (Newest notifications appear first)
+     * @param eventId
+     * Identifier for the event notifications are retrieved for
+     */
     @Override
     public void fetchNotificationsForEvent(String eventId) {
         _isLoading.postValue(true);
