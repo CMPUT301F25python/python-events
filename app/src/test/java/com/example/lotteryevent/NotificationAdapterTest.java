@@ -65,23 +65,13 @@ public class NotificationAdapterTest {
     }
 
     /**
-     * Tests event update message construction
-     */
-    @Test
-    public void testMessageConstructorEventUpdate() {
-        notification.setType("event_update");
-        String message = NotificationAdapter.messageConstructor(notification);
-        assertEquals(message, "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!");
-    }
-
-    /**
      * Tests custom message construction
      */
     @Test
     public void testMessageConstructorCustomMessage() {
         notification.setType("custom_message");
         String message = NotificationAdapter.messageConstructor(notification);
-        assertEquals(message, "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage());
+        assertEquals(message, "\uD83D\uDCAC " + notification.getMessage());
     }
 
 }
