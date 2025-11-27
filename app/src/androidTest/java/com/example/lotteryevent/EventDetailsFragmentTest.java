@@ -330,7 +330,7 @@ public class EventDetailsFragmentTest {
         FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
         onView(withId(R.id.btn_action_positive)).perform(click());
 
-        Thread.sleep(500); // Wait for async callback
+        Thread.sleep(1000); // Wait for async callback
 
         // 4. Assert
         onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
