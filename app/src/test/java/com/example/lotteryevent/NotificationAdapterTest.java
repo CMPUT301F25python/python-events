@@ -27,6 +27,7 @@ public class NotificationAdapterTest {
     private String eventName;
     private String organizerId;
     private String organizerName;
+    private Integer notifBannerID;
 
     /**
      * Sets up notif record and fields
@@ -41,7 +42,8 @@ public class NotificationAdapterTest {
         eventName = "Event Name";
         organizerId = "aIJocfaDTrWhIp3N3FjvADBbTuv";
         organizerName = "Organizer Name";
-        notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+        notifBannerID = 123;
+        notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerID);
     }
 
     /**
