@@ -3,6 +3,8 @@ package com.example.lotteryevent.viewmodels;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import com.example.lotteryevent.repository.INotificationRepository;
 import java.util.List;
@@ -56,13 +58,13 @@ public class NotificationsViewModel extends ViewModel {
     /**
      * Marks all unseen notifications as seen
      */
-    public void onMarkAllSeenClicked() {
+    public void onMarkAllSeenClicked(NotificationCustomManager notificationCustomManager) {
         List<Notification> notifs = getNotifications().getValue();
         if (notifs != null) {
             for (Notification notif : notifs) {
                 // If the notification hasn't been seen, tell the repository to update it.
                 if (notif.getSeen() != Boolean.TRUE) {
-                    notificationRepository.markNotificationAsSeen(notif.getNotificationId());
+                    notificationRepository.markNotificationAsSeen(notif.getNotificationId(), notificationCustomManager);
                 }
             }
         }
@@ -74,10 +76,10 @@ public class NotificationsViewModel extends ViewModel {
      *
      * @param notification The notification that the user clicked on in the RecyclerView.
      */
-    public void onNotificationClicked(Notification notification) {
+    public void onNotificationClicked(Notification notification, NotificationCustomManager notificationCustomManager) {
         // If the notification hasn't been seen, tell the repository to update it.
         if (notification.getSeen() != Boolean.TRUE) {
-            notificationRepository.markNotificationAsSeen(notification.getNotificationId());
+            notificationRepository.markNotificationAsSeen(notification.getNotificationId(), notificationCustomManager);
         }
 
         // If the notification is a "lottery_win", post the event ID to the navigation LiveData.
@@ -92,9 +94,9 @@ public class NotificationsViewModel extends ViewModel {
      *
      * @param notificationId The ID of the notification, passed via fragment arguments.
      */
-    public void processInitialNotification(String notificationId) {
+    public void processInitialNotification(String notificationId, NotificationCustomManager notificationCustomManager) {
         if (notificationId != null) {
-            notificationRepository.markNotificationAsSeen(notificationId);
+            notificationRepository.markNotificationAsSeen(notificationId, notificationCustomManager);
         }
     }
 

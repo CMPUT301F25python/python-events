@@ -38,6 +38,8 @@ public class NotificationsFragment extends Fragment {
     private NotificationsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
 
+    private NotificationCustomManager notificationCustomManager;
+
     /**
      * Default constructor for production use by the Android Framework.
      */
@@ -60,6 +62,8 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        notificationCustomManager = new NotificationCustomManager(requireContext());
+
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             // Production path: create dependencies manually.
@@ -77,7 +81,7 @@ public class NotificationsFragment extends Fragment {
         // --- Initial Action ---
         // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        viewModel.processInitialNotification(notificationId);
+        viewModel.processInitialNotification(notificationId, notificationCustomManager);
     }
 
     /**
@@ -92,11 +96,10 @@ public class NotificationsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         markSeenBtn.setOnClickListener(v -> {
-            NotificationCustomManager notificationCustomManager = new NotificationCustomManager(requireContext());
+            viewModel.onMarkAllSeenClicked(notificationCustomManager);
             notificationCustomManager.clearNotifications();
-            viewModel.onMarkAllSeenClicked();
         });
-        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification));
+        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification, notificationCustomManager));
     }
 
     /**
