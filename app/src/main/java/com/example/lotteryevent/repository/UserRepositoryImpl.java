@@ -2,7 +2,6 @@ package com.example.lotteryevent.repository;
 
 import android.util.Log;
 
-import androidx.core.app.NotificationManagerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -17,7 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 import java.util.HashMap;
 import java.util.Map;
-import android.content.Context;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class UserRepositoryImpl implements IUserRepository {
 
@@ -128,18 +127,27 @@ public class UserRepositoryImpl implements IUserRepository {
         }
         _isLoading.setValue(true);
 
-        db.collection("users").document(firebaseUser.getUid()).set(user)
-                .addOnSuccessListener(aVoid -> {
-                    _isLoading.setValue(false);
-                    _currentUser.postValue(user);
-                    _userMessage.postValue("Profile updated successfully.");
-                    Log.d(TAG, "User profile updated successfully.");
-                })
-                .addOnFailureListener(e -> {
-                    _isLoading.setValue(false);
-                    _userMessage.postValue("Profile update failed: " + e.getMessage());
-                    Log.e(TAG, "Error updating profile", e);
-                });
+        db.collection("users").document(firebaseUser.getUid()).get()
+            .addOnSuccessListener(doc -> {
+                Boolean optOutNotifications = doc.getBoolean("optOutNotifications");
+                if (optOutNotifications != null) {
+                    user.setOptOutNotifications(optOutNotifications);
+                }
+
+                db.collection("users").document(firebaseUser.getUid()).set(user)
+                    .addOnSuccessListener(aVoid -> {
+                        _isLoading.setValue(false);
+                        _currentUser.postValue(user);
+                        _userMessage.postValue("Profile updated successfully.");
+                        Log.d(TAG, "User profile updated successfully.");
+                    })
+                    .addOnFailureListener(e -> {
+                        _isLoading.setValue(false);
+                        _userMessage.postValue("Profile update failed: " + e.getMessage());
+                        Log.e(TAG, "Error updating profile", e);
+                    });
+            })
+            .addOnFailureListener(e -> Log.e(TAG, "Error getting user", e));
     }
 
     /**
