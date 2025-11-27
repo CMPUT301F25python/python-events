@@ -128,7 +128,7 @@ public class NotificationCustomManager {
      * @param notifType notif type
      */
     @SuppressLint("MissingPermission")
-    public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
+    public int generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -164,9 +164,13 @@ public class NotificationCustomManager {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX);
 
+        int notifBannerId = getID();
+
         // Display the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.myContext);
-        notificationManager.notify(getID(), builder.build());
+        notificationManager.notify(notifBannerId, builder.build());
+
+        return notifBannerId;
     }
 
     /**
@@ -199,7 +203,8 @@ public class NotificationCustomManager {
 
                             String fullMessage = message + "\n" + timestamp;
 
-                            generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                         } else if (size > 1) {
                             // many notifs, just tell multiple unread
                             String title = "You have " + String.valueOf(size) + " unread notifications";
@@ -261,7 +266,8 @@ public class NotificationCustomManager {
 
                                         String fullMessage = message + "\n" + timestamp;
 
-                                        generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                                     }
                                 }
                             })
