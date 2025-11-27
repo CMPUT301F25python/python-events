@@ -5,6 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;import androidx.recyclerview.widget.RecyclerView;
@@ -144,15 +147,31 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         /**
          * Binds an {@link Event} object's data to the views within the ViewHolder.
-         * For this version, it only sets the event's name on a TextView.
+         * This sets the event's name and, if available, its poster image.
          *
          * @param event The {@link Event} object containing the data to display.
          */
-        // in EventAdapter.EventViewHolder
         void bind(@NonNull Event event) {
+            // Always set the event name
             titleTextView.setText(event.getName());
+
+            // Handle poster image (Base64) if available
+            String posterImageUrl = event.getPosterImageUrl();
+
+            if (posterImageUrl != null && !posterImageUrl.trim().isEmpty()) {
+                try {
+                    byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    posterImageView.setImageBitmap(bitmap);
+                } catch (IllegalArgumentException e) {
+                    // Invalid Base64 data: fall back to default icon
+                    posterImageView.setImageDrawable(null);
+                }
+            } else {
+                // No poster set: hide ImageView
+                posterImageView.setImageResource(R.drawable.outline_add_photo_alternate_24);
+                posterImageView.setImageTintList(null);
+            }
         }
-
-
     }
 }

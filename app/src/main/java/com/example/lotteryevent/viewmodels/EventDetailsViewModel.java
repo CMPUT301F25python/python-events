@@ -29,6 +29,7 @@ public class EventDetailsViewModel extends ViewModel {
     // --- LiveData exposed to the Fragment ---
     public LiveData<Event> eventDetails;
     public LiveData<String> message;
+    public LiveData<Integer> waitingListCount;
 
     // Signal to the Fragment that we need location permission
     private final MutableLiveData<Boolean> _requestLocationPermission = new MutableLiveData<>();
@@ -44,6 +45,7 @@ public class EventDetailsViewModel extends ViewModel {
         // Pass through the simple LiveData objects from the repository.
         this.eventDetails = repository.getEventDetails();
         this.message = repository.getMessage();
+        this.waitingListCount = repository.getWaitingListCount();
 
         // Add the sources that the UI state depends on.
         _bottomUiState.addSource(repository.getEventDetails(), event -> calculateUiState());
@@ -273,5 +275,13 @@ public class EventDetailsViewModel extends ViewModel {
         }
 
         repository.notifyEntrantFromAdmin(userId, organizerMessage, manager);
+    }
+    
+    /**
+     * This function exposes the waiting list count to the Fragment.
+     * @return a LiveData<Integer> representing the waiting list count
+     */
+    public LiveData<Integer> getWaitingListCount(){
+        return repository.getWaitingListCount();
     }
 }

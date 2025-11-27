@@ -21,11 +21,16 @@ import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
-import com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragmentDirections;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.gson.Gson;
 
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
+
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * This fragment allows the organizer to view the number of entrants drawn, confirm draw, and notify the selected entrants.
@@ -49,6 +54,10 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
     // --- ViewModel ---
     private ConfirmDrawAndNotifyViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
+
+    private Map<String, String> oldEntrantsStatus;
+    private ArrayList<String> newChosenEntrants;
+    private ArrayList<String> newUnchosenEntrants;
 
     /**
      * Default constructor for production use by the Android Framework.
@@ -106,15 +115,28 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         }
         viewModel = new ViewModelProvider(this, viewModelFactory).get(ConfirmDrawAndNotifyViewModel.class);
 
-        initializeViews(view);
-        setupClickListeners();
-        setupObservers();
-
         // --- Initial Action ---
         if (getArguments() != null) {
             String eventId = getArguments().getString("eventId");
-            viewModel.loadEventAndEntrants(eventId);
+            String oldEntrantsStatusString = getArguments().getString("oldEntrantsStatus");
+            String newChosenEntrantsString = getArguments().getString("newChosenEntrants");
+            String newUnchosenEntrantsString = getArguments().getString("newUnchosenEntrants");
+
+            Gson gson = new Gson();
+
+            Type mapType = new TypeToken<Map<String, String>>(){}.getType();
+            oldEntrantsStatus = gson.fromJson(oldEntrantsStatusString, mapType);
+
+            Type listType = new TypeToken<ArrayList<String>>(){}.getType();
+            newChosenEntrants = gson.fromJson(newChosenEntrantsString, listType);
+            newUnchosenEntrants = gson.fromJson(newUnchosenEntrantsString, listType);
+
+            viewModel.loadEventAndEntrantCounts(eventId);
         }
+
+        initializeViews(view);
+        setupClickListeners();
+        setupObservers();
     }
 
     /**
@@ -130,14 +152,17 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         waitingListCountText = v.findViewById(R.id.waiting_list_count);
         availableSpaceCountText = v.findViewById(R.id.available_space_count);
         selectedUsersCountText = v.findViewById(R.id.selected_users_count);
+        if (newChosenEntrants != null) {
+            bindSelectedUsersCount(String.valueOf(newChosenEntrants.size()));
+        }
     }
 
     /**
      * Sets up click listeners for the confirm and notify and cancel buttons
      */
     private void setupClickListeners() {
-        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
-        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
+        btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked(newChosenEntrants, newUnchosenEntrants));
+        btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked(oldEntrantsStatus));
     }
 
     /**
@@ -147,12 +172,6 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), waitingListCount -> {
             if (waitingListCount != null) {
                 bindWaitingListCount(waitingListCount);
-            }
-        });
-
-        viewModel.selectedUsersCount.observe(getViewLifecycleOwner(), selectedUsersCount -> {
-            if (selectedUsersCount != null) {
-                bindSelectedUsersCount(selectedUsersCount);
             }
         });
 

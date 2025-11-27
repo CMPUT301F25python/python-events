@@ -18,10 +18,15 @@ import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.firebase.Timestamp;
+import android.widget.ImageView;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -313,7 +318,7 @@ public class EventDetailsFragmentTest {
      * if the user has granted permission.
      */
     @Test
-    public void joinEvent_locationRequired_waitsForPermission() {
+    public void joinEvent_locationRequired_waitsForPermission() throws Exception {
         // 1. Arrange: Require Geolocation
         fakeRepository.getInMemoryEvent().setGeoLocationRequired(true);
 
@@ -324,6 +329,8 @@ public class EventDetailsFragmentTest {
         // 3. Act: Launch and Click
         FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
         onView(withId(R.id.btn_action_positive)).perform(click());
+
+        Thread.sleep(500); // Wait for async callback
 
         // 4. Assert
         onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
@@ -348,7 +355,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 11: A regular (non-admin) user CANNOT see the delete event button.
+     * Test Case 13: A regular (non-admin) user CANNOT see the delete button.
      * This is a critical security check.
      */
     @Test
@@ -364,7 +371,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 12: An admin user CAN see the delete event button.
+     * Test Case 14: An admin user CAN see the delete button.
      */
     @Test
     public void admin_seesDeleteButton() {
@@ -379,7 +386,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 13: Admin successfully deletes an event via the dialog (Using UIAutomator).
+     * Test Case 15: Admin successfully deletes an event via the dialog (Using UIAutomator).
      */
     @Test
     public void admin_deleteFlow_happyPath() throws Exception {
@@ -409,7 +416,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 14: Admin cancels the deletion via the dialog (Using UIAutomator).
+     * Test Case 16: Admin cancels the deletion via the dialog (Using UIAutomator).
      */
     @Test
     public void admin_deleteFlow_cancelPath() throws Exception {
@@ -437,6 +444,71 @@ public class EventDetailsFragmentTest {
         assert(isDeleted == null || !isDeleted);
     }
 
+
+    /**
+     * Test Case 17: When an event has no poster image set, the details page
+     * shows a placeholder image in the poster ImageView.
+     */
+    @Test
+    public void eventWithoutPoster_showsPlaceholderImage() {
+        // Arrange: ensure the in-memory event has no poster image.
+        fakeRepository.resetToDefaultState();
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(null);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView is present and has a drawable (placeholder).
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Placeholder drawable should be set when no poster is available", drawable);
+        });
+    }
+
+    /**
+     * Test Case 18: When an event has a poster image set (Base64),
+     * the details page displays it as a bitmap in the poster ImageView.
+     */
+    @Test
+    public void eventWithPoster_showsPosterBitmap() {
+        fakeRepository.resetToDefaultState();
+        String base64Png =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAA" +
+                        "AAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(base64Png);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView now has a BitmapDrawable.
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Poster drawable should be set for events with a poster", drawable);
+            assertTrue(
+                    "Poster drawable should be a BitmapDrawable when Base64 poster is provided",
+                    drawable instanceof BitmapDrawable
+            );
+        });
+    }
     /**
      * Test Case 15: A regular (non-admin) user CANNOT see the delete organizer button.
      */

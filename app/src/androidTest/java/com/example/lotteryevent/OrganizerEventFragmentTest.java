@@ -211,4 +211,47 @@ public class OrganizerEventFragmentTest {
         assertNotNull(args);
         assertEquals(TEST_EVENT_ID, args.getString("eventId"));
     }
+
+    /**
+     * Verifies that when an event already has a posterImageUrl, the button
+     * text changes to "Update Poster".
+     */
+    @Test
+    public void eventWithPoster_showsUpdatePosterText() {
+        // Arrange
+        Event eventWithPoster = new Event();
+        eventWithPoster.setStatus("open");
+        eventWithPoster.setName("Event With Poster");
+        // Any non-empty string indicates a saved poster.
+        eventWithPoster.setPosterImageUrl("aGVsbG8="); // "hello" in Base64, value itself doesn't matter here.
+        fakeRepository.setEventToReturn(eventWithPoster);
+
+        // Act
+        launchFragment();
+
+        // Assert
+        onView(withId(R.id.upload_poster_button))
+                .check(matches(withText("Update Poster")));
+    }
+
+    /**
+     * Verifies that when an event has no posterImageUrl, the button text
+     * remains "Upload Poster".
+     */
+    @Test
+    public void eventWithoutPoster_showsUploadPosterText() {
+        // Arrange
+        Event eventWithoutPoster = new Event();
+        eventWithoutPoster.setStatus("open");
+        eventWithoutPoster.setName("Event Without Poster");
+        eventWithoutPoster.setPosterImageUrl(null);  // or ""
+        fakeRepository.setEventToReturn(eventWithoutPoster);
+
+        // Act
+        launchFragment();
+
+        // Assert
+        onView(withId(R.id.upload_poster_button))
+                .check(matches(withText("Upload Poster")));
+    }
 }

@@ -39,7 +39,7 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
     private final MutableLiveData<Integer> _attendeeCount = new MutableLiveData<>(0);
-    private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
 
     @Override
     public LiveData<Event> getEventDetails() { return _eventDetails; }

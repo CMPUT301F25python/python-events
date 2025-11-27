@@ -8,6 +8,10 @@ android {
     namespace = "com.example.lotteryevent"
     compileSdk = 36
 
+    testOptions {
+        animationsDisabled = true
+    }
+
     defaultConfig {
         applicationId = "com.example.lotteryevent"
         minSdk = 24
@@ -59,6 +63,7 @@ dependencies {
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("com.google.code.gson:gson:2.11.0")
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
@@ -84,4 +89,9 @@ dependencies {
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
+
+    // --- Image Dependencies ---
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
 }

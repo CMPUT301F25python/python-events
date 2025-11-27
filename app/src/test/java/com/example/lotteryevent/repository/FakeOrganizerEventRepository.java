@@ -1,7 +1,5 @@
 package com.example.lotteryevent.repository;
 
-import android.util.Log;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -14,26 +12,40 @@ import java.util.List;
 /**
  * A fake implementation of IOrganizerEventRepository for testing purposes.
  * This class allows us to control the data and states returned to the ViewModel,
- * enabling isolated unit tests without hitting a real database.
+ * enabling isolated unit tests and complex UI tests without hitting a real database.
  */
 public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
 
     // MutableLiveData fields that we can control within this fake class.
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
-    private final MutableLiveData<List<Entrant>> _entrants = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Entrant>> _entrants =
+            new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> _isRunDrawButtonEnabled = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
-    private boolean shouldReturnError = false;
-
 
     // --- Test Control Properties ---
     // These fields hold the state that the test methods will configure.
-    private Event eventToReturn = new Event(); // Start with a default, non-null event.
+    private Event eventToReturn = createDefaultEvent();
     private boolean buttonEnabled = true;
+    private boolean shouldReturnError = false;
     private List<Entrant> entrantsToReturn = new ArrayList<>();
     public boolean wasFinalizeCalled = false;
     public boolean wasFetchEntrantsCalled = false;
+
+    // --- Poster update tracking for tests ---
+    private String lastUpdatedPosterEventId;
+    private String lastUpdatedPosterBase64;
+
+    /**
+     * Creates a default event used for the "successful" path in tests.
+     * @return A simple Event instance with a known name.
+     */
+    private Event createDefaultEvent() {
+        Event e = new Event();
+        e.setName("Test Event");
+        return e;
+    }
 
     // --- Public methods for test setup ---
 
@@ -55,15 +67,37 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
         this.buttonEnabled = isEnabled;
     }
 
-    public void setEntrantsToReturn(List<Entrant> entrants) {
-        this.entrantsToReturn = entrants;
-        _entrants.postValue(entrants);
-    }
-
+    /**
+     * Configures whether this fake should simulate an error when fetching
+     * the event and capacity status.
+     * @param shouldReturnError True to simulate an error; false for normal success behavior.
+     */
     public void setShouldReturnError(boolean shouldReturnError) {
         this.shouldReturnError = shouldReturnError;
     }
 
+    public void setEntrantsToReturn(List<Entrant> entrants) {
+        this.entrantsToReturn = entrants;
+        _entrants.setValue(entrants);
+    }
+
+    /**
+     * Returns the last event ID passed to updateEventPoster.
+     * Used by tests to verify that the ViewModel delegates correctly.
+     * @return The last event ID passed to updateEventPoster.
+     */
+    public String getLastUpdatedPosterEventId() {
+        return lastUpdatedPosterEventId;
+    }
+
+    /**
+     * Returns the last Base64 string passed to updateEventPoster.
+     * Used by tests to verify that the ViewModel delegates correctly.
+     * @return The last Base64 poster string passed to updateEventPoster.
+     */
+    public String getLastUpdatedPosterBase64() {
+        return lastUpdatedPosterBase64;
+    }
 
     // --- Implementation of IOrganizerEventRepository ---
 
@@ -71,8 +105,11 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     public LiveData<Event> getEvent() {
         return _event;
     }
+
     @Override
-    public LiveData<List<Entrant>> getEntrants() { return _entrants; }
+    public LiveData<List<Entrant>> getEntrants() {
+        return _entrants;
+    }
 
     @Override
     public LiveData<Boolean> isRunDrawButtonEnabled() {
@@ -89,31 +126,40 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
         return _message;
     }
 
+    /**
+     * Simulates fetching data. If {@code shouldReturnError} is true,
+     * posts an error state. Otherwise, posts the configured event and
+     * button-enabled state.
+     */
     @Override
     public void fetchEventAndCapacityStatus(String eventId) {
-        // 1. Simulate the start of a data fetch.
-        _isLoading.postValue(true);
+        _isLoading.setValue(true);
 
-        // 2. Check our flag to decide whether to return data or an error.
         if (shouldReturnError) {
-            _message.postValue("Test Error: Could not fetch event.");
-            _event.postValue(null); // Post null on error to clear previous data.
-            _isRunDrawButtonEnabled.postValue(false);
+            _event.setValue(null);
+            _isRunDrawButtonEnabled.setValue(false);
+            _message.setValue("Test Error: Could not fetch event.");
         } else {
-            // Create a mock Event object for the success scenario.
-            Event testEvent = new Event();
-            testEvent.setEventId("test-id-123");
-            testEvent.setName("Test Event");
-            testEvent.setCapacity(100);
-            testEvent.setStatus("open");
-
-            _event.postValue(testEvent);
-            // Simulate the event not being at capacity.
-            _isRunDrawButtonEnabled.postValue(true);
+            _event.setValue(eventToReturn);
+            _isRunDrawButtonEnabled.setValue(buttonEnabled);
+            _message.setValue(null);
         }
 
-        // 3. Simulate the end of the data fetch.
-        _isLoading.postValue(false);
+        _isLoading.setValue(false);
+    }
+
+    /**
+     * Simulates updating the event poster for a given event.
+     * Instead of writing to a real database, this method just records
+     * the arguments so tests can verify that the ViewModel called it.
+     *
+     * @param eventId The ID of the event whose poster is being updated.
+     * @param posterBase64 The Base64-encoded poster image data.
+     */
+    @Override
+    public void updateEventPoster(String eventId, String posterBase64) {
+        this.lastUpdatedPosterEventId = eventId;
+        this.lastUpdatedPosterBase64 = posterBase64;
     }
 
     /**
@@ -124,7 +170,6 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     public void finalizeEvent(String eventId) {
         wasFinalizeCalled = true;
 
-        // Simulate the logic of updating the event status
         if (eventToReturn != null) {
             eventToReturn.setStatus("finalized");
             _event.setValue(eventToReturn);
@@ -139,7 +184,6 @@ public class FakeOrganizerEventRepository implements IOrganizerEventRepository {
     @Override
     public void fetchEntrants(String eventId) {
         wasFetchEntrantsCalled = true;
-        // Post the pre-configured entrants
         _entrants.setValue(entrantsToReturn);
     }
 }

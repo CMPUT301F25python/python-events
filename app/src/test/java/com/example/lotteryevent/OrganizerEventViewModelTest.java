@@ -67,4 +67,21 @@ public class OrganizerEventViewModelTest {
         assertNotNull("isLoading LiveData should not be null", isLoading);
         assertFalse("isLoading should be false after the fetch is complete", isLoading);
     }
+
+    /**
+     * Verifies that when updateEventPoster is called on the ViewModel,
+     * the call is delegated to the repository with the same arguments.
+     */
+    @Test
+    public void updateEventPoster_delegatesToRepository() {
+        String eventId = "event-123";
+        String base64 = "test-base64-data";
+
+        viewModel.updateEventPoster(eventId, base64);
+
+        assertEquals(eventId, fakeRepository.getLastUpdatedPosterEventId());
+        assertEquals(base64, fakeRepository.getLastUpdatedPosterBase64());
+    }
+
+
 }

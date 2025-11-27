@@ -126,6 +126,16 @@ public class OrganizerEventViewModel extends ViewModel {
     }
 
     /**
+     * Updates the event poster image (Base64) for the given event.
+     * @param eventId The ID of the event to update.
+     * @param posterImageUrl The Base64-encoded poster image data.
+     */
+    public void updateEventPoster(String eventId, String posterImageUrl) {
+        repository.updateEventPoster(eventId, posterImageUrl);
+    }
+
+
+    /**
      * Generates a QR Code bitmap from the eventId and posts it to the _qrCodeBitmap LiveData.
      *
      * @param eventId The text content to encode in the QR code.

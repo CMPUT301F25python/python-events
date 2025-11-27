@@ -53,8 +53,9 @@ public class EventTest {
         String organizerId = "org-123";
         String organizerName = "Parks Dept.";
         Integer capacity = 150;
+        Integer waitingListCount = 3;
 
-        Event event = new Event(name, description, organizerId, organizerName, capacity);
+        Event event = new Event(name, description, organizerId, organizerName, capacity, waitingListCount);
 
         assertNotNull("Event object should not be null", event);
         assertEquals("Name should be set by constructor", name, event.getName());
@@ -62,6 +63,7 @@ public class EventTest {
         assertEquals("OrganizerId should be set by constructor", organizerId, event.getOrganizerId());
         assertEquals("OrganizerName should be set by constructor", organizerName, event.getOrganizerName());
         assertEquals("Capacity should be set by constructor", capacity, event.getCapacity());
+        assertEquals("Waiting list count should be set by constructor", waitingListCount, event.getWaitingListCount());
 
         // Verify other fields are still default
         assertNull("eventId should be null", event.getEventId());
