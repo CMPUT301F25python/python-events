@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -79,8 +80,15 @@ public class AdminProfilesFragment extends Fragment {
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         // Add navigation to user profile details
-        adapter = new AdminProfilesAdapter(user ->
-            Toast.makeText(requireContext(), "Selected: " + user.getName(), Toast.LENGTH_SHORT).show());
+        adapter = new AdminProfilesAdapter(user -> {
+            // 2. Create the Bundle with the userId
+            Bundle bundle = new Bundle();
+            bundle.putString("userId", user.getId());
+
+            // 3. Navigate to the new Profile page
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_adminProfiles_to_userProfile, bundle);
+        });
 
         recycler.setAdapter(adapter);
 
