@@ -263,7 +263,6 @@ public class OrganizerEventFragment extends Fragment {
         btnViewEntrants.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("eventId", eventId);
-            bundle.putString("status", "all");
             Navigation.findNavController(v)
                     .navigate(R.id.action_organizerEventPageFragment_to_entrantListFragment, bundle);
         });

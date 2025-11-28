@@ -42,12 +42,10 @@ public class EntrantListFragment extends Fragment {
     private RecyclerView recyclerView;
     private EntrantListAdapter adapter;
     private ProgressBar progressBar;
-    private TextView titleTextView;
     private Button sendNotificationButton;
 
     // --- Data ---
     private String eventId;
-    private String status;
 
     // --- ViewModel ---
     private EntrantListViewModel viewModel;
@@ -85,7 +83,6 @@ public class EntrantListFragment extends Fragment {
         if (getArguments() != null) {
             EntrantListFragmentArgs args = EntrantListFragmentArgs.fromBundle(getArguments());
             eventId = args.getEventId();
-            status = args.getStatus();
         }
     }
 
@@ -121,13 +118,12 @@ public class EntrantListFragment extends Fragment {
         if (viewModelFactory == null) {
             EntrantListRepositoryImpl entrantListRepo = new EntrantListRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId, status));
+            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId));
             viewModelFactory = factory;
         }
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
-        titleTextView.setText(viewModel.getCapitalizedStatus());
 
         // --- The rest of the method is the same ---
         setupObservers();
@@ -139,7 +135,6 @@ public class EntrantListFragment extends Fragment {
      * @param view The root view of the fragment's layout.
      */
     private void initializeViews(View view) {
-        titleTextView = view.findViewById(R.id.entrant_list_title);
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress_bar);
         sendNotificationButton = view.findViewById(R.id.send_notification_button);
@@ -160,7 +155,7 @@ public class EntrantListFragment extends Fragment {
      * This is the core of the reactive UI.
      */
     private void setupObservers() {
-        if (eventId == null || status == null) {
+        if (eventId == null) {
             Toast.makeText(getContext(), "Error: Event data not available.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -174,7 +169,7 @@ public class EntrantListFragment extends Fragment {
          * dialog for notifying all entrants.
          * @param list the updated list of entrants retrieved from the ViewModel
          */
-        viewModel.getEntrants().observe(getViewLifecycleOwner(), list -> {
+        viewModel.getFilteredEntrants().observe(getViewLifecycleOwner(), list -> {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
@@ -185,6 +180,12 @@ public class EntrantListFragment extends Fragment {
         viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+        viewModel.getStatus().observe(getViewLifecycleOwner(), status -> {
+            if (status != null) {
+                Toast.makeText(getContext(), "Status changed to " + status, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Capitalized status is" + viewModel.getCapitalizedStatus(), Toast.LENGTH_SHORT).show();
             }
         });
     }

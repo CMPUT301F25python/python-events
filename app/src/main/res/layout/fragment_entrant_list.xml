@@ -7,21 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".ui.organizer.EntrantListFragment">
 
-    <TextView
-        android:id="@+id/entrant_list_title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:gravity="center"
-        android:textColor="@android:color/black"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Status Title" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/entrants_recycler_view"
@@ -31,7 +16,7 @@
         app:layout_constraintBottom_toTopOf="@+id/send_notification_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/entrant_list_title"
+        app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/item_entrant" />
 
     <ProgressBar

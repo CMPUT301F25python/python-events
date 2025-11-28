@@ -1,6 +1,7 @@
 package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.data.Entrant;
@@ -20,8 +21,8 @@ public class EntrantListViewModel extends ViewModel {
 
     private final IEntrantListRepository entrantListRepo;
     private final String eventId;
-    private final String status;
-    private final LiveData<List<Entrant>> entrants;
+    private final MutableLiveData<String> status = new MutableLiveData<>("waiting");
+    private final LiveData<List<Entrant>> filteredEntrants;
 
     /**
      * Creates a new ViewModel instance and injects the repository used for fetching
@@ -30,23 +31,24 @@ public class EntrantListViewModel extends ViewModel {
      *                        data access and notification dispatching
      * @param eventId the unique identifier of the event whose entrants should be
      *                retrieved
-     * @param status the status filter used to determine which entrants are returned
-     *               (accepted, cancelled, waiting, invited)
      */
-    public EntrantListViewModel(IEntrantListRepository entrantListRepo, String eventId, String status) {
+    public EntrantListViewModel(IEntrantListRepository entrantListRepo, String eventId) {
         this.entrantListRepo = entrantListRepo;
         this.eventId = eventId;
-        this.status = status;
-        this.entrants = entrantListRepo.fetchEntrantsByStatus(eventId, status);
+        this.filteredEntrants = entrantListRepo.fetchEntrantsByStatus(eventId, status.getValue());
     }
 
-    public LiveData<List<Entrant>> getEntrants() {
-        return entrants;
+    public LiveData<List<Entrant>> getFilteredEntrants() {
+        return filteredEntrants;
     }
+    public LiveData<String> getStatus() {
+        return status;
+    }
+
 
     public String getCapitalizedStatus() {
-        if (status == null || status.isEmpty()) return "";
-        return status.substring(0, 1).toUpperCase() + status.substring(1);
+        if (status == null || status.getValue() == null) return "";
+        return status.getValue().substring(0, 1).toUpperCase() + status.getValue().substring(1);
     }
 
     /**
@@ -64,7 +66,7 @@ public class EntrantListViewModel extends ViewModel {
      * @param organizerMessage the message content written by the event organizer
      */
     public void notifyAllEntrants(String organizerMessage) {
-        List<Entrant> currentList = entrants.getValue();
+        List<Entrant> currentList = filteredEntrants.getValue();
 
         if (currentList == null || currentList.isEmpty()) {
             entrantListRepo.setUserMessage("No entrants to notify.");
@@ -84,6 +86,15 @@ public class EntrantListViewModel extends ViewModel {
     }
 
     /**
+     * Changes the status of the entrants we wish to see and filters accordingly
+     * @param newStatus the new status to filter by
+     */
+    public void changeCurrentStatus(String newStatus) {
+        this.status.postValue(newStatus);
+        entrantListRepo.fetchEntrantsByStatus(eventId, newStatus);
+    }
+
+    /**
      * Cancels an invitation for a specific user.
      * Sets their status back to "waiting".
      * On success, it refreshes the list automatically via the repository logic (or we trigger a re-fetch).
@@ -96,7 +107,7 @@ public class EntrantListViewModel extends ViewModel {
             public void onSuccess() {
                 entrantListRepo.setUserMessage("User returned to waitlist.");
                 // Refresh the list
-                entrantListRepo.fetchEntrantsByStatus(eventId, status);
+                entrantListRepo.fetchEntrantsByStatus(eventId, status.getValue());
             }
 
             @Override

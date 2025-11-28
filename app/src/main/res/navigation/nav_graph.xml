@@ -139,9 +139,6 @@
         tools:layout="@layout/fragment_entrant_list" >
 
         <argument
-            android:name="status"
-            app:argType="string" />
-        <argument
             android:name="eventId"
             app:argType="string" />
     </fragment>
@@ -187,16 +184,6 @@
             app:argType="string" />
     </fragment>
 
-    <fragment
-        android:id="@+id/adminEventsFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
-        android:label="Admin Events" >
-
-        <action
-            android:id="@+id/action_adminEventsFragment_to_eventDetailsFragment"
-            app:destination="@+id/eventDetailsFragment"/>
-    </fragment>
-        android:label="Admin Events" />
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"

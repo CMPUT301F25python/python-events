@@ -98,7 +98,7 @@ public class ManageInvitedFragment extends Fragment {
             EntrantListRepositoryImpl repository = new EntrantListRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
             factory.put(EntrantListViewModel.class,
-                    () -> new EntrantListViewModel(repository, eventId, STATUS_INVITED));
+                    () -> new EntrantListViewModel(repository, eventId));
             viewModelFactory = factory;
         }
 
@@ -172,7 +172,7 @@ public class ManageInvitedFragment extends Fragment {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
 
         // Observe the list of entrants
-        viewModel.getEntrants().observe(getViewLifecycleOwner(), entrants -> {
+        viewModel.getFilteredEntrants().observe(getViewLifecycleOwner(), entrants -> {
             if (progressBar != null) progressBar.setVisibility(View.GONE);
 
             if (entrants != null) {
