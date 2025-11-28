@@ -47,11 +47,12 @@
     <string name="close">Close</string>
     <string name="event_guidelines">Event Guidelines</string>
     <string name="confirm_and_notify_button">Confirm and Notify</string>
-    <string name="view_waiting_list">View Waiting List</string>
+    <string name="waiting">Waiting</string>
+    <string name="accepted">Accepted</string>
+    <string name="invited">Invited</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="view_entrants">View Entrants</string>
     <string name="view_entrant_map">View Entrant Map</string>
-    <string name="accepted_participants">Accepted Participants</string>
-    <string name="invited_participants">Invited Participants</string>
-    <string name="cancelled_participants">Cancelled Participants</string>
     <string name="run_draw">Run Draw</string>
     <string name="finalize">Finalize</string>
     <string name="join_waiting_list">Join Waiting List</string>

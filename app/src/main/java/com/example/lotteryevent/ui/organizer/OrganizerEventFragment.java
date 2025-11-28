@@ -59,8 +59,8 @@ public class OrganizerEventFragment extends Fragment {
     private Button uploadPosterButton;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
-    private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
-    private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
+    private Button btnViewEntrants, btnViewEntrantMap;
+    private Button btnRunDraw, btnFinalize;
     private Button btnExportEntrantCSV;
 
     public OrganizerEventFragment() { } // Required empty public constructor
@@ -240,11 +240,8 @@ public class OrganizerEventFragment extends Fragment {
         uploadPosterButton = view.findViewById(R.id.upload_poster_button);
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         buttonContainer = view.findViewById(R.id.organizer_button_container);
-        btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
+        btnViewEntrants = view.findViewById(R.id.btnViewEntrants);
         btnViewEntrantMap = view.findViewById(R.id.btnViewEntrantMap);
-        btnAcceptedParticipants = view.findViewById(R.id.btnAcceptedParticipants);
-        btnInvitedParticipants = view.findViewById(R.id.btnInvitedParticipants);
-        btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
         btnExportEntrantCSV = view.findViewById(R.id.btnExportCSV);
@@ -263,35 +260,13 @@ public class OrganizerEventFragment extends Fragment {
                     .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
         });
 
-        View.OnClickListener entrantListNavListener = v -> {
-            String status;
-            int id = v.getId();
-
-            if (id == R.id.btnViewWaitingList) {
-                status = "waiting";
-            } else if (id == R.id.btnAcceptedParticipants) {
-                status = "accepted";
-            } else if (id == R.id.btnInvitedParticipants) {
-                Navigation.findNavController(v).navigate(
-                        OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
-                );
-                return;
-            } else if (id == R.id.btnCancelledParticipants) {
-                status = "cancelled";
-            } else {
-                return;
-            }
-
-            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
-                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
-
-            Navigation.findNavController(v).navigate(action);
-        };
-
-        btnViewWaitingList.setOnClickListener(entrantListNavListener);
-        btnAcceptedParticipants.setOnClickListener(entrantListNavListener);
-        btnInvitedParticipants.setOnClickListener(entrantListNavListener);
-        btnCancelledParticipants.setOnClickListener(entrantListNavListener);
+        btnViewEntrants.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+            bundle.putString("status", "all");
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_organizerEventPageFragment_to_entrantListFragment, bundle);
+        });
 
         View.OnClickListener notImplementedListener = v -> {
             Button b = (Button) v;
