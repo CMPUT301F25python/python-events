@@ -136,7 +136,9 @@ public class RunDrawFragment extends Fragment {
 
         // Available spaces count
         viewModel.availableSpaceCount.observe(getViewLifecycleOwner(), count -> {
-            if (count != null) {
+            if (count == null || count < 0) {
+                availableSpaceCountText.setText("No Limit");
+            } else {
                 availableSpaceCountText.setText(String.valueOf(count));
             }
         });
