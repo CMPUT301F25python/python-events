@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Typeface;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -297,6 +298,8 @@ public class AvailableEventsFragment extends Fragment {
         // Keyword
         TextView keywordHeader = new TextView(requireContext());
         keywordHeader.setText("Filter by Keyword");
+        keywordHeader.setTextSize(16);
+        keywordHeader.setTypeface(Typeface.DEFAULT_BOLD);
         keywordHeader.setPadding(10, pad, 0, 0);
         container.addView(keywordHeader);
 
@@ -308,6 +311,8 @@ public class AvailableEventsFragment extends Fragment {
         // Date range
         TextView dateHeader = new TextView(requireContext());
         dateHeader.setText("Filter by Date");
+        dateHeader.setTextSize(16);
+        dateHeader.setTypeface(Typeface.DEFAULT_BOLD);
         dateHeader.setPadding(10, pad, 0, 0);
         container.addView(dateHeader);
 
