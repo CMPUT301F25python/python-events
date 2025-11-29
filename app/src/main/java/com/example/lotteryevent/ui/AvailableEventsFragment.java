@@ -238,6 +238,9 @@ public class AvailableEventsFragment extends Fragment {
         return out;
     }
 
+    /**
+     * Callback interface for selecting a date range.
+     */
     private interface DaySelectionCallback {
         void onDaySelected(long startOfDayMs, long endOfDayMs);
     }
@@ -268,6 +271,13 @@ public class AvailableEventsFragment extends Fragment {
         dlg.show();
     }
 
+    /**
+     * Converts a date to the start of the day in milliseconds.
+     * @param year
+     * @param monthZeroBased
+     * @param dayOfMonth
+     * @return The start of the day in milliseconds for the given date.
+     */
     private long startOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
         Calendar c = Calendar.getInstance();
         c.set(year, monthZeroBased, dayOfMonth, 0, 0, 0);
@@ -275,6 +285,13 @@ public class AvailableEventsFragment extends Fragment {
         return c.getTimeInMillis();
     }
 
+    /**
+     * Converts a date to the end of the day in milliseconds.
+     * @param year
+     * @param monthZeroBased
+     * @param dayOfMonth
+     * @return The end of the day in milliseconds for the given date.
+     */
     private long endOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
         Calendar c = Calendar.getInstance();
         c.set(year, monthZeroBased, dayOfMonth, 23, 59, 59);
@@ -282,18 +299,31 @@ public class AvailableEventsFragment extends Fragment {
         return c.getTimeInMillis();
     }
 
+    /**
+     * Formats a date as a string.
+     * @param ms
+     * @return The formatted date string.
+     */
     private String formatDay(@Nullable Long ms) {
         if (ms == null) return "";   // important: let the hint show
         DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
         return df.format(new Date(ms));
     }
 
+    /**
+     * Converts a dp value to a pixel value.
+     * @param v
+     * @return The pixel value.
+     */
     private int dp(int v) {
         return (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()
         );
     }
 
+    /**
+     * Opens a dialog that lets the user enter a keyword to filter events by name or description.
+     */
     private void showFilterDialog() {
         // Use a Material themed context so TextInputLayout renders correctly
         ContextThemeWrapper themed = new ContextThemeWrapper(
@@ -321,10 +351,10 @@ public class AvailableEventsFragment extends Fragment {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        // ---- "Date Range" small label ----
+        // Dae Range label
         TextView label = new TextView(themed);
         label.setText("Date Range");
-        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         label.setPadding(0, dp(14), 0, 0);
 
         int onSurfaceVariant = MaterialColors.getColor(root, com.google.android.material.R.attr.colorOnSurfaceVariant);
@@ -332,7 +362,7 @@ public class AvailableEventsFragment extends Fragment {
 
         root.addView(label);
 
-        // ---- Row of two outlined date fields ----
+        // Date range row
         LinearLayout row = new LinearLayout(themed);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, dp(10), 0, 0);
@@ -402,7 +432,7 @@ public class AvailableEventsFragment extends Fragment {
         endInput.setOnClickListener(v -> openEnd.run());
         endLayout.setEndIconOnClickListener(v -> openEnd.run());
 
-        // ---- Custom title (bold + bigger + padding) ----
+        // Title
         TextView titleView = new TextView(themed);
         titleView.setText("Filter Events");
         titleView.setTypeface(Typeface.DEFAULT_BOLD);
