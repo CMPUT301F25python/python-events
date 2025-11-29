@@ -180,7 +180,6 @@ public class OrganizerEventFragment extends Fragment {
             }
         });
 
-
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
             if (state == null) return;
@@ -422,7 +421,7 @@ public class OrganizerEventFragment extends Fragment {
         int inSampleSize = 1;
         int max = Math.max(width, height);
         while (max / inSampleSize > maxDimPx) {
-            inSampleSize *= 2; // power-of-two is efficient for BitmapFactory
+            inSampleSize *= 2; // power of two (efficient for BitmapFactory)
         }
         return Math.max(1, inSampleSize);
     }
@@ -475,7 +474,7 @@ public class OrganizerEventFragment extends Fragment {
                     bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true
             );
         } catch (Exception ignored) {
-            return bitmap; // if EXIF fails, don't block the user
+            return bitmap; // if EXIF fails, don't block user
         }
     }
 
