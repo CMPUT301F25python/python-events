@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextThemeWrapper;
 import android.widget.Toast;
 import android.app.DatePickerDialog;
 import android.util.TypedValue;
@@ -29,6 +30,10 @@ import com.example.lotteryevent.repository.IAvailableEventsRepository;
 import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.text.DateFormat;
@@ -278,117 +283,158 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     private String formatDay(@Nullable Long ms) {
-        if (ms == null) return "Click to Select Date";
+        if (ms == null) return "";   // important: let the hint show
         DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
         return df.format(new Date(ms));
     }
 
-    /**
-     * Opens a dialog that lets the user enter a keyword to filter events by name or description.
-     */
+    private int dp(int v) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()
+        );
+    }
+
     private void showFilterDialog() {
-        final int pad = (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics()
+        // Use a Material themed context so TextInputLayout renders correctly
+        ContextThemeWrapper themed = new ContextThemeWrapper(
+                requireContext(),
+                com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog
         );
 
-        LinearLayout container = new LinearLayout(requireContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(pad, pad, pad, pad);
+        LinearLayout root = new LinearLayout(themed);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(16), dp(24), dp(8));
 
-        // Keyword
-        TextView keywordHeader = new TextView(requireContext());
-        keywordHeader.setText("Filter by Keyword");
-        keywordHeader.setTextSize(16);
-        keywordHeader.setTypeface(Typeface.DEFAULT_BOLD);
-        keywordHeader.setPadding(10, pad, 0, 0);
-        container.addView(keywordHeader);
+        // ---- Keyword outlined field with search icon ----
+        TextInputLayout keywordLayout = new TextInputLayout(themed);
+        keywordLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        keywordLayout.setHint("Keyword");
+        keywordLayout.setStartIconDrawable(android.R.drawable.ic_menu_search); // swap if you have your own search icon
+        keywordLayout.setStartIconVisible(true);
 
-        EditText keywordInput = new EditText(requireContext());
-        keywordInput.setHint("Enter a keyword");
+        TextInputEditText keywordInput = new TextInputEditText(themed);
+        keywordInput.setSingleLine(true);
         keywordInput.setText(currentKeyword);
-        container.addView(keywordInput);
+        keywordLayout.addView(keywordInput);
 
-        // Date range
-        TextView dateHeader = new TextView(requireContext());
-        dateHeader.setText("Filter by Date");
-        dateHeader.setTextSize(16);
-        dateHeader.setTypeface(Typeface.DEFAULT_BOLD);
-        dateHeader.setPadding(10, pad, 0, 0);
-        container.addView(dateHeader);
+        root.addView(keywordLayout, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        // ---- "Date Range" small label ----
+        TextView label = new TextView(themed);
+        label.setText("Date Range");
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        label.setPadding(0, dp(14), 0, 0);
+
+        int onSurfaceVariant = MaterialColors.getColor(root, com.google.android.material.R.attr.colorOnSurfaceVariant);
+        label.setTextColor(onSurfaceVariant);
+
+        root.addView(label);
+
+        // ---- Row of two outlined date fields ----
+        LinearLayout row = new LinearLayout(themed);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp(10), 0, 0);
+
+        LinearLayout.LayoutParams leftLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        leftLp.setMarginEnd(dp(12));
+        LinearLayout.LayoutParams rightLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+
+        TextInputLayout startLayout = new TextInputLayout(themed);
+        startLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        startLayout.setHint("Start Date");
+        startLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        startLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
+
+        TextInputEditText startInput = new TextInputEditText(themed);
+        startInput.setFocusable(false);
+        startInput.setClickable(true);
+        startInput.setCursorVisible(false);
+
+        TextInputLayout endLayout = new TextInputLayout(themed);
+        endLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        endLayout.setHint("End Date");
+        endLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        endLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
+
+        TextInputEditText endInput = new TextInputEditText(themed);
+        endInput.setFocusable(false);
+        endInput.setClickable(true);
+        endInput.setCursorVisible(false);
+
+        startLayout.addView(startInput);
+        endLayout.addView(endInput);
+
+        row.addView(startLayout, leftLp);
+        row.addView(endLayout, rightLp);
+        root.addView(row);
 
         final Long[] tempStart = new Long[]{filterStartDateMs};
         final Long[] tempEnd = new Long[]{filterEndDateMs};
 
-        TextView from = new TextView(requireContext());
-        from.setText("From: " + formatDay(tempStart[0]));
-        from.setPadding(10, pad / 2, 0, 0);
-        from.setOnClickListener(v ->
-                showDayPickerDialog(
-                        tempStart[0],
-                        null,
-                        null,
-                        (s, e) -> {
-                            // invalid if user picks a start date after the current end date
-                            if (tempEnd[0] != null && s > tempEnd[0]) {
-                                Toast.makeText(
-                                        requireContext(),
-                                        "Start date can’t be after the end date.",
-                                        Toast.LENGTH_SHORT
-                                ).show();
-                                return; // reject selection
-                            }
+        startInput.setText(formatDay(tempStart[0]));
+        endInput.setText(formatDay(tempEnd[0]));
 
-                            tempStart[0] = s;
-                            from.setText("From: " + formatDay(tempStart[0]));
-                        }
-                )
+        Runnable openStart = () -> showDayPickerDialog(
+                tempStart[0], null, null,
+                (s, e) -> {
+                    if (tempEnd[0] != null && s > tempEnd[0]) {
+                        Toast.makeText(requireContext(), "Start date can’t be after the end date.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    tempStart[0] = s;
+                    startInput.setText(formatDay(s));
+                }
         );
 
-        container.addView(from);
-
-        TextView to = new TextView(requireContext());
-        to.setText("To: " + formatDay(tempEnd[0]));
-        to.setPadding(10, pad / 2, 0, 0);
-        to.setOnClickListener(v ->
-                showDayPickerDialog(
-                        tempEnd[0],
-                        tempStart[0], // if "From" is set, To cannot be before it
-                        null,
-                        (s, e) -> {
-                            tempEnd[0] = e; // end-of-day (inclusive)
-                            to.setText("To: " + formatDay(tempEnd[0]));
-                        }
-                )
+        Runnable openEnd = () -> showDayPickerDialog(
+                tempEnd[0], tempStart[0], null,
+                (s, e) -> {
+                    tempEnd[0] = e; // inclusive end-of-day
+                    endInput.setText(formatDay(e));
+                }
         );
-        container.addView(to);
 
-        final androidx.appcompat.app.AlertDialog dialog =
-                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Filter Events")
-                    .setView(container)
-                    .setPositiveButton("Apply", null)
-                    .setNegativeButton("Clear", (d, which) -> {
-                        currentKeyword = "";
-                        filterStartDateMs = null;
-                        filterEndDateMs = null;
-                        applyFiltersAndUpdateList();
-                        applyLocalFiltersToAdapter();
-                    })
-                    .setNeutralButton("Cancel", null)
-                    .create();
+        startInput.setOnClickListener(v -> openStart.run());
+        startLayout.setEndIconOnClickListener(v -> openStart.run());
+
+        endInput.setOnClickListener(v -> openEnd.run());
+        endLayout.setEndIconOnClickListener(v -> openEnd.run());
+
+        // ---- Custom title (bold + bigger + padding) ----
+        TextView titleView = new TextView(themed);
+        titleView.setText("Filter Events");
+        titleView.setTypeface(Typeface.DEFAULT_BOLD);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        titleView.setPadding(dp(24), dp(18), dp(24), 0);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(themed)
+                .setCustomTitle(titleView)
+                .setView(root)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Clear", (d, which) -> {
+                    currentKeyword = "";
+                    filterStartDateMs = null;
+                    filterEndDateMs = null;
+                    applyFiltersAndUpdateList();
+                    applyLocalFiltersToAdapter();
+                })
+                .setPositiveButton("Apply", null)
+                .create();
 
         dialog.setOnShowListener(d -> {
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                currentKeyword = keywordInput.getText().toString();
+                currentKeyword = (keywordInput.getText() == null) ? "" : keywordInput.getText().toString();
 
                 Long start = tempStart[0];
                 Long end = tempEnd[0];
 
-                // Until cannot be earlier than From
                 if (start != null && end != null && end < start) {
-                    keywordInput.setError("End date must be on or after the start date.");
+                    endLayout.setError("End date must be on or after the start date.");
                     return;
                 }
+                endLayout.setError(null);
 
                 filterStartDateMs = start;
                 filterEndDateMs = end;
