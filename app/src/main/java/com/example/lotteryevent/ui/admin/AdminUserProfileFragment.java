@@ -108,8 +108,8 @@ public class AdminUserProfileFragment extends Fragment {
                 }
 
 
-                tvEmail.setText(user.getEmail() != null ? user.getEmail() : "No Email");
-                tvPhone.setText(user.getPhone() != null ? user.getPhone() : "No Phone");
+                tvEmail.setText(user.getEmail() != null ? user.getEmail() : "Not provided");
+                tvPhone.setText(user.getPhone() != null ? user.getPhone() : "Not provided");
             }
         });
 
