@@ -32,6 +32,7 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -275,5 +276,20 @@ public class ManageInvitedFragmentTest {
         assertEquals(TEST_EVENT_ID, calls.get(1).getEventId());
         assertEquals(message, calls.get(1).getMessage());
 
+    }
+
+    /**
+     * Tests that if no entrants in the list, notification dialog is not opened
+     */
+    @Test
+    public void test_notifyNoEntrants() {
+        fakeRepository.setEntrants(null);
+        launchFragment();
+
+        // Click "Send Notification" button
+        onView(withId(R.id.buttonNotifyInvited)).perform(click());
+
+        // Check dialog is not shown
+        onView(withText("Notification Message")).check(doesNotExist());
     }
 }

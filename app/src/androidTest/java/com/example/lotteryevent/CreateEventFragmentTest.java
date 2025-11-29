@@ -115,6 +115,29 @@ public class CreateEventFragmentTest {
     /**
      * Verifies the business logic regarding capacity constraints.
      * <p>
+     * <b>Scenario:</b> User enters a Max Attendees count of 0.
+     * <b>Expected Result:</b> Validation fails, and the repository size remains unchanged.
+     */
+    @Test
+    public void zeroCapacity_doesNotCreateEvent() {
+        launchFragment();
+
+        // Arrange: Enter valid name, but invalid capacity logic
+        onView(withId(R.id.edit_text_event_name)).perform(typeText("Zero Cap Event"), closeSoftKeyboard());
+
+        // Capacity = 0
+        onView(withId(R.id.edit_text_max_attendees)).perform(scrollTo(), typeText("0"), closeSoftKeyboard());
+
+        // Act: Click save
+        onView(withId(R.id.button_save)).perform(scrollTo(), click());
+
+        // Assert: Repo size should still be 2
+        assertEquals(2, fakeRepository.getInMemoryEvents().size());
+    }
+
+    /**
+     * Verifies the business logic regarding capacity constraints.
+     * <p>
      * <b>Scenario:</b> User enters a Waiting List limit (5) that is smaller than the Max Attendees (10).
      * <b>Expected Result:</b> Validation fails, and the repository size remains unchanged.
      */

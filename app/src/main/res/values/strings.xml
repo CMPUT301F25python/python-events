@@ -124,4 +124,6 @@
     <string name="delete_organizer">Delete Organizer</string>
     <string name="delete_user_profile">Delete User Profile</string>
     <string name="menu_home">Home</string>
+    <string name="send_notification">Send Notification</string>
+    <string name="mark_all_notifs_as_seen">Mark All As Seen</string>
 </resources>

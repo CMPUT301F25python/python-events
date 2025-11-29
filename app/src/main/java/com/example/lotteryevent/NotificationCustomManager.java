@@ -90,6 +90,14 @@ public class NotificationCustomManager {
     }
 
     /**
+     * Removes a specific notification from the shade
+     */
+    public void clearNotification(int notifBannerId) {
+        NotificationManager notificationManager = myContext.getSystemService(NotificationManager.class);
+        notificationManager.cancel(notifBannerId);
+    }
+
+    /**
      * Sends notification to the specified user by creating a notification document under the user's notification collection.
      * @param uid User ID of the user the notif is directed to
      * @param title Title of the notification
@@ -130,7 +138,7 @@ public class NotificationCustomManager {
      * @param notifType notif type
      */
     @SuppressLint("MissingPermission")
-    public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
+    public int generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -161,9 +169,13 @@ public class NotificationCustomManager {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX);
 
+        int notifBannerId = getID();
+
         // Display the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.myContext);
-        notificationManager.notify(getID(), builder.build());
+        notificationManager.notify(notifBannerId, builder.build());
+
+        return notifBannerId;
     }
 
     /**
@@ -196,7 +208,8 @@ public class NotificationCustomManager {
 
                             String fullMessage = message + "\n" + timestamp;
 
-                            generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                         } else if (size > 1) {
                             // many notifs, just tell multiple unread
                             String title = "You have " + String.valueOf(size) + " unread notifications";
@@ -263,7 +276,8 @@ public class NotificationCustomManager {
 
                                         String fullMessage = message + "\n" + timestamp;
 
-                                        generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                                     }
                                 }
                             })

@@ -2,8 +2,11 @@ package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.data.Notification;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.GeoPoint;
 
@@ -41,6 +44,12 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     // --- Test control flags ---
     private boolean shouldReturnError = false;
 
+    /**
+     * In-memory list of notifications recorded during tests.
+     * Uses the shared {@link Notification} POJO instead of a custom helper class.
+     */
+    private final List<Notification> notificationCalls = new ArrayList<>();
+
     public FakeEventDetailsRepository() {
         resetToDefaultState();
     }
@@ -53,6 +62,9 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     // --- NEW: Implement new getters ---
     @Override public LiveData<Integer> getAttendeeCount() { return _attendeeCount; }
     @Override public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
+
+    @Override
+    public void setMessage(String message) { _message.postValue(message); }
 
     @Override
     public void fetchEventAndEntrantDetails(String eventId) {
@@ -175,6 +187,9 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
 
         inMemoryEntrants.clear();
 
+        // Clear Notifs
+        notificationCalls.clear();
+
         // Clear LiveData
         _eventDetails.postValue(null);
         _entrantStatus.postValue(null);
@@ -253,10 +268,35 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     }
 
     /**
+     * Allows for admin user to send notifications to users
+     * @param userId recipient user's ID
+     * @param adminMessage message to send
+     * @param manager notification custom manager used to send message
+     */
+    @Override
+    public void notifyEntrantFromAdmin(String userId, String adminMessage, NotificationCustomManager manager) {
+        Notification notification = new Notification();
+        notification.setRecipientId(userId);
+        notification.setMessage(adminMessage);
+        notificationCalls.add(notification);
+        _message.postValue("Notification Sent!");
+    }
+
+    /**
      * Returns a LiveData indicating if the user has been successfully deleted.
      */
     @Override
     public LiveData<Boolean> getIsOrganizerDeleted() {
         return _isUserDeleted;
+    }
+
+    /**
+     * Returns all recorded notification calls since repository creation or since
+     * the last test reset. Useful for verifying that the correct users were notified
+     * with the correct message content.
+     * @return a list of {@link Notification} objects representing dispatched notifications
+     */
+    public List<Notification> getNotificationCalls() {
+        return notificationCalls;
     }
 }
