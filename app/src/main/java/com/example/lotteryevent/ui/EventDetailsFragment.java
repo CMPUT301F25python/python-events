@@ -35,7 +35,9 @@ import androidx.navigation.Navigation;
 import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.repository.AdminUserProfileRepositoryImpl;
 import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
+import com.example.lotteryevent.repository.FakeAdminUserProfileRepository;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
@@ -75,6 +77,7 @@ public class EventDetailsFragment extends Fragment {
 
     // --- Location Services ---
     private FusedLocationProviderClient fusedLocationClient;
+    private AdminUserProfileRepositoryImpl userProfileRepository;
 
     /**
      * Handles the result of the system permission dialog.
@@ -130,7 +133,7 @@ public class EventDetailsFragment extends Fragment {
         if (viewModelFactory == null) {
             IEventDetailsRepository repository = new EventDetailsRepositoryImpl();
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(repository));
+            factory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(repository, userProfileRepository));
             viewModelFactory = factory;
         }
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EventDetailsViewModel.class);

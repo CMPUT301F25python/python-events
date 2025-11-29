@@ -44,7 +44,7 @@ public class CreateEventViewModel extends ViewModel {
      */
     public String attemptToCreateEvent(String eventName, String description, String location,
                                        String priceStr, String maxAttendeesStr, String waitingListLimitStr,
-                                       boolean isGeoLocationRequired, Calendar eventStartCalendar, Calendar eventEndCalendar,
+                                       boolean isGeoLocationRequired, String posterBase64, Calendar eventStartCalendar, Calendar eventEndCalendar,
                                        Calendar registrationStartCalendar, Calendar registrationEndCalendar,
                                        String startDateText, String startTimeText, String endDateText, String endTimeText,
                                        String regStartDateText, String regStartTimeText, String regEndDateText, String regEndTimeText) {
@@ -113,6 +113,10 @@ public class CreateEventViewModel extends ViewModel {
         newEvent.setStatus("open");
         // Set the creation timestamp for sorting purposes in the repository.
         newEvent.setCreatedAt(new Timestamp(new Date()));
+
+        if (posterBase64 != null) {
+            newEvent.setPosterImageUrl(posterBase64);
+        }
 
         // Step 6: Pass the fully formed object to the repository to be saved.
         eventRepository.createEvent(newEvent);

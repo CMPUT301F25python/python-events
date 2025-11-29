@@ -1,17 +1,27 @@
 package com.example.lotteryevent.ui;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -20,6 +30,8 @@ import com.example.lotteryevent.repository.EventRepositoryImpl;
 import com.example.lotteryevent.repository.IEventRepository;
 import com.example.lotteryevent.viewmodels.CreateEventViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -31,6 +43,7 @@ import java.util.Locale;
  * and forward user events to the ViewModel.
  */
 public class CreateEventFragment extends Fragment {
+    private static final String TAG = "CreateEventFragment";
 
     // --- UI Components ---
     private EditText editTextEventName, editTextEventDescription, editTextEventLocation,
@@ -40,6 +53,14 @@ public class CreateEventFragment extends Fragment {
             editTextMaxAttendees, editTextWaitingListLimit;
     private CheckBox checkboxGeolocation;
     private Button buttonSave;
+    private CardView cardViewPosterSection;
+
+    // Variables for image upload and preview
+    private static final int REQUEST_POSTER_IMAGE = 2001;
+    private String selectedPosterBase64 = null;
+    private ImageView imageViewPoster;
+    private Button buttonUploadPoster;
+    private Button buttonRemovePoster;
 
     // --- Calendars for Date/Time Pickers (UI State) ---
     private final Calendar eventStartCalendar = Calendar.getInstance();
@@ -135,7 +156,7 @@ public class CreateEventFragment extends Fragment {
         // Pass all the data to the ViewModel. The ViewModel will handle all validation and logic.
         String validationError = viewModel.attemptToCreateEvent(
                 eventName, description, location, priceStr, maxAttendeesStr, waitingListLimitStr, isGeoLocationRequired,
-                eventStartCalendar, eventEndCalendar, registrationStartCalendar, registrationEndCalendar,
+                selectedPosterBase64, eventStartCalendar, eventEndCalendar, registrationStartCalendar, registrationEndCalendar,
                 startDateText, startTimeText, endDateText, endTimeText,
                 regStartDateText, regStartTimeText, regEndDateText, regEndTimeText
         );
@@ -175,11 +196,20 @@ public class CreateEventFragment extends Fragment {
 
         checkboxGeolocation = view.findViewById(R.id.checkbox_geolocation);
         buttonSave = view.findViewById(R.id.button_save);
+
+        imageViewPoster = view.findViewById(R.id.image_view_poster_preview);
+        buttonUploadPoster = view.findViewById(R.id.button_upload_poster);
+        buttonRemovePoster = view.findViewById(R.id.button_remove_poster);
+        cardViewPosterSection = view.findViewById(R.id.card_view_poster_section);
     }
 
     /**
-     * Sets up OnClickListeners for all interactive UI elements in the fragment,
-     * such as date/time fields and the save button.
+     * Sets up OnClickListeners for all interactive UI elements in the fragment.
+     * This includes:* <ul>
+     *     <li>Date and time pickers for event and registration windows.</li>
+     *     <li>Poster image upload and removal buttons.</li>
+     *     <li>The save button to trigger event creation.</li>
+     * </ul>
      */
     private void setupClickListeners() {
         // Set up the picker dialogs for each date and time field
@@ -194,6 +224,18 @@ public class CreateEventFragment extends Fragment {
 
         editTextRegistrationEndDate.setOnClickListener(v -> showDatePickerDialog(registrationEndCalendar, editTextRegistrationEndDate));
         editTextRegistrationEndTime.setOnClickListener(v -> showTimePickerDialog(registrationEndCalendar, editTextRegistrationEndTime));
+
+        buttonUploadPoster.setOnClickListener(v -> openPosterPicker());
+
+        buttonRemovePoster.setOnClickListener(v -> {
+            // 1. Clear the variable
+            selectedPosterBase64 = null;
+
+            // 2. Reset UI
+            imageViewPoster.setImageResource(R.drawable.ic_launcher_background); // Or your placeholder ID
+            cardViewPosterSection.setVisibility(View.GONE);
+
+        });
 
         // Set a click listener on the save button to trigger the ViewModel action
         buttonSave.setOnClickListener(v -> handleSaveEvent());
@@ -252,10 +294,72 @@ public class CreateEventFragment extends Fragment {
      * Updates the text of a {@link EditText} with a formatted date or time string from a Calendar object.
      * @param editText The view to update.
      * @param calendar The calendar containing the date/time to format.
-     * @param format The desired date/time format (e.g., "yyyy-MM-dd" or "HH:mm").
+     * @param format   The desired date/time format (e.g., "yyyy-MM-dd" or "HH:mm").
      */
     private void updateLabel(EditText editText, Calendar calendar, String format) {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
         editText.setText(sdf.format(calendar.getTime()));
     }
+
+    /**
+     * Launches an intent to open the device's image gallery.
+     * The result is handled in {@link #onActivityResult(int, int, Intent)}, where the
+     * selected image is decoded and displayed.
+     */
+    private void openPosterPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, REQUEST_POSTER_IMAGE);
+    }
+
+    /**
+     * Encodes the given {@link Bitmap} as a Base64 string.
+     * @param bitmap The bitmap to encode.
+     * @return A Base64-encoded representation of the bitmap.
+     */
+    private String encodeBitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+        byte[] bytes = baos.toByteArray();
+        return android.util.Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
+
+    /**
+     * Handles results from started activities, specifically the image picker.
+     * <p>
+     * If a valid image is selected:
+     * <ul>
+     *     <li>The bitmap is retrieved and displayed in the preview ImageView.</li>
+     *     <li>The bitmap is encoded to a Base64 string for storage.</li>
+     *     <li>The poster preview section is made visible.</li>
+     * </ul>
+     * </p>
+     *
+     * @param requestCode The original request code (e.g., REQUEST_POSTER_IMAGE).
+     * @param resultCode  The result code returned by the activity (RESULT_OK).
+     * @param data        The returned intent data containing the selected image Uri.
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_POSTER_IMAGE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri imageUri = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+
+                // Update the UI preview
+                imageViewPoster.setImageBitmap(bitmap);
+                selectedPosterBase64 = encodeBitmapToBase64(bitmap);
+
+                cardViewPosterSection.setVisibility(View.VISIBLE);
+                buttonUploadPoster.setText("Change Image");
+
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load poster image", e);
+                Toast.makeText(getContext(), "Failed to load image", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }
