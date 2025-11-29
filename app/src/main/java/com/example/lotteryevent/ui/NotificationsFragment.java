@@ -110,6 +110,12 @@ public class NotificationsFragment extends Fragment {
         viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
             if (notifications != null) {
                 adapter.setNotifications(notifications);
+
+                if (!notifications.isEmpty()) {
+                    markSeenBtn.setVisibility(View.VISIBLE);
+                } else {
+                    markSeenBtn.setVisibility(View.GONE);
+                }
             }
         });
 
