@@ -246,8 +246,8 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                                             Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                                             String eventName = document.getString("name");
                                             String organizerId = document.getString("organizerId");
-                                            String title = "Cancellation";
-                                            String message = "You have been uninvited from the event " + eventName + ".";
+                                            String title = "Invitation Update";
+                                            String message = "Your invitation to the event " + eventName + " has been withdrawn.";
                                             String type = "custom_message";
                                             notifManager.sendNotification(userId, title, message, type, eventId, eventName, organizerId, organizerName);
                                             Log.d(TAG, "Notification sent successfully to " + userId);
