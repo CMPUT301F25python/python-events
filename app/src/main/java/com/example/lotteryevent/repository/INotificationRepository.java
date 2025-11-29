@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.example.lotteryevent.data.Notification;
 import java.util.List;
 
@@ -41,5 +43,5 @@ public interface INotificationRepository {
     /**
      * Gets the notifications that fall under the organizer for a specified event
      */
-    void fetchNotificationsForEvent(String eventId);
+    void fetchNotificationsForEvent(String eventId, MutableLiveData<List<Notification>> targetLiveData);
 }

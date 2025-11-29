@@ -1,5 +1,7 @@
 package com.example.lotteryevent.ui;
 
+import static androidx.lifecycle.LiveDataKt.observe;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,10 +76,8 @@ public class NotificationsFragment extends Fragment {
 
         // --- UI Setup ---
         setupRecyclerView(view);
-        setupObservers(view);
+        setupObservers(view, eventIdFilter);
 
-        // --- Initial Action ---
-        // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
         viewModel.processInitialNotification(notificationId);
     }
@@ -98,13 +98,12 @@ public class NotificationsFragment extends Fragment {
     /**
      * Sets up observers on the ViewModel's LiveData to react to data and state changes.
      */
-    private void setupObservers(@NonNull View view) {
-        String eventIdFilter = null;
-        if (getArguments() != null) {
-            eventIdFilter = getArguments().getString("eventId");
-        }
+    private void setupObservers(@NonNull View view, @Nullable String eventIdFilter) {
 
         if(eventIdFilter != null) {
+
+            viewModel.loadNotificationsForEvent(eventIdFilter);
+
             // Show notifications for Admin
             viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
                 if (notifications != null) {
@@ -112,8 +111,6 @@ public class NotificationsFragment extends Fragment {
                 }
             });
 
-            // Get filtered list
-            viewModel.loadNotificationsForEvent(eventIdFilter);
         } else {
 
             // Observe the list of notifications and submit it to the adapter when it changes.
@@ -141,8 +138,6 @@ public class NotificationsFragment extends Fragment {
                 Navigation.findNavController(view)
                         .navigate(R.id.action_notificationsFragment_to_eventDetailsFragment, bundle);
 
-                // Tell the ViewModel that we have handled the navigation event.
-                // This prevents the navigation from re-triggering on screen rotation.
                 viewModel.onNavigationComplete();
             }
         });

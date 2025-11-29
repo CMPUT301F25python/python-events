@@ -1,5 +1,6 @@
 package com.example.lotteryevent.repository;
 
+
 import android.content.Context;
 import android.util.Log;
 
@@ -110,22 +111,38 @@ public class NotificationRepositoryImpl implements INotificationRepository {
      * Identifier for the event notifications are retrieved for
      */
     @Override
-    public void fetchNotificationsForEvent(String eventId) {
+    public void fetchNotificationsForEvent(String eventId, MutableLiveData<List<Notification>> targetLiveData) {
+
+        Log.d(TAG, "Fetching notifications for eventId: " + eventId);
         _isLoading.postValue(true);
 
         db.collection("notifications")
                 .whereEqualTo("eventId", eventId)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
-                .addOnSuccessListener(query -> {
+                .addOnSuccessListener(snapshot -> {
+                    Log.d(TAG, "Event notiifcation snapshot size: " + snapshot.size());
                     List<Notification> result = new ArrayList<>();
 
-                    for (DocumentSnapshot doc : query.getDocuments()) {
+                    for (DocumentSnapshot doc : snapshot) {
+                        Log.d(TAG, "Doc ID: " + doc.getId() + "=> " + doc.getData());
+
                         Notification eventNoti = doc.toObject(Notification.class);
-                        result.add(eventNoti);
+
+                        if (eventNoti != null) {
+                            result.add(eventNoti);
+                        }
                     }
+                    targetLiveData.setValue(result);
+                    _isLoading.setValue(false);
                     _notificationsForEvent.postValue(result);
                     _isLoading.postValue(false);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching notifications for eventId=" + eventId, e);
+                    targetLiveData.setValue(new ArrayList<>());
+                    _isLoading.setValue(false);
+                    _message.setValue("Unable to load event notifications");
                 });
     }
 }

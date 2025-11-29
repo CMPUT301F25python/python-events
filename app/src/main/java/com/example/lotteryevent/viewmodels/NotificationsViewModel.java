@@ -18,10 +18,10 @@ public class NotificationsViewModel extends ViewModel {
 
     private final INotificationRepository notificationRepository;
 
-    private LiveData<List<Notification>> notificationsForEvent;
-
     // This LiveData will be used to signal navigation events to the Fragment.
     private final MutableLiveData<String> _navigateToEventDetails = new MutableLiveData<>();
+
+    private final MutableLiveData<List<Notification>> _eventNotifications = new MutableLiveData<>();
 
     /**
      * Constructs the ViewModel with a dependency on the notification repository.
@@ -29,24 +29,10 @@ public class NotificationsViewModel extends ViewModel {
      */
     public NotificationsViewModel(INotificationRepository repository) {
         this.notificationRepository = repository;
-        this.notificationsForEvent = repository.getNotificationsForEvent();
     }
-
 
     public LiveData<List<Notification>> getNotifications() {
         return notificationRepository.getNotifications();
-    }
-
-    public LiveData<List<Notification>> getNotificationsForEvent() {
-        return notificationsForEvent;
-    }
-
-    public LiveData<Boolean> isLoading() {
-        return notificationRepository.isLoading();
-    }
-
-    public LiveData<String> getMessage() {
-        return notificationRepository.getMessage();
     }
 
     /**
@@ -58,7 +44,19 @@ public class NotificationsViewModel extends ViewModel {
     }
 
     public void loadNotificationsForEvent(String eventId) {
-        notificationRepository.fetchNotificationsForEvent(eventId);
+        notificationRepository.fetchNotificationsForEvent(eventId, _eventNotifications);
+    }
+
+    public LiveData<Boolean> isLoading() {
+        return notificationRepository.isLoading();
+    }
+
+    public LiveData<String> getMessage() {
+        return notificationRepository.getMessage();
+    }
+
+    public LiveData<List<Notification>> getNotificationsForEvent() {
+        return _eventNotifications;
     }
 
     // --- Business Logic ---

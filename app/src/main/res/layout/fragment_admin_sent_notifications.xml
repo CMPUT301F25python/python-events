@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/admin_sent_notifications_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sent Notifications"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btn_select_event"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Event"
+        android:padding="12dp"/>
+</LinearLayout>

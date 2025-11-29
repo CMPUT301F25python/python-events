@@ -88,6 +88,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
                     }
 
                     if (querySnapshot != null) {
+                        Log.d(TAG, "Success: Events fetched: " + querySnapshot.size());
                         List<Event> userEvents = new ArrayList<>();
                         for (QueryDocumentSnapshot document : querySnapshot) {
                             Event event = document.toObject(Event.class);

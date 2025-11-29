@@ -155,6 +155,11 @@
         android:name="com.example.lotteryevent.ui.admin.AdminSentNotificationsFragment"
         android:label="Sent Notifications" />
 
+        <action
+            android:id="@+id/action_adminSentNotificationsFragment_to_adminSelectEventFragment"
+            app:destination="@id/adminSelectEventFragment" />
+
+
     <fragment
         android:id="@+id/adminImagesFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminImagesFragment"
@@ -166,15 +171,16 @@
         android:label="Profiles" />
 
     <fragment
-        android:id="@+id/adminEventsFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
-        android:label="Admin Events" >
+        android:id="@+id/adminSelectEventFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminSelectEventFragment"
+        android:label="Select Event"
+        tools:layout="@layout/fragment_admin_event_select">
 
         <action
-            android:id="@+id/action_adminEventsFragment_to_eventDetailsFragment"
-            app:destination="@+id/eventDetailsFragment"/>
+            android:id="@+id/action_adminSelectEventFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment"/>
     </fragment>
-        android:label="Admin Events" />
+
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"
