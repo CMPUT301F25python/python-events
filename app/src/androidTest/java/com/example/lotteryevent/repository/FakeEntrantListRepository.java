@@ -83,6 +83,24 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     }
 
     /**
+     * In this case, identical to {@link #fetchEntrantsByStatus(String, String)}
+     * @param eventId the unique identifier of the event for which entrants are
+     *                being fetched
+     * @return a LiveData object containing the in-memory entrant list or null on error
+     */
+    @Override
+    public LiveData<List<Entrant>> fetchAllEntrants(String eventId) {
+        if (shouldReturnError) {
+            _entrants.postValue(null);
+            _userMessage.postValue("Failed to load entrants.");
+        } else {
+            _entrants.postValue(inMemoryEntrants);
+        }
+        return _entrants;
+    }
+
+
+    /**
      * Records a simulated notification call for later inspection. No actual
      * notification is sent. Tests can retrieve the recorded calls via
      * {@link #getNotificationCalls()}.

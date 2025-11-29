@@ -127,6 +127,44 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
     }
 
     /**
+     * Retrieves a list of ALL entrants for a given event from Firestore,
+     * regardless of their status. Used for the Entrant Map.
+     *
+     * @param eventId the Firestore event document ID
+     * @return a LiveData stream containing the list of all entrants
+     */
+    @Override
+    public LiveData<List<Entrant>> fetchAllEntrants(String eventId) {
+        if (eventId == null) {
+            _entrants.postValue(new ArrayList<>());
+            _userMessage.postValue("Error: Event data not available.");
+            return _entrants;
+        }
+
+        // Query the specific event's "entrants" collection (no filters)
+        db.collection("events").document(eventId).collection("entrants")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Entrant> list = new ArrayList<>();
+                    for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+                        Entrant entrant = document.toObject(Entrant.class);
+                        if (entrant != null) {
+                            list.add(entrant);
+                        }
+                    }
+                    _entrants.postValue(list);
+                    _userMessage.postValue(null);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to load all entrants", e);
+                    _entrants.postValue(new ArrayList<>());
+                    _userMessage.postValue("Failed to load entrants.");
+                });
+
+        return _entrants;
+    }
+
+    /**
      * Sends a custom notification message to an individual entrant. Fetches the
      * event's details from Firestore to correctly populate the notification fields
      * (event name, organizer information, message content) before dispatching the

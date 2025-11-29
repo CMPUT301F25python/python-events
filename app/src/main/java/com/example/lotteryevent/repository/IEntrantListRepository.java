@@ -24,8 +24,18 @@ public interface IEntrantListRepository {
      * @return a LiveData object containing a list of entrants that match the
      *         requested status
      */
-
     LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status);
+
+    /**
+     * Retrieves a list of all entrants belonging to a specific event. The results
+     * are delivered asynchronously through a LiveData stream. Used specifically
+     * for Entrant Map
+     * @param eventId the unique identifier of the event for which entrants are
+     *                being fetched
+     * @return a LiveData object containing a list of all entrants belonging to
+     *         the specified event
+     */
+    LiveData<List<Entrant>> fetchAllEntrants(String eventId);
 
     /**
      * Sends a single entrant a notification message associated with a specific
