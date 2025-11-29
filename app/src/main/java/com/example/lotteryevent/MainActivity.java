@@ -25,7 +25,6 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.example.lotteryevent.data.Entrant;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
@@ -62,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
     // flag to check user is initialized (only then should rest of app be set up)
     private boolean userInitialized = false;
 
-    // flag to check whether profile icon should be visible
-    private boolean showProfileIcon = true;
+    // flag to check whether profile icon should be visible (starting invisible)
+    private boolean showProfileIcon = false;
 
     /**
      * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
@@ -145,6 +144,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.home_fragment_menu, menu); // this has profile_icon
+
+        // visibility of home fragment derived from current destination
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        if(navHostFragment != null){
+            NavController navController = navHostFragment.getNavController();
+            if(navController.getCurrentDestination() != null){
+                showProfileIcon = (navController.getCurrentDestination().getId() == R.id.homeFragment);
+            }
+        }
 
         // hiding profile icon where we don't want it
         MenuItem profileItem = menu.findItem(R.id.profile_icon);
@@ -261,9 +269,7 @@ public class MainActivity extends AppCompatActivity {
 
         // all fragments we want to hide profile icon from
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            boolean show =
-                    destination.getId() != R.id.userProfileFragment &&
-                            destination.getId() != R.id.registrationHistoryFragment;
+            boolean show = destination.getId() == R.id.homeFragment;
             if (show != showProfileIcon){
                 showProfileIcon = show;
                 supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
