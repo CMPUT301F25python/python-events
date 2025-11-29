@@ -17,23 +17,30 @@
             android:id="@+id/qrScannerFragment"
             android:icon="@drawable/qr_code_scanner_24px"
             android:title="@string/scan_a_qr_code" />
-
-        <!-- Admin-only Options -->
-        <item
-            android:id="@+id/adminProfilesFragment"
-            android:icon="@drawable/groups_24px"
-            android:title="@string/profiles"
-            android:visible="false" />
-        <item
-            android:id="@+id/adminImagesFragment"
-            android:icon="@drawable/photo_library_24px"
-            android:title="@string/images"
-            android:visible="false" />
-        <item
-            android:id="@+id/adminSentNotificationsFragment"
-            android:icon="@drawable/send_24px"
-            android:title="@string/sent_notifications"
-            android:visible="false" />
-
     </group>
+
+    <!-- Admin section -->
+    <item android:title="@string/admin_tools">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/adminProfilesFragment"
+                    android:icon="@drawable/groups_24px"
+                    android:title="@string/profiles"
+                    android:visible="false" />
+
+                <item
+                    android:id="@+id/adminImagesFragment"
+                    android:icon="@drawable/photo_library_24px"
+                    android:title="@string/images"
+                    android:visible="false" />
+
+                <item
+                    android:id="@+id/adminSentNotificationsFragment"
+                    android:icon="@drawable/send_24px"
+                    android:title="@string/sent_notifications"
+                    android:visible="false" />
+            </group>
+        </menu>
+    </item>
 </menu>
