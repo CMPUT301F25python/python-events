@@ -9,11 +9,14 @@ import java.util.List;
 public class FakeNotificationRepository implements INotificationRepository {
 
     private final MutableLiveData<List<Notification>> notificationsLiveData = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Notification>> notificationsForEventLiveData = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> isLoadingLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<String> messageLiveData = new MutableLiveData<>();
 
     // Helper list to modify data easily during tests
     private final List<Notification> inMemoryList = new ArrayList<>();
+
+    private String lastEventId = null;
 
     @Override
     public LiveData<List<Notification>> getNotifications() {
@@ -31,6 +34,8 @@ public class FakeNotificationRepository implements INotificationRepository {
     }
 
     @Override
+    public LiveData<List<Notification>> getNotificationsForEvent() { return notificationsForEventLiveData; }
+    @Override
     public void markNotificationAsSeen(String notificationId) {
         // Iterate through our in-memory list to find the item
         for (Notification n : inMemoryList) {
@@ -41,11 +46,26 @@ public class FakeNotificationRepository implements INotificationRepository {
         }
         // Refresh the LiveData to trigger UI updates
         notificationsLiveData.postValue(new ArrayList<>(inMemoryList));
+
+        if (lastEventId != null) {
+            notificationsForEventLiveData.postValue((filterByEvent(lastEventId)));
+        }
     }
 
     @Override
     public void detachListener() {
         // No-op for fake
+    }
+
+    // --- Admin Notif Interface ---
+    @Override
+    public void fetchNotificationsForEvent(String eventId, MutableLiveData<List<Notification>> targetLiveData) {
+        lastEventId = eventId;
+
+        List<Notification> filtered = filterByEvent(eventId);
+
+        targetLiveData.postValue(filtered);
+        notificationsForEventLiveData.postValue(filtered);
     }
 
     // --- Test Helper Methods ---
@@ -63,7 +83,23 @@ public class FakeNotificationRepository implements INotificationRepository {
         return inMemoryList;
     }
 
+    private List<Notification> filterByEvent(String eventId) {
+        List<Notification> out = new ArrayList<>();
+
+        if (eventId == null) {
+            return out;
+        }
+
+        for (Notification n : inMemoryList) {
+            if (eventId.equals(n.getEventId())) {
+                out.add(n);
+            }
+        }
+        return out;
+    }
     public void setMessage(String msg) {
         messageLiveData.postValue(msg);
     }
+
+
 }
