@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,6 +12,9 @@ import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.R;
 
+/**
+ * Fragment to redirect admin to event-selection screen where they can choose an event and view relevant notifications
+ */
 public class AdminSentNotificationsFragment extends Fragment {
 
     @Nullable
@@ -21,21 +23,11 @@ public class AdminSentNotificationsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        return inflater.inflate(R.layout.fragment_admin_sent_notifications, container, false);
+
+        Navigation.findNavController(requireActivity(), R.id.nav_host_fragment)
+                .navigate(R.id.action_adminSentNotificationsFragment_to_adminSelectEventFragment);
+
+        return new View(requireContext());
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
-
-        super.onViewCreated(view, savedInstanceState);
-
-        Button btnSelectEvent = view.findViewById(R.id.btn_select_event);
-
-        btnSelectEvent.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(
-                        R.id.action_adminSentNotificationsFragment_to_adminSelectEventFragment
-                )
-        );
-    }
 }

@@ -20,12 +20,26 @@ import com.example.lotteryevent.repository.IAvailableEventsRepository;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.AdminEventsViewModel;
 
+/**
+ * This fragment displays a list of all events for the admin to choose from when viewing notifications sent by organizers
+ * Displays recyclerView of all events and navigates to NotificationFragment when event is selected
+ */
 public class AdminSelectEventFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
     private AdminEventsViewModel viewModel;
 
+    /**
+     *
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -35,6 +49,12 @@ public class AdminSelectEventFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_admin_event_select, container, false);
     }
 
+    /**
+     *
+     * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {

@@ -27,7 +27,7 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
-    private ListenerRegistration listenerRegistration; // To manage the real-time listener
+    private ListenerRegistration listenerRegistration;
 
 
     public NotificationRepositoryImpl(Context context) {
