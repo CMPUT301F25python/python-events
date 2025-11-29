@@ -178,7 +178,13 @@ public class ManageInvitedFragment extends Fragment {
             if (entrants != null) {
                 // Update the adapter with the new list of Entrant objects
                 adapter.setEntrants(entrants);
-                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
+                sendNotificationButton.setOnClickListener(v -> {
+                    if (entrants.isEmpty()) {
+                        Toast.makeText(getContext(), "No entrants to notify.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showNotificationDialog();
+                    }
+                });
             }
         });
 

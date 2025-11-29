@@ -59,6 +59,15 @@
         <argument
             android:name="eventId"
             app:argType="string"/>
+        <argument
+            android:name="oldEntrantsStatus"
+            app:argType="string"/>
+        <argument
+            android:name="newChosenEntrants"
+            app:argType="string"/>
+        <argument
+            android:name="newUnchosenEntrants"
+            app:argType="string"/>
 
         <action
             android:id="@+id/action_confirmDrawAndNotifyFragment_to_organizerEventPageFragment"
@@ -161,17 +170,6 @@
             app:popUpTo="@id/adminSentNotificationsFragment"
             app:popUpToInclusive="true"/>
 
-
-    <fragment
-        android:id="@+id/adminImagesFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminImagesFragment"
-        android:label="Images" />
-
-    <fragment
-        android:id="@+id/adminProfilesFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
-        android:label="Profiles" />
-
     <fragment
         android:id="@+id/adminSelectEventFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminSelectEventFragment"
@@ -183,6 +181,27 @@
             app:destination="@id/notificationsFragment"/>
     </fragment>
 
+    <fragment
+        android:id="@+id/adminImagesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminImagesFragment"
+        android:label="Images" />
+
+    <fragment
+        android:id="@+id/adminProfilesFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminProfilesFragment"
+        android:label="Profiles" >
+        <action
+            android:id="@+id/action_adminProfiles_to_userProfile"
+            app:destination="@id/adminUserProfileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminUserProfileFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminUserProfileFragment">
+        <argument
+            android:name="userId"
+            app:argType="string" />
+    </fragment>
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"

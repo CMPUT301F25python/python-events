@@ -6,12 +6,17 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.data.User;
+import com.example.lotteryevent.repository.IAdminUserProfileRepository;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.List;
 
 /**
  * ViewModel for the EventDetailsFragment.
@@ -28,6 +33,11 @@ public class EventDetailsViewModel extends ViewModel {
     public LiveData<String> message;
     public LiveData<Integer> waitingListCount;
 
+    private final IAdminUserProfileRepository userRepo;
+    private final MutableLiveData<User> userProfile = new MutableLiveData<>();
+    private final MutableLiveData<String> errorState = new MutableLiveData<>();
+
+
     // Signal to the Fragment that we need location permission
     private final MutableLiveData<Boolean> _requestLocationPermission = new MutableLiveData<>();
     public LiveData<Boolean> requestLocationPermission = _requestLocationPermission;
@@ -37,8 +47,9 @@ public class EventDetailsViewModel extends ViewModel {
     private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<BottomUiState> bottomUiState = _bottomUiState;
 
-    public EventDetailsViewModel(IEventDetailsRepository repository) {
+    public EventDetailsViewModel(IEventDetailsRepository repository, IAdminUserProfileRepository userRepo) {
         this.repository = repository;
+        this.userRepo = userRepo;
         // Pass through the simple LiveData objects from the repository.
         this.eventDetails = repository.getEventDetails();
         this.message = repository.getMessage();
@@ -255,10 +266,76 @@ public class EventDetailsViewModel extends ViewModel {
     }
 
     /**
+     * Sends a notification message to all entrants in the provided list. Iterates
+     * through each entrant and delegates the notification sending to the repository.
+     * Only valid entrants with non-null user IDs are processed.
+     * @param organizerMessage the message content written by the event organizer
+     */
+    public void notifyEntrant(String userId, String organizerMessage, NotificationCustomManager manager) {
+        if (userId == null) {
+            repository.setMessage("No user given to notify.");
+            return;
+        }
+
+        if (organizerMessage == null || organizerMessage.trim().isEmpty()) {
+            repository.setMessage("No message provided.");
+            return;
+        }
+
+        repository.notifyEntrantFromAdmin(userId, organizerMessage, manager);
+    }
+    
+    /**
      * This function exposes the waiting list count to the Fragment.
      * @return a LiveData<Integer> representing the waiting list count
      */
     public LiveData<Integer> getWaitingListCount(){
         return repository.getWaitingListCount();
+    }
+
+    /**
+     * Exposes the user profile data as an observable LiveData object.
+     * <p>
+     * The UI should observe this field to receive updates when a user's profile is successfully loaded.
+     *
+     * @return A {@link LiveData} object containing the {@link User} profile.
+     */
+    public LiveData<User> getUserProfile() {
+        return userProfile;
+    }
+
+
+    /**
+     * Exposes error messages related to user profile operations.
+     * <p>
+     * The UI should observe this field to display error notifications (e.g., Toasts) if data loading fails.
+     *
+     * @return A {@link LiveData} object containing the error message string.
+     */
+    public LiveData<String> getErrorState() {
+        return errorState;
+    }
+
+    /**
+     * Initiates an asynchronous request to fetch detailed profile information for a specific user.
+     * <p>
+     * This method delegates the data fetching to the {@link IAdminUserProfileRepository}.
+     * Upon success, the {@link #getUserProfile()} LiveData is updated.
+     * Upon failure, the {@link #getErrorState()} LiveData is updated with the exception message.
+     *
+     * @param userId The unique identifier of the user to load.
+     */
+    public void loadUserProfile(String userId) {
+        userRepo.getUserProfile(userId, new IAdminUserProfileRepository.UserProfileCallback() {
+            @Override
+            public void onSuccess(User user) {
+                userProfile.setValue(user);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                errorState.setValue(e.getMessage());
+            }
+        });
     }
 }

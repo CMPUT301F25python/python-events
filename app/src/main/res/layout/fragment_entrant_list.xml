@@ -50,7 +50,7 @@
         android:id="@+id/send_notification_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send Notification"
+        android:text="@string/send_notification"
         tools:layout_editor_absoluteX="156dp"
         tools:layout_editor_absoluteY="675dp"
         app:layout_constraintEnd_toEndOf="parent"

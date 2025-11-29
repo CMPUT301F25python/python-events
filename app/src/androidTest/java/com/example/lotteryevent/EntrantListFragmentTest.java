@@ -21,11 +21,13 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.typeText;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -187,5 +189,22 @@ public class EntrantListFragmentTest {
         assertEquals(eventId, calls.get(1).getEventId());
         assertEquals(message, calls.get(1).getMessage());
 
+    }
+
+    /**
+     * Tests that if no entrants in the list, notification dialog is not opened
+     */
+    @Test
+    public void test_notifyNoEntrants() {
+        String eventId = "event123";
+        String status = "accepted";
+
+        launchFragment(eventId, status);
+
+        // Click "Send Notification" button
+        onView(withId(R.id.send_notification_button)).perform(click());
+
+        // Check dialog is not shown
+        onView(withText("Notification Message")).check(doesNotExist());
     }
 }

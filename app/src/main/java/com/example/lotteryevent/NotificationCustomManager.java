@@ -26,6 +26,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
@@ -46,6 +47,7 @@ public class NotificationCustomManager {
     private String channelDescription = "Notifications on winning the lottery.";
     private FirebaseFirestore db;
     private final static AtomicInteger c = new AtomicInteger(0);
+    private ListenerRegistration listener;
 
 
     /**
@@ -85,6 +87,14 @@ public class NotificationCustomManager {
     public void clearNotifications() {
         NotificationManager notificationManager = myContext.getSystemService(NotificationManager.class);
         notificationManager.cancelAll();
+    }
+
+    /**
+     * Removes a specific notification from the shade
+     */
+    public void clearNotification(int notifBannerId) {
+        NotificationManager notificationManager = myContext.getSystemService(NotificationManager.class);
+        notificationManager.cancel(notifBannerId);
     }
 
     /**
@@ -128,31 +138,26 @@ public class NotificationCustomManager {
      * @param notifType notif type
      */
     @SuppressLint("MissingPermission")
-    public void generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
+    public int generateNotification(String title, String message, String eventId, String notificationId, String notifType) {
         // Intent that triggers when the notification is tapped
         Intent intent = new Intent(this.myContext, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = null;
+        // for determining which fragment to redirect to from notification
         Bundle bundle = new Bundle();
-        bundle.putString("notificationId", notificationId); // used to mark notif as seen
-
-        // if one notif and is a lottery win, navigate to the event and mark notif
-        if (notifType != null && Objects.equals(notifType, "lottery_win")) {
+        bundle.putString("notificationId", notificationId);
+        bundle.putString("notificationType", notifType);
+        if (notifType != null && notifType.equals("lottery_win")) {
             bundle.putString("eventId", eventId);
-
-            pendingIntent = new NavDeepLinkBuilder(this.myContext)
-                    .setGraph(R.navigation.nav_graph)
-                    .setDestination(R.id.eventDetailsFragment)
-                    .setArguments(bundle)
-                    .createPendingIntent();
-        } else { // navigate to notifs screen
-            pendingIntent = new NavDeepLinkBuilder(this.myContext)
-                    .setGraph(R.navigation.nav_graph)
-                    .setDestination(R.id.notificationsFragment)
-                    .setArguments(bundle)
-                    .createPendingIntent();
         }
+        intent.putExtras(bundle);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                myContext,
+                getID(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this.myContext, channelID)
@@ -164,9 +169,13 @@ public class NotificationCustomManager {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_MAX);
 
+        int notifBannerId = getID();
+
         // Display the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this.myContext);
-        notificationManager.notify(getID(), builder.build());
+        notificationManager.notify(notifBannerId, builder.build());
+
+        return notifBannerId;
     }
 
     /**
@@ -199,7 +208,8 @@ public class NotificationCustomManager {
 
                             String fullMessage = message + "\n" + timestamp;
 
-                            generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                            db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                         } else if (size > 1) {
                             // many notifs, just tell multiple unread
                             String title = "You have " + String.valueOf(size) + " unread notifications";
@@ -223,8 +233,13 @@ public class NotificationCustomManager {
      * @param uid recipient user's id
      */
     public void listenForNotifications(String uid) {
+        if (listener != null) {
+            Log.d(TAG, "Notification listener already exists for uid=" + uid + " instance=" + this.hashCode());
+            return;
+        }
+        Log.d(TAG, "Attaching listener for uid=" + uid + " instance=" + this.hashCode());
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
-        db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
+        listener = db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value,
@@ -261,7 +276,8 @@ public class NotificationCustomManager {
 
                                         String fullMessage = message + "\n" + timestamp;
 
-                                        generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        int notifBannerId = generateNotification(title, fullMessage, notification.getEventId(), notification.getNotificationId(), notification.getType());
+                                        db.collection("notifications").document(notification.getNotificationId()).update("notifBannerId", notifBannerId);
                                     }
                                 }
                             })
@@ -270,6 +286,16 @@ public class NotificationCustomManager {
                             });
                     }
                 });
+    }
+
+    /**
+     * Stops listening for notifications
+     */
+    public void stopListener() {
+        if (listener != null) {
+            listener.remove();
+            Log.d(TAG, "Stopped listening for notifications.");
+        }
     }
 
     /**
