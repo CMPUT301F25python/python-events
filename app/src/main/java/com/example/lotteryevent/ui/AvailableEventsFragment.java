@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.core.content.ContextCompat;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EventAdapter;
@@ -123,9 +122,9 @@ public class AvailableEventsFragment extends Fragment {
      */
     public void setupRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.events_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        adapter = new EventAdapter(R.layout.item_event);
+        // use tile layout
+        adapter = new EventAdapter(R.layout.tile_event);
         recyclerView.setAdapter(adapter);
 
         adapter.setOnItemClickListener(event -> {
@@ -363,6 +362,7 @@ public class AvailableEventsFragment extends Fragment {
                         filterStartDateMs = null;
                         filterEndDateMs = null;
                         applyFiltersAndUpdateList();
+                        applyLocalFiltersToAdapter();
                     })
                     .setNeutralButton("Cancel", null)
                     .create();
@@ -384,6 +384,7 @@ public class AvailableEventsFragment extends Fragment {
                 filterEndDateMs = end;
 
                 applyFiltersAndUpdateList();
+                applyLocalFiltersToAdapter();
                 dialog.dismiss();
             });
         });
