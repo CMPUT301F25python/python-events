@@ -1,99 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
+    android:fillViewport="true"
     android:padding="24dp">
-
-    <TextView
-        android:id="@+id/waitingList"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:text="Waiting List:"
-        android:textColor="#4CAF50"
-        android:textSize="16sp"
-        android:layout_marginBottom="4dp"
-        tools:ignore="HardcodedText"/>
-
-    <TextView
-        android:id="@+id/waiting_list_count"
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:text="@string/loading"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="14sp"
-        android:layout_marginBottom="12dp"
-        tools:ignore="HardcodedText"/>
-
-    <TextView
-        android:id="@+id/available_space"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Spots Available:"
-        android:textColor="#4CAF50"
-        android:textSize="16sp"
-        android:layout_marginBottom="4dp"
-        tools:ignore="HardcodedText" />
-
-    <TextView
-        android:id="@+id/available_space_count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/loading"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="14sp"
-        android:layout_marginBottom="24dp"
-        tools:ignore="HardcodedText" />
-
-    <TextView
-        android:id="@+id/numSelectPrompt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Number of Participants to select"
-        android:textColor="#4CAF50"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"
-        tools:ignore="HardcodedText"/>
-
-    <EditText
-        android:id="@+id/numSelectedEntrants"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="number"
-        android:hint="Enter # of participants you wish to select"
-        android:padding="12dp"
-        android:layout_marginBottom="24dp"
-        tools:ignore="HardcodedText"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <Button
-            android:id="@+id/cancel_button"
-            android:text="Cancel"
-            android:layout_weight="1"
-            android:layout_width="0dp"
+        <!-- Waiting List + Available Spots Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:backgroundTint="#F48FB1"
-            android:textColor="@android:color/white"
-            tools:ignore="ButtonStyle,HardcodedText"/>
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="20dp">
 
-        <Button
-            android:id="@+id/runDrawButton"
-            android:text="Run Draw"
-            android:layout_weight="1"
-            android:layout_width="0dp"
+            <!-- Waiting List  -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/waitingList"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/waiting_list_label"
+                    android:textColor="@color/primary_green"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/waiting_list_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textColor="@color/grey"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- Available Spots -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/available_space"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/spots_available_label"
+                    android:textColor="@color/primary_green"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/available_space_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/loading"
+                    android:textColor="@color/grey"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Participant Selection Section -->
+        <TextView
+            android:id="@+id/numSelectPrompt"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#F48FB1"
-            android:textColor="@android:color/white"
-            tools:ignore="ButtonStyle,HardcodedText"/>
+            android:text="@string/select_participants_label"
+            android:textColor="@color/primary_green"
+            android:textSize="18sp"
+            android:paddingTop="14dp"
+            android:paddingBottom="8dp"
+            android:textAlignment="viewStart" />
+
+        <EditText
+            android:id="@+id/numSelectedEntrants"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_background"
+            android:hint="@string/select_participants_hint"
+            android:inputType="number"
+            android:padding="12dp"
+            android:textColor="@color/grey"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Button Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp">
+
+            <Button
+                android:id="@+id/cancel_button"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="@string/cancel"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:backgroundTint="@color/primary_pink"
+                android:radius="30dp" />
+
+            <Button
+                android:id="@+id/runDrawButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="@string/run_draw"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:backgroundTint="@color/primary_pink"
+                android:radius="30dp" />
+        </LinearLayout>
+
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>
