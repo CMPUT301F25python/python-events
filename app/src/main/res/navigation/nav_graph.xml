@@ -157,7 +157,9 @@
 
         <action
             android:id="@+id/action_adminSentNotificationsFragment_to_adminSelectEventFragment"
-            app:destination="@id/adminSelectEventFragment" />
+            app:destination="@id/adminSelectEventFragment"
+            app:popUpTo="@id/adminSentNotificationsFragment"
+            app:popUpToInclusive="true"/>
 
 
     <fragment
