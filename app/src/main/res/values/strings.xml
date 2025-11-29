@@ -127,4 +127,6 @@
     <string name="selected_event_poster">Selected event poster</string>
     <string name="upload_poster">Upload Poster</string>
     <string name="remove_image">Remove Image</string>
+    <string name="send_notification">Send Notification</string>
+    <string name="mark_all_notifs_as_seen">Mark All As Seen</string>
 </resources>
