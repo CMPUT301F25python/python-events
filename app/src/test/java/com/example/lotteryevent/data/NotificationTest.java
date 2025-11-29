@@ -45,8 +45,9 @@ public class NotificationTest {
         String eventName = "Gala";
         String organizerId = "org123";
         String organizerName = "Organizer Name";
+        Integer notifBannerId = 123;
 
-        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerId);
 
         assertEquals("Recipient ID should match", uid, notification.getRecipientId());
         assertEquals("Title should match", title, notification.getTitle());
@@ -56,6 +57,7 @@ public class NotificationTest {
         assertEquals("Event Name should match", eventName, notification.getEventName());
         assertEquals("Organizer ID should match", organizerId, notification.getOrganizerId());
         assertEquals("Organizer Name should match", organizerName, notification.getOrganizerName());
+        assertEquals("Notifications Banner ID should match", notifBannerId, notification.getNotifBannerId());
 
         // Verify defaults set in constructor
         assertFalse("New notification should default to unseen", notification.getSeen());
@@ -116,14 +118,17 @@ public class NotificationTest {
         String eventId = "ev_1";
         String eventName = "Party";
         String type = "general";
+        Integer notifBannerId = 123;
 
         notification.setEventId(eventId);
         notification.setEventName(eventName);
         notification.setType(type);
+        notification.setNotifBannerId(notifBannerId);
 
         assertEquals(eventId, notification.getEventId());
         assertEquals(eventName, notification.getEventName());
         assertEquals(type, notification.getType());
+        assertEquals(notifBannerId, notification.getNotifBannerId());
     }
 
     /**

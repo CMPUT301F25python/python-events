@@ -141,7 +141,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             // Set a click listener on the entire tile view.
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
-                v.setBackgroundColor(Color.rgb(230, 232, 230));
+                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
                 // Ensure the position is valid and a listener is registered before triggering the callback.
                 if (listener != null && position != RecyclerView.NO_POSITION) {
                     listener.onItemClick(notificationsList.get(position));
@@ -164,7 +164,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             String timestamp = dateFormat.format(timestampRaw.toDate());
 
             if (notification.getSeen() == true) {
-                notifications_material_card.setBackgroundColor(Color.rgb(230, 232, 230));
+                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
+            } else {
+                notifications_material_card.setCardBackgroundColor(Color.rgb(255, 251, 254));
             }
 
             this.message.setText(message);
@@ -183,10 +185,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             message = "\uD83C\uDF89 You've been selected for " + notification.getEventName() + "! Tap to accept or decline.";
         } else if (Objects.equals(notification.getType(), "lottery_loss")) {
             message = "❌ You weren't selected for " + notification.getEventName() + ".";
-        } else if (Objects.equals(notification.getType(), "event_update")) {
-            message = "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!";
         } else {
-            message = "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage();
+            message = "\uD83D\uDCAC " + notification.getMessage();
         }
 
         return message;

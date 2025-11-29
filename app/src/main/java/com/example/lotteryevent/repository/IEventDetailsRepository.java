@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 
@@ -34,6 +36,12 @@ public interface IEventDetailsRepository {
      * Exposes user-facing messages, such as success confirmations or errors, as LiveData.
      */
     LiveData<String> getMessage();
+
+    /**
+     * Allows user to write a custom message
+     * @param message set by the user
+     */
+    void setMessage(String message);
 
     /**
      * Kicks off the process of fetching both the event's main details and the
@@ -121,4 +129,12 @@ public interface IEventDetailsRepository {
      * @return A LiveData Boolean that becomes true upon successful deletion.
      */
     LiveData<Boolean> getIsOrganizerDeleted();
+
+    /**
+     * Allows for admin user to send notifications to users
+     * @param userId reciepient user's ID
+     * @param adminMessage message to send
+     * @param manager notification custom manager used to send message
+     */
+     void notifyEntrantFromAdmin(String userId, String adminMessage, NotificationCustomManager manager);
 }

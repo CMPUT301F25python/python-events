@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,9 +17,15 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.repository.AdminUserProfileRepositoryImpl;
+import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
+import com.example.lotteryevent.repository.IAdminUserProfileRepository;
+import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModelFactory;
+import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -36,15 +43,27 @@ import com.google.firebase.auth.FirebaseUser;
 public class AdminUserProfileFragment extends Fragment {
 
     private TextView tvEmail, tvPhone;
+    private Button sendNotificationButton;
     private Button deleteButton;
     private String userId;
     private EventDetailsViewModel viewModel;
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
+    private ViewModelProvider.Factory viewModelFactory;
+
     /**
      * Required empty public constructor.
      */
     public AdminUserProfileFragment() {
+    }
+
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     *
+     * @param factory The factory to use for creating the ViewModel.
+     */
+    public AdminUserProfileFragment(ViewModelProvider.Factory factory) {
+        this.viewModelFactory = factory;
     }
 
     /**
@@ -81,8 +100,14 @@ public class AdminUserProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // 1. Initialize ViewModel
-        EventDetailsViewModelFactory factory = new EventDetailsViewModelFactory(requireActivity().getApplication());
-        viewModel = new ViewModelProvider(this, factory).get(EventDetailsViewModel.class);
+        if (viewModelFactory == null) {
+            IEventDetailsRepository repository = new EventDetailsRepositoryImpl();
+            IAdminUserProfileRepository userProfileRepository = new AdminUserProfileRepositoryImpl();
+            GenericViewModelFactory factory = new GenericViewModelFactory();
+            factory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(repository, userProfileRepository));
+            viewModelFactory = factory;
+        }
+        viewModel = new ViewModelProvider(this, viewModelFactory).get(EventDetailsViewModel.class);
 
         // 2. Get the User ID
         if (getArguments() != null) {
@@ -91,6 +116,8 @@ public class AdminUserProfileFragment extends Fragment {
 
         // 3. Bind Views
         deleteButton = view.findViewById(R.id.btn_delete_user);
+        sendNotificationButton = view.findViewById(R.id.btn_notify);
+        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
         tvEmail = view.findViewById(R.id.tv_user_email);
         tvPhone = view.findViewById(R.id.tv_user_phone);
 
@@ -103,9 +130,13 @@ public class AdminUserProfileFragment extends Fragment {
                 String name = user.getName() != null ? user.getName() : "Unknown User";
 
                 // Set header title
-                if (getActivity() != null) {
-                    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(name);
+                if (getActivity() instanceof AppCompatActivity) {
+                    AppCompatActivity activity = (AppCompatActivity) getActivity();
+                    if (activity.getSupportActionBar() != null) {
+                        activity.getSupportActionBar().setTitle(name);
+                    }
                 }
+
 
 
                 tvEmail.setText(user.getEmail() != null ? user.getEmail() : "Not provided");
@@ -177,5 +208,33 @@ public class AdminUserProfileFragment extends Fragment {
         } else {
             Toast.makeText(getContext(), "Error: Invalid User ID", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    /**
+     * Displays a dialog allowing the organizer to input a message that will be
+     * sent as a notification to all entrants currently shown in the list.
+     * Provides input validation and triggers the ViewModel's bulk notification
+     * method when confirmed.
+     */
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notification Message");
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter message...");
+        builder.setView(input);
+        builder.setPositiveButton("Notify", (dialog, which) -> {
+            /**
+             * Callback triggered when the "Notify All" button in the notification dialog is
+             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+             * bulk notification method.
+             * @param dialog the dialog that triggered the callback
+             */
+            String organizerMessage = input.getText().toString().trim();
+            NotificationCustomManager manager = new NotificationCustomManager(requireContext());
+            viewModel.notifyEntrant(userId, organizerMessage, manager);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 }
