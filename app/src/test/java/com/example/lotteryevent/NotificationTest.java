@@ -27,6 +27,7 @@ public class NotificationTest {
     private String eventName;
     private String organizerId;
     private String organizerName;
+    private Integer notifBannerID;
 
     /**
      * assigns fields for notif
@@ -41,6 +42,7 @@ public class NotificationTest {
         eventName = "Event Name";
         organizerId = "aIJocfaDTrWhIp3N3FjvADBbTuv";
         organizerName = "Organizer Name";
+        notifBannerID = 123;
     }
 
     /**
@@ -49,7 +51,7 @@ public class NotificationTest {
     @Test
     public void testConstructor() {
 
-        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerID);
 
         assertEquals(uid, notification.getRecipientId());
         assertEquals(title, notification.getTitle());
@@ -61,6 +63,7 @@ public class NotificationTest {
         assertEquals(organizerName, notification.getOrganizerName());
         assertEquals(false, notification.getSeen());
         assertNotEquals(null, notification.getTimestamp());
+        assertEquals(notifBannerID, notification.getNotifBannerId());
     }
 
     /**
@@ -82,6 +85,7 @@ public class NotificationTest {
         notification.setSeen(true);
         notification.setTimestamp(now);
         notification.setNotificationId("12345abcde");
+        notification.setNotifBannerId(notifBannerID);
 
         assertEquals(uid, notification.getRecipientId());
         assertEquals(title, notification.getTitle());
@@ -94,5 +98,6 @@ public class NotificationTest {
         assertEquals(true, notification.getSeen());
         assertEquals(now, notification.getTimestamp());
         assertEquals("12345abcde", notification.getNotificationId());
+        assertEquals(notifBannerID, notification.getNotifBannerId());
     }
 }

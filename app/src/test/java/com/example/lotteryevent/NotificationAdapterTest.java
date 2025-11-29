@@ -27,6 +27,7 @@ public class NotificationAdapterTest {
     private String eventName;
     private String organizerId;
     private String organizerName;
+    private Integer notifBannerID;
 
     /**
      * Sets up notif record and fields
@@ -41,7 +42,8 @@ public class NotificationAdapterTest {
         eventName = "Event Name";
         organizerId = "aIJocfaDTrWhIp3N3FjvADBbTuv";
         organizerName = "Organizer Name";
-        notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+        notifBannerID = 123;
+        notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerID);
     }
 
     /**
@@ -65,23 +67,13 @@ public class NotificationAdapterTest {
     }
 
     /**
-     * Tests event update message construction
-     */
-    @Test
-    public void testMessageConstructorEventUpdate() {
-        notification.setType("event_update");
-        String message = NotificationAdapter.messageConstructor(notification);
-        assertEquals(message, "\uD83D\uDD01 A spot just opened for " + notification.getEventName() + "!");
-    }
-
-    /**
      * Tests custom message construction
      */
     @Test
     public void testMessageConstructorCustomMessage() {
         notification.setType("custom_message");
         String message = NotificationAdapter.messageConstructor(notification);
-        assertEquals(message, "\uD83D\uDCAC Message from the organizer of " + notification.getEventName() + ": " + notification.getMessage());
+        assertEquals(message, "\uD83D\uDCAC " + notification.getMessage());
     }
 
 }

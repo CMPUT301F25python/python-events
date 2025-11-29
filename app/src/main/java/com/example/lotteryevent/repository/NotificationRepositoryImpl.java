@@ -6,6 +6,7 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -78,15 +79,51 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     }
 
     @Override
-    public void markNotificationAsSeen(String notificationId) {
+    public void markNotificationAsSeen(String notificationId, NotificationCustomManager notificationCustomManager) {
         if (notificationId == null || notificationId.isEmpty()) return;
 
-        db.collection("notifications").document(notificationId)
-                .update("seen", true)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Notification " + notificationId + " marked as seen."))
+        db.collection("notifications").document(notificationId).get()
+                .addOnSuccessListener(doc -> {
+
+                    Long notifBannerIdLong = doc.getLong("notifBannerId");
+                    String recipientId = doc.getString("recipientId");
+                    Integer notifBannerId;
+                    if (notifBannerIdLong != null) {
+                        notifBannerId = notifBannerIdLong.intValue();
+                    } else {
+                        notifBannerId = null;
+                    }
+
+                    // sets notification seen as true in db
+                    db.collection("notifications").document(notificationId)
+                            .update("seen", true)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Notification " + notificationId + " marked as seen.");
+
+                                // clears the notif's system banner if it exists
+                                if (notifBannerId != null) {
+                                    notificationCustomManager.clearNotification(notifBannerId);
+                                }
+
+                                if (recipientId != null) {
+                                    // if all notifs seen, clear all system banners
+                                    db.collection("notifications").whereEqualTo("recipientId", recipientId).whereEqualTo("seen", false).get()
+                                            .addOnSuccessListener(query -> {
+                                                if (query.isEmpty()) {
+                                                    notificationCustomManager.clearNotifications();
+                                                }
+                                            })
+                                            .addOnFailureListener(e -> Log.e(TAG, "Error getting remaining unseen notifications", e));
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Error marking notification as seen", e);
+                                _message.postValue("Failed to update notification status.");
+                            });
+                })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error marking notification as seen", e);
-                    _message.postValue("Failed to update notification status.");
+                    Log.e(TAG, "Failed to fetch notification", e);
+                    _message.postValue("Failed to fetch notification.");
                 });
     }
 
