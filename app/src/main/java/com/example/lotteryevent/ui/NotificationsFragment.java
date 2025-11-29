@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +37,8 @@ public class NotificationsFragment extends Fragment {
     private NotificationsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
 
+    private TextView noNotification;
+
     /**
      * Default constructor for production use by the Android Framework.
      */
@@ -57,6 +60,7 @@ public class NotificationsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        noNotification = view.findViewById(R.id.text_no_notifications);
 
         // Get eventId for for admin
         String eventIdFilter = null;
@@ -80,6 +84,7 @@ public class NotificationsFragment extends Fragment {
 
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
         viewModel.processInitialNotification(notificationId);
+
     }
 
     /**
@@ -101,22 +106,30 @@ public class NotificationsFragment extends Fragment {
     private void setupObservers(@NonNull View view, @Nullable String eventIdFilter) {
 
         if(eventIdFilter != null) {
-
             viewModel.loadNotificationsForEvent(eventIdFilter);
 
             // Show notifications for Admin
             viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
-                if (notifications != null) {
+                if (notifications != null && !notifications.isEmpty()) {
                     adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
                 }
             });
 
         } else {
-
             // Observe the list of notifications and submit it to the adapter when it changes.
             viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
-                if (notifications != null) {
+                if (notifications != null && !notifications.isEmpty()) {
                     adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
                 }
             });
         }
