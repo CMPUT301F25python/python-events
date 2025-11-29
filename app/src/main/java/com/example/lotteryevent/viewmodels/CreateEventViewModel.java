@@ -196,8 +196,8 @@ public class CreateEventViewModel extends ViewModel {
             return "A capacity is required to set a waiting list limit.";
         }
 
-        if (capacity != null && capacity < 0) {
-            return "Capacity cannot be negative.";
+        if (capacity != null && capacity <= 0) {
+            return "Capacity must be greater than zero.";
         }
 
         if (waitingListLimit != null && waitingListLimit < 1) {
