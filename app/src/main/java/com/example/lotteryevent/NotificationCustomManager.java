@@ -17,7 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.navigation.NavDeepLinkBuilder;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
@@ -30,7 +29,6 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.text.SimpleDateFormat;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -104,17 +102,17 @@ public class NotificationCustomManager {
      * @param message Message content
      * @param eventId Event ID that the notif relates to
      * @param eventName Event name that the notif relates to
-     * @param organizerId Organizer ID who sent the notif
-     * @param organizerName Organizer Name who sent the notif
+     * @param senderId Notif sender's ID
+     * @param senderName Notif sender's name
      */
-    public Task<DocumentReference> sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
+    public Task<DocumentReference> sendNotification(String uid, String title, String message, String type, String eventId, String eventName, String senderId, String senderName) {
         Notification notification = new Notification();
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setEventId(eventId);
         notification.setEventName(eventName);
-        notification.setOrganizerId(organizerId);
-        notification.setOrganizerName(organizerName);
+        notification.setSenderId(senderId);
+        notification.setSenderName(senderName);
         notification.setSeen(false);
         notification.setRecipientId(uid);
         notification.setType(type);
