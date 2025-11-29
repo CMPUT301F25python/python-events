@@ -5,6 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.app.DatePickerDialog;
+import android.util.TypedValue;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +27,9 @@ import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 
 import java.util.ArrayList;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,6 +46,10 @@ public class AvailableEventsFragment extends Fragment {
     // UI-level filter state (the actual filtering is done in the ViewModel)
     private String currentKeyword = "";
     private boolean filterAvailableToday = false;
+
+    @Nullable private Long filterStartDateMs = null;
+    @Nullable private Long filterEndDateMs = null;
+    @NonNull private List<Event> lastEventsFromViewModel = new ArrayList<>();
 
     public AvailableEventsFragment() { }
 
@@ -134,15 +146,9 @@ public class AvailableEventsFragment extends Fragment {
      */
     public void setupObservers() {
         availableEventsViewModel.getFilteredEvents().observe(getViewLifecycleOwner(), events -> {
-            if (adapter == null) {
-                return;
-            }
-
-            if (events == null) {
-                adapter.setEvents(new ArrayList<>());
-            } else {
-                adapter.setEvents(events);
-            }
+            // Keep the latest list from the ViewModel and apply the date filter locally.
+            lastEventsFromViewModel = (events == null) ? new ArrayList<>() : events;
+            applyLocalFiltersToAdapter();
         });
 
         availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
@@ -172,7 +178,7 @@ public class AvailableEventsFragment extends Fragment {
         });
 
         // Show a simple dialog to enter a keyword for interest-based filtering
-        filterButton.setOnClickListener(v -> showKeywordDialog());
+        filterButton.setOnClickListener(v -> showFilterDialog());
     }
 
     /**
@@ -187,26 +193,189 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     * Shows a dialog allowing the user to enter a keyword used to filter events
-     * by name or description.
+     * Applies the currently selected date range filter to {@link #lastEventsFromViewModel}
+     * and pushes the result into the adapter.
      */
-    private void showKeywordDialog() {
-        android.widget.EditText input = new android.widget.EditText(requireContext());
-        input.setHint("Enter a keyword");
-        input.setText(currentKeyword);
+    private void applyLocalFiltersToAdapter() {
+        if (adapter == null) return;
+        adapter.setEvents(applyDateRangeFilter(lastEventsFromViewModel));
+    }
 
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Filter by keyword")
-                .setView(input)
-                .setPositiveButton("Apply", (dialog, which) -> {
-                    currentKeyword = input.getText().toString();
-                    applyFiltersAndUpdateList();
-                })
-                .setNegativeButton("Clear", (dialog, which) -> {
-                    currentKeyword = "";
-                    applyFiltersAndUpdateList();
-                })
-                .setNeutralButton("Cancel", null)
-                .show();
+    /**
+     * Filters events by {@link Event#getEventStartDateTime()} using the inclusive day range
+     * [filterStartDateMs, filterEndDateMs]. If either bound is null, it is treated as "unbounded".
+     */
+    @NonNull
+    private List<Event> applyDateRangeFilter(@NonNull List<Event> input) {
+        if (filterStartDateMs == null && filterEndDateMs == null) return input;
+
+        List<Event> out = new ArrayList<>();
+        for (Event e : input) {
+            if (e == null || e.getEventStartDateTime() == null) continue;
+
+            long t = e.getEventStartDateTime().toDate().getTime();
+            if (filterStartDateMs != null && t < filterStartDateMs) continue;
+            if (filterEndDateMs != null && t > filterEndDateMs) continue;
+
+            out.add(e);
+        }
+        return out;
+    }
+
+    private interface DaySelectionCallback {
+        void onDaySelected(long startOfDayMs, long endOfDayMs);
+    }
+
+    /**
+     * Opens a dialog that lets the user select a date.
+     */
+    private void showDayPickerDialog(
+            @Nullable Long existingMs,
+            @Nullable Long minDateMs,
+            @Nullable Long maxDateMs,
+            @NonNull DaySelectionCallback cb
+    ) {
+        final Calendar cal = Calendar.getInstance();
+        if (existingMs != null) cal.setTimeInMillis(existingMs);
+
+        int year = cal.get(Calendar.YEAR);
+        int month = cal.get(Calendar.MONTH);
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog dlg = new DatePickerDialog(requireContext(), (view, y, m, d) -> {
+            cb.onDaySelected(startOfDayMillis(y, m, d), endOfDayMillis(y, m, d));
+        }, year, month, day);
+
+        if (minDateMs != null) dlg.getDatePicker().setMinDate(minDateMs);
+        if (maxDateMs != null) dlg.getDatePicker().setMaxDate(maxDateMs);
+
+        dlg.show();
+    }
+
+    private long startOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
+        Calendar c = Calendar.getInstance();
+        c.set(year, monthZeroBased, dayOfMonth, 0, 0, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
+    }
+
+    private long endOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
+        Calendar c = Calendar.getInstance();
+        c.set(year, monthZeroBased, dayOfMonth, 23, 59, 59);
+        c.set(Calendar.MILLISECOND, 999);
+        return c.getTimeInMillis();
+    }
+
+    private String formatDay(@Nullable Long ms) {
+        if (ms == null) return "";
+        DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
+        return df.format(new Date(ms));
+    }
+
+    /**
+     * Opens a dialog that lets the user enter a keyword to filter events by name or description.
+     */
+    private void showFilterDialog() {
+        final int pad = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics()
+        );
+
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(pad, pad, pad, pad);
+
+        // Keyword
+        EditText keywordInput = new EditText(requireContext());
+        keywordInput.setHint("Enter a keyword");
+        keywordInput.setText(currentKeyword);
+        container.addView(keywordInput);
+
+        // Date range
+        TextView dateHeader = new TextView(requireContext());
+        dateHeader.setText("Date");
+        dateHeader.setPadding(0, pad, 0, 0);
+        container.addView(dateHeader);
+
+        final Long[] tempStart = new Long[]{filterStartDateMs};
+        final Long[] tempEnd = new Long[]{filterEndDateMs};
+
+        TextView from = new TextView(requireContext());
+        from.setText("From: " + formatDay(tempStart[0]));
+        from.setPadding(0, pad / 2, 0, 0);
+        from.setOnClickListener(v ->
+                showDayPickerDialog(
+                        tempStart[0],
+                        null,
+                        null,
+                        (s, e) -> {
+                            // invalid if user picks a start date after the current end date
+                            if (tempEnd[0] != null && s > tempEnd[0]) {
+                                Toast.makeText(
+                                        requireContext(),
+                                        "Start date can’t be after the end date.",
+                                        Toast.LENGTH_SHORT
+                                ).show();
+                                return; // reject selection
+                            }
+
+                            tempStart[0] = s;
+                            from.setText("From: " + formatDay(tempStart[0]));
+                        }
+                )
+        );
+
+        container.addView(from);
+
+        TextView to = new TextView(requireContext());
+        to.setText("To: " + formatDay(tempEnd[0]));
+        to.setPadding(0, pad / 2, 0, 0);
+        to.setOnClickListener(v ->
+                showDayPickerDialog(
+                        tempEnd[0],
+                        tempStart[0], // if "From" is set, To cannot be before it
+                        null,
+                        (s, e) -> {
+                            tempEnd[0] = e; // end-of-day (inclusive)
+                            to.setText("To: " + formatDay(tempEnd[0]));
+                        }
+                )
+        );
+        container.addView(to);
+
+        final androidx.appcompat.app.AlertDialog dialog =
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Filter events")
+                    .setView(container)
+                    .setPositiveButton("Apply", null)
+                    .setNegativeButton("Clear", (d, which) -> {
+                        currentKeyword = "";
+                        filterStartDateMs = null;
+                        filterEndDateMs = null;
+                        applyFiltersAndUpdateList();
+                    })
+                    .setNeutralButton("Cancel", null)
+                    .create();
+
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                currentKeyword = keywordInput.getText().toString();
+
+                Long start = tempStart[0];
+                Long end = tempEnd[0];
+
+                // Until cannot be earlier than From
+                if (start != null && end != null && end < start) {
+                    keywordInput.setError("End date must be on or after the start date.");
+                    return;
+                }
+
+                filterStartDateMs = start;
+                filterEndDateMs = end;
+
+                applyFiltersAndUpdateList();
+                dialog.dismiss();
+            });
+        });
+        dialog.show();
     }
 }
