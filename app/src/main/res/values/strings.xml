@@ -132,7 +132,7 @@
     <string name="mark_all_notifs_as_seen">Mark All As Seen</string>
     <string name="user_not_found">User not found</string>
     <string name="phone_number">Phone Number</string>
-    <string name="loading">loading...</string>
+    <string name="loading">loading…</string>
     <string name="email">Email</string>
     <string name="email_icon">Email Icon</string>
     <string name="phone_icon">Phone Icon</string>
