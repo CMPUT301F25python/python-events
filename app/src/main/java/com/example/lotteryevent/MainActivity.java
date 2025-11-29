@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Inflates home menu so the profile icon appears across all fragments except where indicated.
+     * Inflates home menu so the profile icon only appears on the HomeFragment
      * @param menu The options menu in which you place your items.
      * @return true if initialized correctly
      */
@@ -154,16 +154,23 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // hiding profile icon where we don't want it
+        // showing profile icon only on HomeFragment
         MenuItem profileItem = menu.findItem(R.id.profile_icon);
         if(profileItem != null){
             profileItem.setVisible(showProfileIcon);
+        }
+
+        // showing home icon everywhere except HomeFragment (i.e. no profile icon)
+        MenuItem homeItem = menu.findItem(R.id.home_icon);
+        if(homeItem != null){
+            homeItem.setVisible(!showProfileIcon);
         }
         return true;
     }
 
     /**
-     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly
+     * and clicking the home icon takes on the HomeFragment
      * Stack is updated if user is not already on the fragment.
      * @param item The menu item that was selected.
      * @return boolean value indicating success of action
@@ -174,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
             NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
             if (navHostFragment != null) {
                 NavController navController = navHostFragment.getNavController();
-
                 // navigating only if not already on UserProfileFragment
                 if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.userProfileFragment){
                     navController.navigate(R.id.userProfileFragment);
@@ -183,7 +189,20 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        // default handling
+        // navigate to home when home icon is clicked
+        if (item.getItemId() == R.id.home_icon) {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+                // navigating only if not already on UserProfileFragment
+                if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.homeFragment){
+                    navController.navigate(R.id.homeFragment);
+                }
+            }
+            return true;
+        }
+
+            // default handling
         return super.onOptionsItemSelected(item);
     }
 
