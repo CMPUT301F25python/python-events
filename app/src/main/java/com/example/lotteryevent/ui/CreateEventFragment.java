@@ -213,8 +213,15 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "yyyy-MM-dd");
         };
 
-        new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // Add a "Clear" button
+        dialog.setButton(DatePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
+            editText.setText(""); // Clear the visible text
+        });
+
+        dialog.show();
     }
 
     /**
@@ -230,8 +237,15 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "HH:mm");
         };
 
-        new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE), false).show();
+        TimePickerDialog dialog = new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE), true);
+
+        // Add "Clear" button to the dialog
+        dialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
+            editText.setText(""); // Clear the visible text in the EditText
+        });
+
+        dialog.show();
     }
 
     /**
