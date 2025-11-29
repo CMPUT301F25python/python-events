@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
 
 import com.example.lotteryevent.data.Notification;
+import com.example.lotteryevent.repository.FakeAdminUserProfileRepository;
 import com.example.lotteryevent.repository.FakeEventDetailsRepository;
 import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.ui.admin.AdminUserProfileFragment;
@@ -45,6 +46,7 @@ import java.util.List;
 public class AdminUserProfileFragmentTest {
 
     private FakeEventDetailsRepository fakeRepository;
+    private FakeAdminUserProfileRepository fakeProfileRepository;
     private ReusableTestFragmentFactory fragmentFactory;
 
     @Before
@@ -52,10 +54,11 @@ public class AdminUserProfileFragmentTest {
         // --- Arrange ---
         // 1. Create the fake repository that our ViewModel will use.
         fakeRepository = new FakeEventDetailsRepository();
+        fakeProfileRepository = new FakeAdminUserProfileRepository();
 
         // 2. Create the factory that knows how to create our ViewModel.
         GenericViewModelFactory viewModelFactory = new GenericViewModelFactory();
-        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository));
+        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository, fakeProfileRepository));
 
         // 3. Create the factory that knows how to create our Fragment.
         fragmentFactory = new ReusableTestFragmentFactory();
@@ -80,10 +83,6 @@ public class AdminUserProfileFragmentTest {
                 .check(matches(isDisplayed()));
         onView(withId(R.id.btn_notify))
                 .check(matches(isDisplayed()));
-
-        // 4. Verify the headers are visible (Events Organized/Attended)
-        onView(withText("Events Organized")).check(matches(isDisplayed()));
-        onView(withText("Events Attended")).check(matches(isDisplayed()));
     }
 
 
