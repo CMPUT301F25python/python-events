@@ -3,6 +3,8 @@ package com.example.lotteryevent.ui.organizer;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.ContentResolver;
+import android.graphics.Matrix;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -26,6 +28,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.repository.IOrganizerEventRepository;
@@ -35,6 +38,8 @@ import com.example.lotteryevent.viewmodels.OrganizerEventViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Displays info about a single event for the organizer to view.
@@ -48,6 +53,8 @@ public class OrganizerEventFragment extends Fragment {
 
     private static final String TAG = "OrganizerEventPage";
     private static final int REQUEST_POSTER_IMAGE = 2001;
+    private static final int POSTER_MAX_DIM_PX = 1200; // longest side cap
+    private static final int POSTER_JPEG_QUALITY = 80; // keep existing quality
 
     private OrganizerEventViewModel viewModel;
     private String eventId;
@@ -321,10 +328,14 @@ public class OrganizerEventFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_POSTER_IMAGE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == REQUEST_POSTER_IMAGE
+                && resultCode == Activity.RESULT_OK
+                && data != null
+                && data.getData() != null) {
+
             Uri imageUri = data.getData();
             try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireContext().getContentResolver(), imageUri);
+                Bitmap bitmap = decodeScaledBitmapFromUri(imageUri, POSTER_MAX_DIM_PX);
 
                 // Update the UI preview
                 posterImage.setImageBitmap(bitmap);
@@ -351,9 +362,121 @@ public class OrganizerEventFragment extends Fragment {
      */
     private String encodeBitmapToBase64(Bitmap bitmap) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
-        byte[] bytes = baos.toByteArray();
-        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, POSTER_JPEG_QUALITY, baos);
+        return Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+    }
+
+    /**
+     * Decodes a scaled bitmap from the given Uri.
+     * @param imageUri
+     * @param maxDimPx
+     * @return Decoded bitmap
+     * @throws IOException
+     */
+    private Bitmap decodeScaledBitmapFromUri(@NonNull Uri imageUri, int maxDimPx) throws IOException {
+        ContentResolver resolver = requireContext().getContentResolver();
+
+        // 1) Decode bounds only
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream is = resolver.openInputStream(imageUri)) {
+            if (is == null) throw new IOException("Unable to open image stream for bounds.");
+            BitmapFactory.decodeStream(is, null, bounds);
+        }
+
+        int srcW = bounds.outWidth;
+        int srcH = bounds.outHeight;
+        if (srcW <= 0 || srcH <= 0) throw new IOException("Invalid image bounds.");
+
+        // 2) Decode with sampling (prevents loading full-res bitmap)
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = calculateInSampleSizeForMaxDim(srcW, srcH, maxDimPx);
+        opts.inJustDecodeBounds = false;
+
+        Bitmap decoded;
+        try (InputStream is = resolver.openInputStream(imageUri)) {
+            if (is == null) throw new IOException("Unable to open image stream for decode.");
+            decoded = BitmapFactory.decodeStream(is, null, opts);
+        }
+        if (decoded == null) throw new IOException("Bitmap decode returned null.");
+
+        // 3) Fix rotation (common for camera photos)
+        Bitmap rotated = rotateBitmapIfRequired(imageUri, decoded);
+        if (rotated != decoded) decoded.recycle();
+
+        // 4) Final exact scale-down (in case sampling didn’t land under maxDim)
+        Bitmap finalBmp = scaleDownToMaxDim(rotated, maxDimPx);
+        if (finalBmp != rotated) rotated.recycle();
+
+        return finalBmp;
+    }
+
+    /**
+     * Calculates the in-sample size for decoding a bitmap.
+     * @param width
+     * @param height
+     * @param maxDimPx
+     * @return In-sample size
+     */
+    private static int calculateInSampleSizeForMaxDim(int width, int height, int maxDimPx) {
+        int inSampleSize = 1;
+        int max = Math.max(width, height);
+        while (max / inSampleSize > maxDimPx) {
+            inSampleSize *= 2; // power-of-two is efficient for BitmapFactory
+        }
+        return Math.max(1, inSampleSize);
+    }
+
+    /**
+     * Scales the given bitmap down to a maximum dimension.
+     * @param bitmap
+     * @param maxDimPx
+     * @return Scaled bitmap
+     */
+    private static Bitmap scaleDownToMaxDim(@NonNull Bitmap bitmap, int maxDimPx) {
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+        int max = Math.max(w, h);
+        if (max <= maxDimPx) return bitmap;
+
+        float scale = maxDimPx / (float) max;
+        int newW = Math.max(1, Math.round(w * scale));
+        int newH = Math.max(1, Math.round(h * scale));
+        return Bitmap.createScaledBitmap(bitmap, newW, newH, true);
+    }
+
+    /**
+     * Rotates the given bitmap if required based on EXIF data.
+     * @param imageUri
+     * @param bitmap
+     * @return Bitmap with rotation applied if required
+     */
+    private Bitmap rotateBitmapIfRequired(@NonNull Uri imageUri, @NonNull Bitmap bitmap) {
+        try (InputStream is = requireContext().getContentResolver().openInputStream(imageUri)) {
+            if (is == null) return bitmap;
+
+            ExifInterface exif = new ExifInterface(is);
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+            );
+
+            int rotationDegrees = 0;
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotationDegrees = 90;
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotationDegrees = 180;
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotationDegrees = 270;
+
+            if (rotationDegrees == 0) return bitmap;
+
+            Matrix matrix = new Matrix();
+            matrix.postRotate(rotationDegrees);
+
+            return Bitmap.createBitmap(
+                    bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true
+            );
+        } catch (Exception ignored) {
+            return bitmap; // if EXIF fails, don't block the user
+        }
     }
 
     /**
