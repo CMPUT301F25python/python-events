@@ -6,10 +6,15 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.util.List;
 
 /**
  * ViewModel for the EventDetailsFragment.
@@ -24,6 +29,7 @@ public class EventDetailsViewModel extends ViewModel {
     // --- LiveData exposed to the Fragment ---
     public LiveData<Event> eventDetails;
     public LiveData<String> message;
+    public LiveData<Integer> waitingListCount;
 
     // Signal to the Fragment that we need location permission
     private final MutableLiveData<Boolean> _requestLocationPermission = new MutableLiveData<>();
@@ -39,6 +45,7 @@ public class EventDetailsViewModel extends ViewModel {
         // Pass through the simple LiveData objects from the repository.
         this.eventDetails = repository.getEventDetails();
         this.message = repository.getMessage();
+        this.waitingListCount = repository.getWaitingListCount();
 
         // Add the sources that the UI state depends on.
         _bottomUiState.addSource(repository.getEventDetails(), event -> calculateUiState());
@@ -170,6 +177,68 @@ public class EventDetailsViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Exposes the administrative status of the current user.
+     * The Fragment can observe this to determine if admin-only controls (like delete) should be visible.
+     *
+     * @return A LiveData Boolean that is true if the user is an admin, false otherwise.
+     */
+    public LiveData<Boolean> getIsAdmin() {
+        return repository.getIsAdmin();
+    }
+
+
+    /**
+     * Checks the current user's authentication status and queries the repository to see if they have admin privileges.
+     * This should be called when the Fragment view is created to update the {@link #getIsAdmin()} LiveData.
+     */
+    public void checkAdminStatus() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();if (user != null) {
+            repository.checkAdminStatus(user.getUid());
+        }
+    }
+
+    /**
+     * Requests the deletion of a specific event through the repository.
+     * This action is generally restricted to users with administrative privileges.
+     *
+     * @param eventId The unique ID of the event to be deleted.
+     */
+    public void deleteEvent(String eventId) {
+        repository.deleteEvent(eventId);
+    }
+
+    /**
+     * Exposes a status flag indicating whether the event has been successfully deleted.
+     * The Fragment can observe this to trigger navigation away from the screen (e.g., popping the back stack).
+     *
+     * @return A LiveData Boolean that becomes true when the deletion operation completes successfully.
+     */
+    public LiveData<Boolean> getIsDeleted() {
+        return repository.getIsDeleted();
+    }
+
+    /**
+     * Requests the deletion of a specific organizer through the repository.
+     * This action is generally restricted to users with administrative privileges.
+     *
+     * @param organizerId The unique ID of the organizer to be deleted.
+     */
+    public void deleteOrganizer(String organizerId) {
+        repository.deleteOrganizer(organizerId);
+    }
+
+    /**
+     * Exposes a status flag indicating whether the organizer has been successfully deleted.
+     * The Fragment can observe this to trigger navigation away from the screen (e.g., popping the back stack).
+     *
+     * @return A LiveData Boolean that becomes true when the deletion operation completes successfully.
+     */
+    public LiveData<Boolean> getIsOrganizerDeleted() {
+        return repository.getIsOrganizerDeleted();
+    }
+
+
     // --- Location Methods ---
     /**
      * Called by the Fragment after it successfully retrieves the location.
@@ -186,5 +255,33 @@ public class EventDetailsViewModel extends ViewModel {
     public void onLocationPermissionDenied() {
         // Reset the signal
         _requestLocationPermission.setValue(false);
+    }
+
+    /**
+     * Sends a notification message to all entrants in the provided list. Iterates
+     * through each entrant and delegates the notification sending to the repository.
+     * Only valid entrants with non-null user IDs are processed.
+     * @param organizerMessage the message content written by the event organizer
+     */
+    public void notifyEntrant(String userId, String organizerMessage, NotificationCustomManager manager) {
+        if (userId == null) {
+            repository.setMessage("No user given to notify.");
+            return;
+        }
+
+        if (organizerMessage == null || organizerMessage.trim().isEmpty()) {
+            repository.setMessage("No message provided.");
+            return;
+        }
+
+        repository.notifyEntrantFromAdmin(userId, organizerMessage, manager);
+    }
+    
+    /**
+     * This function exposes the waiting list count to the Fragment.
+     * @return a LiveData<Integer> representing the waiting list count
+     */
+    public LiveData<Integer> getWaitingListCount(){
+        return repository.getWaitingListCount();
     }
 }

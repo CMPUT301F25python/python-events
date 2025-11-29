@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import java.util.List;
 
@@ -24,8 +26,9 @@ public interface INotificationRepository {
     /**
      * Marks a specific notification as 'seen' in the database.
      * @param notificationId The ID of the notification to update.
+     * @param notificationCustomManager notification custom manager used to remove notif banners
      */
-    void markNotificationAsSeen(String notificationId);
+    void markNotificationAsSeen(String notificationId, NotificationCustomManager notificationCustomManager);
 
     /**
      * Detaches the real-time Firestore listener to prevent memory leaks.

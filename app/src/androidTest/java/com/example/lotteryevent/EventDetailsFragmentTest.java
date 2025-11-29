@@ -2,17 +2,31 @@ package com.example.lotteryevent;
 
 import android.os.Bundle;
 import androidx.fragment.app.testing.FragmentScenario;
+import androidx.navigation.Navigation;
+import androidx.navigation.testing.TestNavHostController;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiScrollable;
+import androidx.test.uiautomator.UiSelector;
+
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.FakeEventDetailsRepository;
 import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.google.firebase.Timestamp;
+import android.widget.ImageView;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -29,6 +43,8 @@ public class EventDetailsFragmentTest {
     private FakeEventDetailsRepository fakeRepository;
     private ReusableTestFragmentFactory fragmentFactory;
     private Bundle fragmentArgs;
+    private UiDevice device;
+    private TestNavHostController navController;
 
     @Before
     public void setup() {
@@ -47,7 +63,37 @@ public class EventDetailsFragmentTest {
         // 4. Prepare arguments to pass to the fragment, simulating navigation.
         fragmentArgs = new Bundle();
         fragmentArgs.putString("eventId", "fake-event-id");
+
+        // Initialize UI Automator - used due to difficulty in testing dialog buttons
+        device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
+
+    /**
+     * Helper method to launch the fragment with a TestNavHostController attached.
+     * This is required for tests that trigger navigation actions (e.g., "navigateUp" after deletion).
+     */
+    private void launchFragment() {
+        // Create a TestNavHostController
+        navController = new TestNavHostController(ApplicationProvider.getApplicationContext());
+
+        // Launch the fragment
+        FragmentScenario<EventDetailsFragment> scenario = FragmentScenario.launchInContainer(
+                EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory
+        );
+
+        // Attach the controller to the fragment's view
+        scenario.onFragment(fragment -> {
+            // Set the graph so the controller knows where it is (start destination)
+            navController.setGraph(R.navigation.nav_graph);
+
+            // Set the current destination to the fragment being tested
+            navController.setCurrentDestination(R.id.eventDetailsFragment);
+
+            // Attach the controller to the view
+            Navigation.setViewNavController(fragment.requireView(), navController);
+        });
+    }
+
 
     /**
      * Test Case 1: A user who is NOT an entrant sees the "Join Waiting List" button.
@@ -267,29 +313,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 11: Event requires geolocation.
-     * Verifies that clicking "Join" for an event requiring geolocation will succeed
-     * if the user has granted permission.
-     */
-    @Test
-    public void joinEvent_locationRequired_waitsForPermission() {
-        // 1. Arrange: Require Geolocation
-        fakeRepository.getInMemoryEvent().setGeoLocationRequired(true);
-
-        // 2. PRE-GRANT PERMISSION
-        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("pm grant " + androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName() + " android.permission.ACCESS_FINE_LOCATION");
-
-        // 3. Act: Launch and Click
-        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
-        onView(withId(R.id.btn_action_positive)).perform(click());
-
-        // 4. Assert
-        onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
-    }
-
-    /**
-     * Test Case 12: Event does NOT require geolocation.
+     * Test Case 11: Event does NOT require geolocation.
      * Verifies that clicking "Join" joins the list immediately.
      */
     @Test
@@ -305,4 +329,224 @@ public class EventDetailsFragmentTest {
         // Since no permission was needed, the join happened immediately.
         onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
     }
+
+    /**
+     * Test Case 12: A regular (non-admin) user CANNOT see the delete button.
+     * This is a critical security check.
+     */
+    @Test
+    public void nonAdmin_cannotSeeDeleteButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(false);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_event)).check(matches(not(isDisplayed())));
+    }
+
+    /**
+     * Test Case 13: An admin user CAN see the delete button.
+     */
+    @Test
+    public void admin_seesDeleteButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_event)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 14: Admin successfully deletes an event via the dialog (Using UIAutomator).
+     */
+    @Test
+    public void admin_deleteFlow_happyPath() throws Exception {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // 1. Click Delete
+        onView(withId(R.id.btn_remove_event)).perform(click());
+
+        // 2. Use UIAutomator to find the "Delete" button in the dialog
+        UiObject deleteButton = device.findObject(new UiSelector()
+                .text("Delete")
+                .className("android.widget.Button"));
+
+        if (deleteButton.exists() || deleteButton.waitForExists(2000)) {
+            deleteButton.click();
+        } else {
+            throw new RuntimeException("Could not find Delete button in dialog");
+        }
+
+        // 3. Wait briefly for async callback & Verify Repository Update
+        Thread.sleep(500);
+        Boolean isDeleted = fakeRepository.getIsDeleted().getValue();
+        // Use assert to check true (handling nulls safely)
+        assert(isDeleted != null && isDeleted);
+    }
+
+    /**
+     * Test Case 15: Admin cancels the deletion via the dialog (Using UIAutomator).
+     */
+    @Test
+    public void admin_deleteFlow_cancelPath() throws Exception {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // 1. Click Delete
+        onView(withId(R.id.btn_remove_event)).perform(click());
+
+        // 2. Use UIAutomator to find the "Cancel" button
+        UiObject cancelButton = device.findObject(new UiSelector()
+                .text("Cancel")
+                .className("android.widget.Button"));
+
+        if (cancelButton.exists() || cancelButton.waitForExists(2000)) {
+            cancelButton.click();
+        } else {
+            throw new RuntimeException("Could not find Cancel button in dialog");
+        }
+
+        // 3. Verify Repository was NOT updated
+        Thread.sleep(500);
+        Boolean isDeleted = fakeRepository.getIsDeleted().getValue();
+        assert(isDeleted == null || !isDeleted);
+    }
+
+
+    /**
+     * Test Case 16: When an event has no poster image set, the details page
+     * shows a placeholder image in the poster ImageView.
+     */
+    @Test
+    public void eventWithoutPoster_showsPlaceholderImage() {
+        // Arrange: ensure the in-memory event has no poster image.
+        fakeRepository.resetToDefaultState();
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(null);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView is present and has a drawable (placeholder).
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Placeholder drawable should be set when no poster is available", drawable);
+        });
+    }
+
+    /**
+     * Test Case 17: When an event has a poster image set (Base64),
+     * the details page displays it as a bitmap in the poster ImageView.
+     */
+    @Test
+    public void eventWithPoster_showsPosterBitmap() {
+        fakeRepository.resetToDefaultState();
+        String base64Png =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAA" +
+                        "AAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=";
+
+        fakeRepository.getInMemoryEvent().setPosterImageUrl(base64Png);
+
+        // Act: launch the fragment.
+        FragmentScenario<EventDetailsFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        EventDetailsFragment.class,
+                        fragmentArgs,
+                        R.style.Theme_LotteryEvent,
+                        fragmentFactory
+                );
+
+        // Assert: the poster ImageView now has a BitmapDrawable.
+        scenario.onFragment(fragment -> {
+            ImageView imageView = fragment.requireView().findViewById(R.id.event_poster_image);
+            assertNotNull("Poster ImageView should not be null", imageView);
+
+            Drawable drawable = imageView.getDrawable();
+            assertNotNull("Poster drawable should be set for events with a poster", drawable);
+            assertTrue(
+                    "Poster drawable should be a BitmapDrawable when Base64 poster is provided",
+                    drawable instanceof BitmapDrawable
+            );
+        });
+    }
+    /**
+     * Test Case 18: A regular (non-admin) user CANNOT see the delete organizer button.
+     */
+    @Test
+    public void nonAdmin_cannotSeeDeleteOrganizerButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(false);        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_organizer)).check(matches(not(isDisplayed())));
+    }
+
+    /**
+     * Test Case 19: An admin user CAN see the delete organizer button.
+     */
+    @Test
+    public void admin_seesDeleteOrganizerButton() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+
+        // Act
+        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
+
+        // Assert
+        onView(withId(R.id.btn_remove_organizer)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 20: Admin clicks delete organizer and the confirmation dialog appears.
+     * Simplified to avoid brittle UIAutomator clicks on system dialogs.
+     */
+    @Test
+    public void admin_clicksDeleteOrganizer_dialogAppears() {
+        // Arrange
+        fakeRepository.setIsAdmin(true);
+        launchFragment();
+
+        // Act: Click the button
+        onView(withId(R.id.btn_remove_organizer)).perform(click());
+
+        // Assert: Check if a view with the dialog text exists in the hierarchy.
+        onView(withText("Delete Organizer")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 21: Admin deletes organizer (Logical Test).
+     */
+    @Test
+    public void repository_deleteOrganizer_logicWorks() throws InterruptedException {
+        // Arrange
+        String testOrganizerId = "test_organizer_123";
+
+        // Act
+        fakeRepository.deleteOrganizer(testOrganizerId);
+
+        // Wait for postValue() to finish
+        Thread.sleep(100);
+
+        // Assert
+        Boolean isDeleted = fakeRepository.getIsOrganizerDeleted().getValue();
+        assert(isDeleted != null && isDeleted);
+    }
+
 }

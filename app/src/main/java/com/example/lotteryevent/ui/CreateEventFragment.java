@@ -37,7 +37,7 @@ public class CreateEventFragment extends Fragment {
             editTextEventStartDate, editTextEventStartTime, editTextEventEndDate,
             editTextEventEndTime, editTextRegistrationStartDate, editTextRegistrationStartTime,
             editTextRegistrationEndDate, editTextRegistrationEndTime, editTextEventPrice,
-            editTextMaxAttendees, editTextWaitingListLimit, editTextLotteryGuidelines;
+            editTextMaxAttendees, editTextWaitingListLimit;
     private CheckBox checkboxGeolocation;
     private Button buttonSave;
 
@@ -121,7 +121,6 @@ public class CreateEventFragment extends Fragment {
         String priceStr = editTextEventPrice.getText().toString().trim();
         String maxAttendeesStr = editTextMaxAttendees.getText().toString().trim();
         String waitingListLimitStr = editTextWaitingListLimit.getText().toString().trim();
-        String lotteryGuidelinesStr = editTextLotteryGuidelines.getText().toString().trim();
         boolean isGeoLocationRequired = checkboxGeolocation.isChecked();
 
         String startDateText = editTextEventStartDate.getText().toString();
@@ -135,8 +134,7 @@ public class CreateEventFragment extends Fragment {
 
         // Pass all the data to the ViewModel. The ViewModel will handle all validation and logic.
         String validationError = viewModel.attemptToCreateEvent(
-                eventName, description, location, priceStr, maxAttendeesStr, waitingListLimitStr,
-                lotteryGuidelinesStr, isGeoLocationRequired,
+                eventName, description, location, priceStr, maxAttendeesStr, waitingListLimitStr, isGeoLocationRequired,
                 eventStartCalendar, eventEndCalendar, registrationStartCalendar, registrationEndCalendar,
                 startDateText, startTimeText, endDateText, endTimeText,
                 regStartDateText, regStartTimeText, regEndDateText, regEndTimeText
@@ -174,8 +172,6 @@ public class CreateEventFragment extends Fragment {
 
         editTextMaxAttendees = view.findViewById(R.id.edit_text_max_attendees);
         editTextWaitingListLimit = view.findViewById(R.id.edit_text_waiting_list_limit);
-
-        editTextLotteryGuidelines = view.findViewById(R.id.edit_text_lottery_guidelines);
 
         checkboxGeolocation = view.findViewById(R.id.checkbox_geolocation);
         buttonSave = view.findViewById(R.id.button_save);
@@ -217,8 +213,15 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "yyyy-MM-dd");
         };
 
-        new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
+        DatePickerDialog dialog = new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+        // Add a "Clear" button
+        dialog.setButton(DatePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
+            editText.setText(""); // Clear the visible text
+        });
+
+        dialog.show();
     }
 
     /**
@@ -234,8 +237,15 @@ public class CreateEventFragment extends Fragment {
             updateLabel(editText, calendar, "HH:mm");
         };
 
-        new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE), false).show();
+        TimePickerDialog dialog = new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE), true);
+
+        // Add "Clear" button to the dialog
+        dialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
+            editText.setText(""); // Clear the visible text in the EditText
+        });
+
+        dialog.show();
     }
 
     /**

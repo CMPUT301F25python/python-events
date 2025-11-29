@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +13,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.NotificationAdapter;
 import com.example.lotteryevent.repository.INotificationRepository;
@@ -27,12 +30,15 @@ import com.example.lotteryevent.viewmodels.NotificationsViewModel;
 public class NotificationsFragment extends Fragment {
 
     // --- UI Components ---
+    private Button markSeenBtn;
     private RecyclerView recyclerView;
     private NotificationAdapter adapter;
 
     // --- ViewModel ---
     private NotificationsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
+
+    private NotificationCustomManager notificationCustomManager;
 
     /**
      * Default constructor for production use by the Android Framework.
@@ -56,6 +62,8 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        notificationCustomManager = new NotificationCustomManager(requireContext());
+
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             // Production path: create dependencies manually.
@@ -73,7 +81,7 @@ public class NotificationsFragment extends Fragment {
         // --- Initial Action ---
         // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        viewModel.processInitialNotification(notificationId);
+        viewModel.processInitialNotification(notificationId, notificationCustomManager);
     }
 
     /**
@@ -81,12 +89,17 @@ public class NotificationsFragment extends Fragment {
      * delegates the event directly to the ViewModel.
      */
     private void setupRecyclerView(@NonNull View view) {
+        markSeenBtn = view.findViewById(R.id.mark_as_seen_btn);
         recyclerView = view.findViewById(R.id.notifications_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new NotificationAdapter(R.layout.item_notification);
         recyclerView.setAdapter(adapter);
 
-        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification));
+        markSeenBtn.setOnClickListener(v -> {
+            viewModel.onMarkAllSeenClicked(notificationCustomManager);
+            notificationCustomManager.clearNotifications();
+        });
+        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification, notificationCustomManager));
     }
 
     /**

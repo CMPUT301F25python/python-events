@@ -55,6 +55,12 @@ public interface IRunDrawRepository {
      */
     LiveData<Boolean> getCancelSuccess();
 
+    public LiveData<String> getOldEntrantsStatus();
+
+    public LiveData<String> getNewChosenEntrants();
+
+    public LiveData<String> getNewUnchosenEntrants();
+
     /**
      * Loads event metrics:
      * <ul>

@@ -17,6 +17,10 @@ import android.provider.Settings;
 import android.content.Intent;
 import android.net.Uri;
 import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -26,6 +30,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.R;
@@ -55,10 +60,11 @@ public class EventDetailsFragment extends Fragment {
 
     // --- UI Components ---
     private ListView detailsList;
-    private Button btnActionPositive, btnActionNegative;
+    private Button btnActionPositive, btnActionNegative, btnDeleteEvent, btnDeleteOrganizer;
     private TextView textInfoMessage;
     private ProgressBar bottomProgressBar;
-    private LinearLayout buttonActionsContainer;
+    private ImageView eventPosterImage;
+    private LinearLayout buttonActionsContainer, adminActionsContainer;
 
     private ArrayAdapter<String> listAdapter;
     private final ArrayList<String> dataList = new ArrayList<>();
@@ -79,7 +85,7 @@ public class EventDetailsFragment extends Fragment {
                     fetchLocationAndJoin();
                 } else {
                     // The user denied the system dialog just now.
-                    // We need to inform the ViewModel to reset the state so the button works again next time.
+                    // Inform the ViewModel to reset the state so the button works again next time.
                     viewModel.onLocationPermissionDenied();
 
                     // Check if we should show a manual "Go to Settings" dialog
@@ -120,7 +126,6 @@ public class EventDetailsFragment extends Fragment {
         // --- Initialize Location Client ---
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
-
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             IEventDetailsRepository repository = new EventDetailsRepositoryImpl();
@@ -136,6 +141,41 @@ public class EventDetailsFragment extends Fragment {
         setupClickListeners();
         setupObservers();
 
+        // Check if user is an admin before showing the delete button
+        viewModel.checkAdminStatus();
+
+        viewModel.getIsAdmin().observe(getViewLifecycleOwner(), isAdmin -> {
+            if (isAdmin) {
+                adminActionsContainer.setVisibility(View.VISIBLE);
+            } else {
+                adminActionsContainer.setVisibility(View.GONE);
+            }
+        });
+
+        btnDeleteEvent.setOnClickListener(v -> {
+            if (getArguments() != null) {
+                String eventId = getArguments().getString("eventId");
+                if (eventId != null) {
+                    showDeleteConfirmationDialog(eventId);
+                }
+            }
+        });
+
+        btnDeleteOrganizer.setOnClickListener(v -> {
+            // Get the current event data from the ViewModel
+            Event currentEvent = viewModel.eventDetails.getValue();
+
+            if (currentEvent != null) {
+                String organizerId = currentEvent.getOrganizerId();
+
+                if (organizerId != null && !organizerId.isEmpty()) {
+                    showDeleteOrganizerConfirmationDialog(organizerId);
+                } else {
+                    Toast.makeText(getContext(), "Error: Organizer ID not found.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         // --- Initial Action ---
         if (getArguments() != null) {
             String eventId = getArguments().getString("eventId");
@@ -148,8 +188,12 @@ public class EventDetailsFragment extends Fragment {
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
         btnActionPositive = v.findViewById(R.id.btn_action_positive);
         btnActionNegative = v.findViewById(R.id.btn_action_negative);
+        adminActionsContainer = v.findViewById(R.id.admin_actions_container);
+        btnDeleteEvent = v.findViewById(R.id.btn_remove_event);
+        btnDeleteOrganizer = v.findViewById(R.id.btn_remove_organizer);
         textInfoMessage = v.findViewById(R.id.text_info_message);
         bottomProgressBar = v.findViewById(R.id.bottom_progress_bar);
+        eventPosterImage = v.findViewById(R.id.event_poster_image);
     }
 
     private void setupClickListeners() {
@@ -161,7 +205,9 @@ public class EventDetailsFragment extends Fragment {
         // Observer for the main event data.
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
-                bindEventDetails(event);
+              Integer count = viewModel.waitingListCount.getValue();
+              bindEventDetails(event, count);
+              bindEventPoster(event);
             }
         });
 
@@ -169,6 +215,18 @@ public class EventDetailsFragment extends Fragment {
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getIsDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
+            if (isDeleted) {
+                Navigation.findNavController(requireView()).navigateUp();
+            }
+        });
+
+        viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isOrganizerDeleted -> {
+            if (isOrganizerDeleted) {
+                Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
@@ -186,6 +244,37 @@ public class EventDetailsFragment extends Fragment {
                 checkPermissionAndAct();
             }
         });
+
+        // observer to display waitinglistCount
+        viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
+            if (count != null && viewModel.eventDetails.getValue() != null) {
+                // Rebind details including the count
+                bindEventDetails(viewModel.eventDetails.getValue(), count);
+            }
+        });
+    }
+
+    /**
+     * Binds the event poster image (if available) to the header ImageView.
+     * The poster is stored as a Base64-encoded string on the Event model.
+     *
+     * @param event The event whose poster should be displayed.
+     */
+    private void bindEventPoster(Event event) {
+        if (eventPosterImage == null) {
+            return;
+        }
+
+        String posterImageUrl = event.getPosterImageUrl();
+        if (posterImageUrl == null || posterImageUrl.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            eventPosterImage.setImageBitmap(bitmap);
+        } catch (IllegalArgumentException e) {}
     }
 
     /**
@@ -193,7 +282,6 @@ public class EventDetailsFragment extends Fragment {
      */
     private void renderBottomUi(BottomUiState uiState) {
         hideAllBottomActions(); // Start by hiding everything.
-
 
         switch (uiState.type) {
             case LOADING:
@@ -211,7 +299,7 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
-    private void bindEventDetails(Event event) {
+    private void bindEventDetails(Event event, @Nullable Integer waitingListCount) {
         dataList.clear();
         addAny("Name", event.getName());
         addAny("Organizer", event.getOrganizerName());
@@ -219,13 +307,16 @@ public class EventDetailsFragment extends Fragment {
         addAny("Date and Time", event.getEventStartDateTime());
         addAny("Price", event.getPrice());
         addAny("Description", event.getDescription());
-        addAny("Lottery Guidelines", event.getLotteryGuidelines());
         addAny("Max Attendees", event.getCapacity());
+        // check if waiting list count has a value otherwise set to loading
+        if (waitingListCount == null){
+            dataList.add("Waiting List Count: Loading...");
+        } else {
+            addAny("Waiting List Count", waitingListCount);
+        }
         addAny("Geolocation Required", event.getGeoLocationRequired() ? "Yes" : "No");
         listAdapter.notifyDataSetChanged();
     }
-
-    // --- UI Helper Methods  ---
 
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);
@@ -338,4 +429,51 @@ public class EventDetailsFragment extends Fragment {
                     viewModel.onLocationPermissionDenied();
                 });
     }
+
+    /**
+     * Displays a confirmation dialog to the user before deleting an event.
+     * <p>
+     * If the user selects "Delete", the event deletion process is initiated via the ViewModel.
+     * If the user selects "Cancel", the dialog is dismissed without any action.
+     *
+     * @param eventId The unique identifier of the event to be deleted.
+     */
+    private void showDeleteConfirmationDialog(String eventId) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Event")
+                .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // User confirmed, proceed with deletion
+                    viewModel.deleteEvent(eventId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    /**
+     * Displays a confirmation dialog to the user before deleting an organizer.
+     * <p>
+     * If the user selects "Delete", the organizer deletion process is initiated via the ViewModel.
+     * If the user selects "Cancel", the dialog is dismissed without any action.
+     *
+     * @param organizerId The unique identifier of the organizer to be deleted.
+     */
+    private void showDeleteOrganizerConfirmationDialog(String organizerId) {
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Delete Organizer")
+                .setMessage("Are you sure you want to delete this organizer? This action cannot be undone. This action will also delete all events organized by this organizer.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // User confirmed, proceed with deletion
+                    viewModel.deleteOrganizer(organizerId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
 }

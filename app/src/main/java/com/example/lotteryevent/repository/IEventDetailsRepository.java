@@ -1,6 +1,8 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 
@@ -34,6 +36,12 @@ public interface IEventDetailsRepository {
      * Exposes user-facing messages, such as success confirmations or errors, as LiveData.
      */
     LiveData<String> getMessage();
+
+    /**
+     * Allows user to write a custom message
+     * @param message set by the user
+     */
+    void setMessage(String message);
 
     /**
      * Kicks off the process of fetching both the event's main details and the
@@ -75,4 +83,58 @@ public interface IEventDetailsRepository {
      * Exposes the current count of entrants on the waiting list (status = "waiting").
      */
     LiveData<Integer> getWaitingListCount();
+
+    /**
+     * Exposes the administrative status of the current user as LiveData.
+     * True if the user has admin privileges, false otherwise.
+     */
+    LiveData<Boolean> getIsAdmin();
+
+    /**
+     * Checks the database to see if the specified user has administrative privileges.
+     * The result updates the {@link #getIsAdmin()} LiveData.
+     *
+     * @param userId The unique identifier of the user to check.
+     */
+    void checkAdminStatus(String userId);
+
+
+    /**
+     * Permanently removes the specified event from the data source.
+     * This action is typically restricted to administrators.
+     *
+     * @param eventId The unique identifier of the event to delete.
+     */
+    void deleteEvent(String eventId);
+
+    /**
+     * Exposes a boolean flag indicating whether the event has been successfully deleted.
+     * The View can observe this to trigger navigation away from the current screen.
+     *
+     * @return A LiveData Boolean that becomes true upon successful deletion.
+     */
+    LiveData<Boolean> getIsDeleted();
+
+    /**
+     * Permanently removes the event's organizer (user) from the data source.
+     * This action is typically restricted to administrators.
+     *
+     * @param userId The unique identifier of the user (organizer) to delete.
+     */
+    void deleteOrganizer(String userId);
+
+    /**
+     * Exposes a boolean flag indicating whether the user (organizer) has been successfully deleted.
+     *
+     * @return A LiveData Boolean that becomes true upon successful deletion.
+     */
+    LiveData<Boolean> getIsOrganizerDeleted();
+
+    /**
+     * Allows for admin user to send notifications to users
+     * @param userId reciepient user's ID
+     * @param adminMessage message to send
+     * @param manager notification custom manager used to send message
+     */
+     void notifyEntrantFromAdmin(String userId, String adminMessage, NotificationCustomManager manager);
 }

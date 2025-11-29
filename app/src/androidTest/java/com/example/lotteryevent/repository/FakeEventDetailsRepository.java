@@ -2,8 +2,11 @@ package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.data.Notification;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.GeoPoint;
 
@@ -27,6 +30,9 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     // --- NEW: LiveData for the counts ---
     private final MutableLiveData<Integer> _attendeeCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _isDeleted = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> _isUserDeleted = new MutableLiveData<>(false);
+    private boolean isAdmin = false;
 
     // --- In-memory "database" ---
     private Event inMemoryEvent;
@@ -37,6 +43,12 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
 
     // --- Test control flags ---
     private boolean shouldReturnError = false;
+
+    /**
+     * In-memory list of notifications recorded during tests.
+     * Uses the shared {@link Notification} POJO instead of a custom helper class.
+     */
+    private final List<Notification> notificationCalls = new ArrayList<>();
 
     public FakeEventDetailsRepository() {
         resetToDefaultState();
@@ -50,6 +62,9 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
     // --- NEW: Implement new getters ---
     @Override public LiveData<Integer> getAttendeeCount() { return _attendeeCount; }
     @Override public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
+
+    @Override
+    public void setMessage(String message) { _message.postValue(message); }
 
     @Override
     public void fetchEventAndEntrantDetails(String eventId) {
@@ -172,6 +187,9 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
 
         inMemoryEntrants.clear();
 
+        // Clear Notifs
+        notificationCalls.clear();
+
         // Clear LiveData
         _eventDetails.postValue(null);
         _entrantStatus.postValue(null);
@@ -197,5 +215,88 @@ public class FakeEventDetailsRepository implements IEventDetailsRepository {
             inMemoryEntrants.removeIf(e -> Objects.equals(e.getUserId(), entrant.getUserId()));
             inMemoryEntrants.add(entrant);
         }
+    }
+
+    /**
+     * Test Helper: Manually sets the admin status for the current test scenario.
+     * @param isAdmin true to simulate an admin user, false for a regular user.
+     */
+    public void setIsAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+
+    @Override
+    public LiveData<Boolean> getIsAdmin() {
+        return new MutableLiveData<>(isAdmin);
+    }
+
+    /**
+     * Simulates the repository check for admin privileges.
+     * In this fake, it simply relies on the flag set by {@link #setIsAdmin(boolean)}.
+     */
+    @Override
+    public void checkAdminStatus(String userId) {
+        // Pass: in the fake repository, the status is already determined by the isAdmin boolean
+    }
+
+    /**
+     * Simulates the deletion of an event.
+     * Sets the isDeleted LiveData to true to signal success.
+     */
+    @Override
+    public void deleteEvent(String eventId) {
+        // Simulate successful deletion immediately
+        _isDeleted.postValue(true);
+    }
+
+    /**
+     * Returns a LiveData indicating if the event has been successfully deleted.
+     */
+    @Override
+    public LiveData<Boolean> getIsDeleted() {
+        return _isDeleted;
+    }
+
+    /**
+     * Simulates the deletion of a user.
+     * Sets the isUserDeleted LiveData to true to signal success.
+     */
+    @Override
+    public void deleteOrganizer(String userId) {
+        // Simulate successful deletion immediately
+        _isUserDeleted.postValue(true);
+    }
+
+    /**
+     * Allows for admin user to send notifications to users
+     * @param userId recipient user's ID
+     * @param adminMessage message to send
+     * @param manager notification custom manager used to send message
+     */
+    @Override
+    public void notifyEntrantFromAdmin(String userId, String adminMessage, NotificationCustomManager manager) {
+        Notification notification = new Notification();
+        notification.setRecipientId(userId);
+        notification.setMessage(adminMessage);
+        notificationCalls.add(notification);
+        _message.postValue("Notification Sent!");
+    }
+
+    /**
+     * Returns a LiveData indicating if the user has been successfully deleted.
+     */
+    @Override
+    public LiveData<Boolean> getIsOrganizerDeleted() {
+        return _isUserDeleted;
+    }
+
+    /**
+     * Returns all recorded notification calls since repository creation or since
+     * the last test reset. Useful for verifying that the correct users were notified
+     * with the correct message content.
+     * @return a list of {@link Notification} objects representing dispatched notifications
+     */
+    public List<Notification> getNotificationCalls() {
+        return notificationCalls;
     }
 }

@@ -115,6 +115,29 @@ public class CreateEventFragmentTest {
     /**
      * Verifies the business logic regarding capacity constraints.
      * <p>
+     * <b>Scenario:</b> User enters a Max Attendees count of 0.
+     * <b>Expected Result:</b> Validation fails, and the repository size remains unchanged.
+     */
+    @Test
+    public void zeroCapacity_doesNotCreateEvent() {
+        launchFragment();
+
+        // Arrange: Enter valid name, but invalid capacity logic
+        onView(withId(R.id.edit_text_event_name)).perform(typeText("Zero Cap Event"), closeSoftKeyboard());
+
+        // Capacity = 0
+        onView(withId(R.id.edit_text_max_attendees)).perform(scrollTo(), typeText("0"), closeSoftKeyboard());
+
+        // Act: Click save
+        onView(withId(R.id.button_save)).perform(scrollTo(), click());
+
+        // Assert: Repo size should still be 2
+        assertEquals(2, fakeRepository.getInMemoryEvents().size());
+    }
+
+    /**
+     * Verifies the business logic regarding capacity constraints.
+     * <p>
      * <b>Scenario:</b> User enters a Waiting List limit (5) that is smaller than the Max Attendees (10).
      * <b>Expected Result:</b> Validation fails, and the repository size remains unchanged.
      */
@@ -196,26 +219,43 @@ public class CreateEventFragmentTest {
 
     /**
      * Helper to fill out the form with valid data to pass validation.
-     * This reduces code duplication in tests.
+     * Updated to include Description, Location, and Registration Dates.
      */
     private void fillValidFormInputs(String eventName) {
         // 1. Name
         onView(withId(R.id.edit_text_event_name)).perform(typeText(eventName), closeSoftKeyboard());
 
-        // 2. Dates (Tomorrow)
-        Calendar tomorrow = Calendar.getInstance();
-        tomorrow.add(Calendar.DAY_OF_YEAR, 1);
-        int year = tomorrow.get(Calendar.YEAR);
-        int month = tomorrow.get(Calendar.MONTH) + 1;
-        int day = tomorrow.get(Calendar.DAY_OF_MONTH);
+        // 2. Description (MANDATORY)
+        onView(withId(R.id.edit_text_event_description)).perform(scrollTo(), typeText("Test Description"), closeSoftKeyboard());
 
+        // 3. Location (MANDATORY)
+        onView(withId(R.id.edit_text_event_location)).perform(scrollTo(), typeText("Test Location"), closeSoftKeyboard());
+
+        // Calculate dates
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_YEAR, 1); // Tomorrow
+        int year = cal.get(Calendar.YEAR);
+        int month = cal.get(Calendar.MONTH) + 1; // Months are 0-indexed
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+
+        // 4. Registration Dates (MANDATORY)
+        setDate(R.id.edit_text_registration_start_date, year, month, day);
+        setTime(R.id.edit_text_registration_start_time, 9, 0);
+
+        setDate(R.id.edit_text_registration_end_date, year, month, day);
+        setTime(R.id.edit_text_registration_end_time, 11, 0);
+
+        // 5. Event Dates (MANDATORY)
         setDate(R.id.edit_text_event_start_date, year, month, day);
         setTime(R.id.edit_text_event_start_time, 12, 0);
+
         setDate(R.id.edit_text_event_end_date, year, month, day);
         setTime(R.id.edit_text_event_end_time, 14, 0);
 
-        // 3. Capacity
+        // 6. Capacity (MANDATORY)
         onView(withId(R.id.edit_text_max_attendees)).perform(scrollTo(), typeText("50"), closeSoftKeyboard());
+
+        // 7. Waiting List (OPTIONAL)
         onView(withId(R.id.edit_text_waiting_list_limit)).perform(scrollTo(), typeText("100"), closeSoftKeyboard());
     }
 

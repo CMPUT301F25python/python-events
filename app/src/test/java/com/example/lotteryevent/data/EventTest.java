@@ -34,7 +34,6 @@ public class EventTest {
         assertNull("registrationStartDateTime should be null", event.getRegistrationStartDateTime());
         assertNull("registrationEndDateTime should be null", event.getRegistrationEndDateTime());
         assertNull("capacity should be null", event.getCapacity());
-        assertNull("lotteryGuidelines should be null", event.getLotteryGuidelines());
         assertNull("waitinglistlimit should be null", event.getWaitingListLimit());
         assertNull("status should be null", event.getStatus());
         assertNull("createdAt should be null", event.getCreatedAt());
@@ -54,8 +53,9 @@ public class EventTest {
         String organizerId = "org-123";
         String organizerName = "Parks Dept.";
         Integer capacity = 150;
+        Integer waitingListCount = 3;
 
-        Event event = new Event(name, description, organizerId, organizerName, capacity);
+        Event event = new Event(name, description, organizerId, organizerName, capacity, waitingListCount);
 
         assertNotNull("Event object should not be null", event);
         assertEquals("Name should be set by constructor", name, event.getName());
@@ -63,6 +63,7 @@ public class EventTest {
         assertEquals("OrganizerId should be set by constructor", organizerId, event.getOrganizerId());
         assertEquals("OrganizerName should be set by constructor", organizerName, event.getOrganizerName());
         assertEquals("Capacity should be set by constructor", capacity, event.getCapacity());
+        assertEquals("Waiting list count should be set by constructor", waitingListCount, event.getWaitingListCount());
 
         // Verify other fields are still default
         assertNull("eventId should be null", event.getEventId());
@@ -105,10 +106,6 @@ public class EventTest {
         String posterImageUrl = "http://example.com/poster.jpg";
         event.setPosterImageUrl(posterImageUrl);
         assertEquals(posterImageUrl, event.getPosterImageUrl());
-
-        String lotteryGuidelines = "Winners will be selected randomly.";
-        event.setLotteryGuidelines(lotteryGuidelines);
-        assertEquals(lotteryGuidelines, event.getLotteryGuidelines());
 
         String status = "open";
         event.setStatus(status);

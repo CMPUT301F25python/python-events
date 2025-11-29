@@ -9,6 +9,10 @@ android {
     namespace = "com.example.lotteryevent"
     compileSdk = 36
 
+    testOptions {
+        animationsDisabled = true
+    }
+
     defaultConfig {
         applicationId = "com.example.lotteryevent"
         minSdk = 24
@@ -54,10 +58,13 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.google.guava)
     implementation(libs.zxing.core)
+    implementation(libs.androidx.uiautomator.v18)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.play.services.location)
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("com.google.code.gson:gson:2.11.0")
 
     // --- Testing Dependencies ---
     testImplementation(libs.junit)
@@ -86,4 +93,9 @@ dependencies {
 
     // --- Map Dependencies ---
     implementation(libs.play.services.maps)
+    
+    // --- Image Dependencies ---
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
 }

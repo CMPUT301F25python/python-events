@@ -31,6 +31,7 @@ playServicesLocation = "21.3.0"
 legacySupportV4 = "1.0.0"
 lifecycleLivedataKtx = "2.6.1"
 lifecycleViewmodelKtx = "2.6.1"
+uiautomatorV18 = "2.2.0-alpha1"
 
 [libraries]
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
@@ -68,6 +69,7 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
 androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-uiautomator-v18 = { group = "androidx.test.uiautomator", name = "uiautomator-v18", version.ref = "uiautomatorV18" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

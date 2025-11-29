@@ -19,7 +19,7 @@ public class GenericViewModelFactory implements ViewModelProvider.Factory {
     // The "Cookbook": A map where each entry is a recipe for a specific ViewModel.
     // Key: The ViewModel's class (e.g., HomeViewModel.class).
     // Value: A function that, when called, creates a new instance of that ViewModel.
-    private final Map<Class<? extends ViewModel>, Supplier<ViewModel>> suppliers = new HashMap<>();
+    private final Map<Class<? extends ViewModel>, Supplier<? extends ViewModel>> suppliers = new HashMap<>();
 
     /**
      * This is how a Fragment adds a "recipe" to the factory.
@@ -36,7 +36,7 @@ public class GenericViewModelFactory implements ViewModelProvider.Factory {
     @SuppressWarnings("unchecked")
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         // Find the recipe for the ViewModel class that was requested.
-        Supplier<ViewModel> supplier = suppliers.get(modelClass);
+        Supplier<? extends ViewModel> supplier = suppliers.get(modelClass);
 
         // If we found a recipe, use it to create the ViewModel.
         if (supplier != null) {

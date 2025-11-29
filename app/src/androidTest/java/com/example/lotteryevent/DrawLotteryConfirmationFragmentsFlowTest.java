@@ -71,7 +71,8 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
                 "Snow day shenanigens",
                 String.valueOf(user.getUid()),
                 "John Doe",
-                3);
+                3,
+                5);
         event.setOrganizerId(user.getUid());
 
         db.collection("events").add(event).addOnSuccessListener(documentReference -> {
