@@ -2,15 +2,16 @@ package com.example.lotteryevent.ui.admin;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -34,6 +35,7 @@ import com.google.firebase.auth.FirebaseUser;
  */
 public class AdminUserProfileFragment extends Fragment {
 
+    private TextView tvEmail, tvPhone;
     private Button deleteButton;
     private String userId;
     private EventDetailsViewModel viewModel;
@@ -60,12 +62,16 @@ public class AdminUserProfileFragment extends Fragment {
     }
 
     /**
-     * Initializes the ViewModel, retrieves the User ID argument, and sets up the UI interactions.
+     * Initializes the ViewModel, retrieves the User ID argument, and binds the UI components.
      * <p>
-     * This method performs a check against the currently logged-in user. If the administrator
-     * is viewing their own profile, the "Delete" button is hidden to prevent accidental
-     * self-deletion.
-     * </p>
+     * This method establishes the following behaviors:
+     * <ul>
+     *     <li><b>ViewModel Setup:</b> Initializes {@link EventDetailsViewModel} to handle data operations.</li>
+     *     <li><b>Data Observation:</b> Observes the user profile LiveData to populate the UI fields (Email, Phone)
+     *     and dynamically updates the Activity's Toolbar title with the user's name.</li>
+     *     <li><b>Delete Logic:</b> Calls {@link #setupDeleteButton()} to conditionally show/hide the delete option
+     *     based on whether the admin is viewing their own profile.</li>
+     * </ul>
      *
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state.
@@ -83,25 +89,32 @@ public class AdminUserProfileFragment extends Fragment {
             userId = getArguments().getString("userId");
         }
 
-        // 3. Setup the Delete Button
+        // 3. Bind Views
         deleteButton = view.findViewById(R.id.btn_delete_user);
+        tvEmail = view.findViewById(R.id.tv_user_email);
+        tvPhone = view.findViewById(R.id.tv_user_phone);
 
-        // 4. Get the current user's ID
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        String currentUserId = "";
+        // 4. Handle Delete Button Logic
+        setupDeleteButton();
 
-        if (currentUser != null) {
-            currentUserId = currentUser.getUid();
-        }
+        // 5. Observe User Profile
+        viewModel.getUserProfile().observe(getViewLifecycleOwner(), user -> {
+            if (user != null) {
+                String name = user.getName() != null ? user.getName() : "Unknown User";
 
-        // 5. Check if the profile being viewed belongs to the current user
-        if (userId != null && userId.equals(currentUserId)) {
-            // If it is the current user, hide the button
-            deleteButton.setVisibility(View.GONE);
-        } else {
-            // Otherwise, show it and enable the click listener
-            deleteButton.setVisibility(View.VISIBLE);
-            deleteButton.setOnClickListener(v -> showDeleteConfirmation());
+                // Set header title
+                if (getActivity() != null) {
+                    ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(name);
+                }
+
+
+                tvEmail.setText(user.getEmail() != null ? user.getEmail() : "No Email");
+                tvPhone.setText(user.getPhone() != null ? user.getPhone() : "No Phone");
+            }
+        });
+
+        if (userId != null) {
+            viewModel.loadUserProfile(userId);
         }
 
         // 6. Observe Delete Status
@@ -111,6 +124,29 @@ public class AdminUserProfileFragment extends Fragment {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
+    }
+
+    /**
+     * Configures the visibility and behavior of the "Delete User" button.
+     * <p>
+     * This method serves as a safety check to prevent an administrator from accidentally
+     * deleting their own account.
+     * <ul>
+     *     <li>If the profile being viewed belongs to the currently logged-in user, the button is hidden (GONE).</li>
+     *     <li>If the profile belongs to a different user, the button is visible and a click listener is attached
+     *         to trigger the deletion confirmation dialog.</li>
+     * </ul>
+     */
+    private void setupDeleteButton() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
+
+        if (userId != null && userId.equals(currentUserId)) {
+            deleteButton.setVisibility(View.GONE);
+        } else {
+            deleteButton.setVisibility(View.VISIBLE);
+            deleteButton.setOnClickListener(v -> showDeleteConfirmation());
+        }
     }
 
     /**

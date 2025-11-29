@@ -45,10 +45,6 @@ public class AdminUserProfileFragmentTest {
         // 3. Verify the Delete button is visible
         onView(withId(R.id.btn_delete_user))
                 .check(matches(isDisplayed()));
-
-        // 4. Verify the headers are visible (Events Organized/Attended)
-        onView(withText("Events Organized")).check(matches(isDisplayed()));
-        onView(withText("Events Attended")).check(matches(isDisplayed()));
     }
 
 
