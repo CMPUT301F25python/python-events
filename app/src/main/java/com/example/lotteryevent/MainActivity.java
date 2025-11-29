@@ -286,6 +286,13 @@ public class MainActivity extends AppCompatActivity {
 
         navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
 
+        appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
+                .setOpenableLayout(drawerLayout)
+                .build();
+
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        NavigationUI.setupWithNavController(navView, navController);
+
         // all fragments we want to hide profile icon from
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             boolean show = destination.getId() == R.id.homeFragment;
@@ -293,14 +300,21 @@ public class MainActivity extends AppCompatActivity {
                 showProfileIcon = show;
                 supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
             }
+
+            // remove the back button on confirmDrawAndNotifyFragment
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            if(destination.getId() == R.id.confirmDrawAndNotifyFragment){
+                // hide back button
+                if(getSupportActionBar() != null){
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                }
+
+                // hide drawer
+                if(toolbar != null){
+                    toolbar.setNavigationIcon(null);
+                }
+            }
         });
-
-        appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
-                .setOpenableLayout(drawerLayout)
-                .build();
-
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
     }
 
     /**
