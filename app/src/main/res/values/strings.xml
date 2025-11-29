@@ -6,7 +6,7 @@
     <string name="create_new_event">Create New Event</string>
     <string name="description">Description</string>
     <string name="location">Location</string>
-    <string name="require_geolocation_for_check_in">Require Geolocation for Check-in?</string>
+    <string name="require_geolocation_for_check_in">Require Geolocation for Check-in? (optional)</string>
     <string name="save_event">Save Event</string>
     <string name="max_attendees">Max Attendees</string>
     <string name="event_start_time">Event Start Time</string>
@@ -22,7 +22,8 @@
     <string name="end_time">End Time</string>
     <string name="end_date">End Date</string>
     <string name="event_name">Event Name</string>
-    <string name="price">Price ($)</string>
+    <string name="price">Price ($) (optional)</string>
+    <string name="price_in_box">Price ($)</string>
     <string name="registration_information">Registration Information</string>
     <string name="waiting_list_information">Waiting List Information</string>
     <string name="event_information">Event Information</string>
@@ -81,7 +82,8 @@
     <string name="dialog_leave_warning_message">Registration for this event has closed. If you leave the waiting list, you will not be able to rejoin.</string>
     <string name="dialog_leave_confirm">Leave</string>
     <string name="dialog_cancel">Cancel</string>
-    <string name="max_waiting_list_size">Max Waiting List Size</string>
+    <string name="max_waiting_list_size">Max Waiting List Size (optional)</string>
+    <string name="max_waiting_list_size_in_box">Max Waiting List Size</string>
     <string name="scan_a_qr_code">Scan a QR Code</string>
     <string name="notifications">Notifications</string>
     <string name="events">Events</string>
@@ -122,4 +124,6 @@
     <string name="delete_organizer">Delete Organizer</string>
     <string name="delete_user_profile">Delete User Profile</string>
     <string name="admin_tools">Admin Tools</string>
+    <string name="send_notification">Send Notification</string>
+    <string name="mark_all_notifs_as_seen">Mark All As Seen</string>
 </resources>

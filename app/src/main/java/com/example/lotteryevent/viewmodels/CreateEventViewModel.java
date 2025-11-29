@@ -49,7 +49,35 @@ public class CreateEventViewModel extends ViewModel {
                                        String startDateText, String startTimeText, String endDateText, String endTimeText,
                                        String regStartDateText, String regStartTimeText, String regEndDateText, String regEndTimeText) {
 
-        // Step 1: Convert all raw inputs into the required data types.
+        // 1. Validate Mandatory Text Fields
+        if (eventName == null || eventName.trim().isEmpty()) {
+            return "Event Name is required.";
+        }
+        if (description == null || description.trim().isEmpty()) {
+            return "Event Description is required.";
+        }
+        if (location == null || location.trim().isEmpty()) {
+            return "Event Location is required.";
+        }
+        if (maxAttendeesStr == null || maxAttendeesStr.trim().isEmpty()) {
+            return "Max Attendees is required.";
+        }
+
+        // 2. Validate Mandatory Date/Time Fields (Check if the UI text is empty)
+        if (startDateText.isEmpty() || startTimeText.isEmpty()) {
+            return "Event Start Date and Time are required.";
+        }
+        if (endDateText.isEmpty() || endTimeText.isEmpty()) {
+            return "Event End Date and Time are required.";
+        }
+        if (regStartDateText.isEmpty() || regStartTimeText.isEmpty()) {
+            return "Registration Start Date and Time are required.";
+        }
+        if (regEndDateText.isEmpty() || regEndTimeText.isEmpty()) {
+            return "Registration End Date and Time are required.";
+        }
+
+        // Step 3: Convert all raw inputs into the required data types.
         Timestamp eventStartTimestamp = getTimestampFromCalendar(eventStartCalendar, startDateText, startTimeText);
         Timestamp eventEndTimestamp = getTimestampFromCalendar(eventEndCalendar, endDateText, endTimeText);
         Timestamp regStartTimestamp = getTimestampFromCalendar(registrationStartCalendar, regStartDateText, regStartTimeText);
@@ -59,7 +87,7 @@ public class CreateEventViewModel extends ViewModel {
         Integer capacity = maxAttendeesStr.isEmpty() ? null : Integer.parseInt(maxAttendeesStr);
         Integer waitingListLimit = waitingListLimitStr.isEmpty() ? null : Integer.parseInt(waitingListLimitStr);
 
-        // Step 2: Validate all the processed inputs using the internal business logic.
+        // Step 4: Validate all the processed inputs using the internal business logic.
         String validationError = validateEventInput(eventName, startDateText, startTimeText,
                 endDateText, endTimeText, eventStartTimestamp, eventEndTimestamp,
                 regStartDateText, regStartTimeText, regEndDateText, regEndTimeText,
@@ -69,7 +97,7 @@ public class CreateEventViewModel extends ViewModel {
             return validationError; // Validation failed, return the error message immediately.
         }
 
-        // Step 3: If validation succeeds, assemble the final Event object.
+        // Step 5: If validation succeeds, assemble the final Event object.
         Event newEvent = new Event();
         newEvent.setName(eventName);
         newEvent.setDescription(description);
@@ -86,7 +114,7 @@ public class CreateEventViewModel extends ViewModel {
         // Set the creation timestamp for sorting purposes in the repository.
         newEvent.setCreatedAt(new Timestamp(new Date()));
 
-        // Step 4: Pass the fully formed object to the repository to be saved.
+        // Step 6: Pass the fully formed object to the repository to be saved.
         eventRepository.createEvent(newEvent);
 
         return null; // Signal that the process was started successfully.
@@ -168,8 +196,8 @@ public class CreateEventViewModel extends ViewModel {
             return "A capacity is required to set a waiting list limit.";
         }
 
-        if (capacity != null && capacity < 0) {
-            return "Capacity cannot be negative.";
+        if (capacity != null && capacity <= 0) {
+            return "Capacity must be greater than zero.";
         }
 
         if (waitingListLimit != null && waitingListLimit < 1) {

@@ -26,6 +26,7 @@ public class Notification {
     private String title;
     private String type;
     private Timestamp timestamp;
+    private Integer notifBannerId;
 
     /**
      * A public no-argument constructor is required for Firestore deserialization.
@@ -43,7 +44,7 @@ public class Notification {
      * @param organizerId organizer Id who sent the notif
      * @param organizerName organizer name who sent the notif
      */
-    public Notification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName) {
+    public Notification(String uid, String title, String message, String type, String eventId, String eventName, String organizerId, String organizerName, Integer notifBannerId) {
         this.recipientId = uid;
         this.title = title;
         this.message = message;
@@ -54,6 +55,7 @@ public class Notification {
         this.organizerName = organizerName;
         this.seen = false;
         this.timestamp = Timestamp.now();
+        this.notifBannerId = notifBannerId;
     }
 
     // --- Getters and Setters ---
@@ -148,6 +150,12 @@ public class Notification {
     }
 
     /**
+     * gets banner ID of notif
+     * @return int of banner ID
+     */
+    public Integer getNotifBannerId() { return notifBannerId; }
+
+    /**
      * gets notif id
      * @param notificationId notif id
      */
@@ -234,4 +242,10 @@ public class Notification {
     public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
+
+    /**
+     * sets the banner ID
+     * @param notifBannerId ID to set
+     */
+    public void setNotifBannerId(Integer notifBannerId) { this.notifBannerId = notifBannerId; }
 }
