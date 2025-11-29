@@ -4,6 +4,8 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.example.lotteryevent.repository.AdminUserProfileRepositoryImpl;
 import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
 
 
@@ -15,6 +17,7 @@ import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
  */
 public class EventDetailsViewModelFactory implements ViewModelProvider.Factory {
     private final EventDetailsRepositoryImpl repository;
+    private final AdminUserProfileRepositoryImpl userProfileRepository;
 
     /**
      * Constructs the factory and initializes the shared repository instance.
@@ -23,6 +26,7 @@ public class EventDetailsViewModelFactory implements ViewModelProvider.Factory {
      */
     public EventDetailsViewModelFactory(Application application) {
         this.repository = new EventDetailsRepositoryImpl();
+        this.userProfileRepository = new AdminUserProfileRepositoryImpl();
     }
 
     /**
@@ -37,7 +41,7 @@ public class EventDetailsViewModelFactory implements ViewModelProvider.Factory {
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.isAssignableFrom(EventDetailsViewModel.class)) {
-            return (T) new EventDetailsViewModel(repository);
+            return (T) new EventDetailsViewModel(repository, userProfileRepository);
         }
         throw new IllegalArgumentException("Unknown ViewModel class");
     }

@@ -13,6 +13,7 @@ import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.repository.FakeAdminUserProfileRepository;
 import com.example.lotteryevent.repository.FakeEventDetailsRepository;
 import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
@@ -41,6 +42,7 @@ import java.util.Date;
 public class EventDetailsFragmentTest {
 
     private FakeEventDetailsRepository fakeRepository;
+    private FakeAdminUserProfileRepository fakeUserRepository;
     private ReusableTestFragmentFactory fragmentFactory;
     private Bundle fragmentArgs;
     private UiDevice device;
@@ -54,7 +56,7 @@ public class EventDetailsFragmentTest {
 
         // 2. Create the factory that knows how to create our ViewModel.
         GenericViewModelFactory viewModelFactory = new GenericViewModelFactory();
-        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository));
+        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository, fakeUserRepository));
 
         // 3. Create the factory that knows how to create our Fragment.
         fragmentFactory = new ReusableTestFragmentFactory();
