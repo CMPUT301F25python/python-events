@@ -110,7 +110,7 @@
                 android:text="@string/cancel"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:backgroundTint="@color/primary_pink"
+                android:backgroundTint="@color/primary_green"
                 android:radius="30dp" />
 
             <Button
