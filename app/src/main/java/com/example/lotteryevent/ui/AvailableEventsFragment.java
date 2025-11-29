@@ -277,7 +277,7 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     private String formatDay(@Nullable Long ms) {
-        if (ms == null) return "";
+        if (ms == null) return "Click to Select Date";
         DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
         return df.format(new Date(ms));
     }
@@ -295,6 +295,11 @@ public class AvailableEventsFragment extends Fragment {
         container.setPadding(pad, pad, pad, pad);
 
         // Keyword
+        TextView keywordHeader = new TextView(requireContext());
+        keywordHeader.setText("Filter by Keyword");
+        keywordHeader.setPadding(10, pad, 0, 0);
+        container.addView(keywordHeader);
+
         EditText keywordInput = new EditText(requireContext());
         keywordInput.setHint("Enter a keyword");
         keywordInput.setText(currentKeyword);
@@ -302,8 +307,8 @@ public class AvailableEventsFragment extends Fragment {
 
         // Date range
         TextView dateHeader = new TextView(requireContext());
-        dateHeader.setText("Date");
-        dateHeader.setPadding(0, pad, 0, 0);
+        dateHeader.setText("Filter by Date");
+        dateHeader.setPadding(10, pad, 0, 0);
         container.addView(dateHeader);
 
         final Long[] tempStart = new Long[]{filterStartDateMs};
@@ -311,7 +316,7 @@ public class AvailableEventsFragment extends Fragment {
 
         TextView from = new TextView(requireContext());
         from.setText("From: " + formatDay(tempStart[0]));
-        from.setPadding(0, pad / 2, 0, 0);
+        from.setPadding(10, pad / 2, 0, 0);
         from.setOnClickListener(v ->
                 showDayPickerDialog(
                         tempStart[0],
@@ -338,7 +343,7 @@ public class AvailableEventsFragment extends Fragment {
 
         TextView to = new TextView(requireContext());
         to.setText("To: " + formatDay(tempEnd[0]));
-        to.setPadding(0, pad / 2, 0, 0);
+        to.setPadding(10, pad / 2, 0, 0);
         to.setOnClickListener(v ->
                 showDayPickerDialog(
                         tempEnd[0],
@@ -354,7 +359,7 @@ public class AvailableEventsFragment extends Fragment {
 
         final androidx.appcompat.app.AlertDialog dialog =
                 new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Filter events")
+                    .setTitle("Filter Events")
                     .setView(container)
                     .setPositiveButton("Apply", null)
                     .setNegativeButton("Clear", (d, which) -> {
