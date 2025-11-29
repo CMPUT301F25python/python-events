@@ -10,6 +10,8 @@ import android.util.TypedValue;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.content.ContextCompat;
 
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.adapters.EventAdapter;
@@ -25,6 +28,7 @@ import com.example.lotteryevent.repository.AvailableEventsRepositoryImpl;
 import com.example.lotteryevent.repository.IAvailableEventsRepository;
 import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.text.DateFormat;
@@ -50,6 +54,10 @@ public class AvailableEventsFragment extends Fragment {
     @Nullable private Long filterStartDateMs = null;
     @Nullable private Long filterEndDateMs = null;
     @NonNull private List<Event> lastEventsFromViewModel = new ArrayList<>();
+    @Nullable private ColorStateList availableTodayDefaultBgTint;
+    @Nullable private ColorStateList availableTodayDefaultTextColors;
+    @Nullable private ColorStateList availableTodayDefaultStrokeColor;
+    private int availableTodayDefaultStrokeWidth;
 
     public AvailableEventsFragment() { }
 
@@ -168,16 +176,19 @@ public class AvailableEventsFragment extends Fragment {
      * @param view the root view of this fragment used to locate the buttons
      */
     public void setupButtons(View view) {
-        View availableTodayButton = view.findViewById(R.id.available_today_button);
+        MaterialButton availableTodayButton = view.findViewById(R.id.available_today_button);
         View filterButton = view.findViewById(R.id.filter_button);
 
-        // Toggle "available today" filter
+        // Set initial style
+        updateAvailableTodayButtonStyle(availableTodayButton);
+
+        // Toggle "available today" filter + update UI
         availableTodayButton.setOnClickListener(v -> {
             filterAvailableToday = !filterAvailableToday;
+            updateAvailableTodayButtonStyle(availableTodayButton);
             applyFiltersAndUpdateList();
         });
 
-        // Show a simple dialog to enter a keyword for interest-based filtering
         filterButton.setOnClickListener(v -> showFilterDialog());
     }
 
@@ -378,4 +389,32 @@ public class AvailableEventsFragment extends Fragment {
         });
         dialog.show();
     }
+
+    /**
+     * Updates the style of the "Available Today" button.
+     * @param button
+     */
+    private void updateAvailableTodayButtonStyle(@NonNull MaterialButton button) {
+
+        if (availableTodayDefaultTextColors == null) {
+            availableTodayDefaultBgTint = button.getBackgroundTintList();
+            availableTodayDefaultTextColors = button.getTextColors();
+            availableTodayDefaultStrokeColor = button.getStrokeColor();
+            availableTodayDefaultStrokeWidth = button.getStrokeWidth();
+        }
+
+        if (filterAvailableToday) {
+            int pink = Color.parseColor("#F981A5"); // changes button colour to primary pink
+            button.setBackgroundTintList(ColorStateList.valueOf(pink));
+            button.setTextColor(Color.WHITE);
+            button.setStrokeWidth(0);
+        } else {
+            button.setBackgroundTintList(availableTodayDefaultBgTint);
+            if (availableTodayDefaultTextColors != null) button.setTextColor(availableTodayDefaultTextColors);
+
+            button.setStrokeWidth(availableTodayDefaultStrokeWidth);
+            button.setStrokeColor(availableTodayDefaultStrokeColor);
+        }
+    }
+
 }
