@@ -25,8 +25,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
             android:maxLines="1"
             android:text="@string/entrant_name"
             android:textSize="16sp"
@@ -36,13 +34,17 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <!-- Cancel Button (Hidden by default) -->
-        <Button
+        <TextView
             android:id="@+id/cancel_invitation_button"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cancel_button"
-            android:textColor="@android:color/holo_red_dark"
+            android:textColor="@color/red"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginEnd="14sp"
+            android:clickable="true"
+            android:focusable="true"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

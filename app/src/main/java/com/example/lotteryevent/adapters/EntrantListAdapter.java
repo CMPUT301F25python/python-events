@@ -130,7 +130,7 @@ public class EntrantListAdapter extends RecyclerView.Adapter<EntrantListAdapter.
      */
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView nameText;
-        Button cancelButton;
+        TextView cancelButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
