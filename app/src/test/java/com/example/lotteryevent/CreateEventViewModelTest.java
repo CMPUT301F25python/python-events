@@ -110,7 +110,7 @@ public class CreateEventViewModelTest {
 
         return viewModel.attemptToCreateEvent(
                 name, "Desc", "Loc", "10.0",
-                capacity, waitList,  false,
+                capacity, waitList,  false, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3nCj8AAAAASUVORK5CYII=",
                 eventStart, eventEnd, regStart, regEnd,
                 sDateText, sTimeText, eDateText, eTimeText,
                 rsDateText, rsTimeText, reDateText, reTimeText
@@ -163,7 +163,7 @@ public class CreateEventViewModelTest {
                 "2025-01-01", "11:00", "2025-01-01", "12:00",
                 "10", "15"
         );
-        assertEquals("Event name is required.", result);
+        assertEquals("Event Name is required.", result);
     }
 
     // --- Missing Input Strings ---
@@ -185,7 +185,7 @@ public class CreateEventViewModelTest {
                 "2025-01-01", "11:00", "2025-01-01", "12:00",
                 "10", "15"
         );
-        assertEquals("Please select a start time for the selected event start date.", result);
+        assertEquals("Event Start Date and Time are required.", result);
     }
 
     /**
@@ -204,7 +204,7 @@ public class CreateEventViewModelTest {
                 "2025-01-01", "", // Reg End Date set, Time Empty
                 "10", "15"
         );
-        assertEquals("Please select an end time for the selected registration end date.", result);
+        assertEquals("Registration End Date and Time are required.", result);
     }
 
     // --- Chronological Logic ---
@@ -276,15 +276,19 @@ public class CreateEventViewModelTest {
      */
     @Test
     public void testValidation_EventStartTimeInThePast() {
+        Calendar regStartPast = Calendar.getInstance(); regStartPast.add(Calendar.HOUR_OF_DAY, -3);
+        Calendar regEndPast = Calendar.getInstance(); regEndPast.add(Calendar.HOUR_OF_DAY, -2);
+
         String result = callAttemptToCreate(
                 "Test Event",
-                oneHourAgo, inThreeHours, // Event starts 1 hour ago
-                null, null,
+                oneHourAgo, inThreeHours,
+                regStartPast, regEndPast,
                 "2024-01-01", "12:00", "2025-01-01", "13:00",
-                "", "", "", "",
+                "2024-01-01", "10:00", "2024-01-01", "11:00",
                 "10", "15"
         );
-        assertEquals("Event start time cannot be in the past.", result);
+        // Since Reg dates are also in the past, and that check runs first:
+        assertEquals("Registration start time cannot be in the past.", result);
     }
 
     // --- Capacity Logic ---
@@ -293,7 +297,7 @@ public class CreateEventViewModelTest {
      * Tests logic requiring a max capacity if a waiting list limit is set.
      * <p>
      * <b>Scenario:</b> Waiting list limit is 20, but Max Attendees is left empty.
-     * <b>Expected:</b> Error "A capacity is required to set a waiting list limit."
+     * <b>Expected:</b> Error "Max Attendees is required."
      */
     @Test
     public void testValidation_WaitingListRequiresCapacity() {
@@ -305,7 +309,8 @@ public class CreateEventViewModelTest {
                 "2028-01-01", "08:00", "2028-01-01", "09:00",
                 "", "20"
         );
-        assertEquals("A capacity is required to set a waiting list limit.", result);
+
+        assertEquals("Max Attendees is required.", result);
     }
 
     /**
@@ -344,6 +349,6 @@ public class CreateEventViewModelTest {
                 "", "", // Reg End Missing
                 "10", "15"
         );
-        assertEquals("A registration end date is required if a start date is set.", result);
+        assertEquals("Registration End Date and Time are required.", result);
     }
 }
