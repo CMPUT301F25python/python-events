@@ -53,7 +53,7 @@
     <fragment
         android:id="@+id/confirmDrawAndNotifyFragment"
         android:name="com.example.lotteryevent.ui.organizer.ConfirmDrawAndNotifyFragment"
-        android:label="Confirm Draw and Notify"
+        android:label="Confirm Draw"
         tools:layout="@layout/fragment_confirm_draw_and_notify">
 
         <argument
@@ -180,23 +180,11 @@
 
     <fragment
         android:id="@+id/adminUserProfileFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminUserProfileFragment"
-        android:label="User Profile">
+        android:name="com.example.lotteryevent.ui.admin.AdminUserProfileFragment">
         <argument
             android:name="userId"
             app:argType="string" />
     </fragment>
-
-    <fragment
-        android:id="@+id/adminEventsFragment"
-        android:name="com.example.lotteryevent.ui.admin.AdminEventsFragment"
-        android:label="Admin Events" >
-
-        <action
-            android:id="@+id/action_adminEventsFragment_to_eventDetailsFragment"
-            app:destination="@+id/eventDetailsFragment"/>
-    </fragment>
-        android:label="Admin Events" />
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"
