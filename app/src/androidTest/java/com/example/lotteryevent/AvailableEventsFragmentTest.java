@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import android.widget.DatePicker;
+import androidx.test.espresso.contrib.PickerActions;
 
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.FakeAvailableEventsRepository;
@@ -36,9 +38,11 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
+import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.startsWith;
 
 /***
  * Unit tests for {@link AvailableEventsFragment}.
@@ -350,4 +354,73 @@ public class AvailableEventsFragmentTest {
         onView(withText("Board Games Night")).check(matches(isDisplayed()));
         onView(withText("Cooking Workshop")).check(doesNotExist());
     }
+
+    /**
+     * This test verifies that when the "Filter" button is clicked, the date range filter dialog is
+     * shown.
+     */
+    @Test
+    public void filterButton_filtersEventsByDateRange_onEventStartDate() {
+        List<Event> events = new ArrayList<>();
+
+        // Create 3 events with known eventStartDateTime values
+        Calendar cal = Calendar.getInstance();
+
+        // Before range: Jan 5, 2025
+        cal.set(2025, Calendar.JANUARY, 5, 12, 0, 0);
+        Event before = new Event();
+        before.setEventId("before-id");
+        before.setName("Before Range Event");
+        before.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(before);
+
+        // In range: Jan 20, 2025
+        cal.set(2025, Calendar.JANUARY, 20, 12, 0, 0);
+        Event inRange = new Event();
+        inRange.setEventId("inrange-id");
+        inRange.setName("In Range Event");
+        inRange.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(inRange);
+
+        // After range: Feb 3, 2025
+        cal.set(2025, Calendar.FEBRUARY, 3, 12, 0, 0);
+        Event after = new Event();
+        after.setEventId("after-id");
+        after.setName("After Range Event");
+        after.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(after);
+
+        fakeRepository.setEventsToReturn(events);
+
+        launchFragment();
+
+        // All visible before filtering
+        onView(withText("Before Range Event")).check(matches(isDisplayed()));
+        onView(withText("In Range Event")).check(matches(isDisplayed()));
+        onView(withText("After Range Event")).check(matches(isDisplayed()));
+
+        // Open filter dialog
+        onView(withId(R.id.filter_button)).perform(click());
+
+        // Select From: Jan 15, 2025
+        onView(withText(startsWith("From:"))).perform(click());
+        onView(isAssignableFrom(DatePicker.class))
+                .perform(PickerActions.setDate(2025, 1, 15)); // month is 1-12 here
+        onView(withId(android.R.id.button1)).perform(click()); // OK
+
+        // Select To: Jan 31, 2025
+        onView(withText(startsWith("To:"))).perform(click());
+        onView(isAssignableFrom(DatePicker.class))
+                .perform(PickerActions.setDate(2025, 1, 31));
+        onView(withId(android.R.id.button1)).perform(click()); // OK
+
+        // Apply the filter
+        onView(withText("Apply")).perform(click());
+
+        // Assert: only in-range event remains
+        onView(withText("In Range Event")).check(matches(isDisplayed()));
+        onView(withText("Before Range Event")).check(doesNotExist());
+        onView(withText("After Range Event")).check(doesNotExist());
+    }
+
 }
