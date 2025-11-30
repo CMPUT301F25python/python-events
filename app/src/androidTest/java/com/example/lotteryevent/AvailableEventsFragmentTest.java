@@ -1,6 +1,7 @@
 package com.example.lotteryevent;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.fragment.app.testing.FragmentScenario;
 import androidx.navigation.Navigation;
@@ -21,6 +22,9 @@ import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 import com.google.firebase.Timestamp;
 
@@ -43,6 +47,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.not;
 
 /***
  * Unit tests for {@link AvailableEventsFragment}.
@@ -97,6 +103,24 @@ public class AvailableEventsFragmentTest {
         });
 
         return scenario;
+    }
+
+    private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {
+        return new TypeSafeMatcher<View>() {
+            int currentIndex = 0;
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with index: " + index + " ");
+                matcher.describeTo(description);
+            }
+
+            @Override
+            protected boolean matchesSafely(View view) {
+                if (!matcher.matches(view)) return false;
+                return currentIndex++ == index;
+            }
+        };
     }
 
     /**
@@ -344,8 +368,12 @@ public class AvailableEventsFragmentTest {
         // Open the keyword filter dialog via the filter button
         onView(withId(R.id.filter_button)).perform(click());
 
-        // Type a keyword that should match only the "Board Games Night" event
-        onView(withHint("Enter a keyword")).perform(replaceText("game"));
+        // Keyword field is the only focusable TextInputEditText in the dialog
+        onView(allOf(
+            isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+            androidx.test.espresso.matcher.ViewMatchers.isFocusable(),
+            isDisplayed()
+            )).perform(replaceText("game"));
 
         // Apply the filter
         onView(withText("Apply")).perform(click());
@@ -403,13 +431,23 @@ public class AvailableEventsFragmentTest {
         onView(withId(R.id.filter_button)).perform(click());
 
         // Select From: Jan 15, 2025
-        onView(withText(startsWith("From:"))).perform(click());
+        onView(withIndex(allOf(
+                isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+                not(androidx.test.espresso.matcher.ViewMatchers.isFocusable()),
+                isDisplayed()
+        ), 0)).perform(click());
+
         onView(isAssignableFrom(DatePicker.class))
                 .perform(PickerActions.setDate(2025, 1, 15)); // month is 1-12 here
         onView(withId(android.R.id.button1)).perform(click()); // OK
 
         // Select To: Jan 31, 2025
-        onView(withText(startsWith("To:"))).perform(click());
+        onView(withIndex(allOf(
+                isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+                not(androidx.test.espresso.matcher.ViewMatchers.isFocusable()),
+                isDisplayed()
+        ), 1)).perform(click());
+
         onView(isAssignableFrom(DatePicker.class))
                 .perform(PickerActions.setDate(2025, 1, 31));
         onView(withId(android.R.id.button1)).perform(click()); // OK
