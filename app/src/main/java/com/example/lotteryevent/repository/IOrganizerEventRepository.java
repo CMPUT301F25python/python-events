@@ -7,6 +7,11 @@ import com.example.lotteryevent.data.Event;
 
 import java.util.List;
 
+/**
+ * Interface for the fetching of event details and their entrants.
+ * It allows for event poster upload
+ * and finalizing an event
+ */
 public interface IOrganizerEventRepository {
     LiveData<Event> getEvent();
     LiveData<List<Entrant>> getEntrants();

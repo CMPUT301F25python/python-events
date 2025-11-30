@@ -82,10 +82,18 @@ public class EntrantListViewModel extends ViewModel {
         displayedEntrants.setValue(filteredList);
     }
 
+    /**
+     * Expose entrants LiveData from repository to the UI layer
+     * @return the list of entrants
+     */
     public LiveData<List<Entrant>> getFilteredEntrants() {
         return displayedEntrants;
     }
 
+    /**
+     * Expose status LiveData from repository to the UI layer
+     * @return the filter status
+     */
     public LiveData<String> getStatus() {
         return filterStatus;
     }
@@ -151,15 +159,22 @@ public class EntrantListViewModel extends ViewModel {
         if (userId == null) return;
 
         entrantListRepo.updateEntrantStatus(this.eventId, userId, "waiting", new StatusUpdateCallback() {
+            /**
+             * Message that entrant sent to waitlist and update list
+             */
             @Override
             public void onSuccess() {
-                entrantListRepo.setUserMessage("User returned to waitlist.");
+                entrantListRepo.setUserMessage("User returned to waitlist and notified.");
                 entrantListRepo.fetchEntrantsByStatus(eventId, null);
             }
 
+            /**
+             * On exception do nothing for now
+             * @param e exception thrown
+             */
             @Override
             public void onFailure(Exception e) {
             }
-        });
+        }, true);
     }
 }

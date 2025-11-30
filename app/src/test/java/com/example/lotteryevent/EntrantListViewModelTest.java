@@ -1,6 +1,8 @@
 package com.example.lotteryevent;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -147,31 +149,82 @@ public class EntrantListViewModelTest {
         verify(repository, never()).notifyEntrant(eq("user3"), anyString(), anyString());
     }
 
+    /**
+     * Verifies that {@link EntrantListViewModel#cancelInvite(String)} calls the repository
+     * with the correct parameters (null status) and triggers a success message upon success.
+     */
     @Test
     public void test_cancelInvite_success() {
         String targetUserId = "userToCancel";
 
+        // 1. Trigger the action
         viewModel.cancelInvite(targetUserId);
 
         ArgumentCaptor<StatusUpdateCallback> callbackCaptor = ArgumentCaptor.forClass(StatusUpdateCallback.class);
-        verify(repository).updateEntrantStatus(eq(TEST_EVENT_ID), eq(targetUserId), eq("waiting"), callbackCaptor.capture());
 
-        // Simulate Success
+        // 2. Verify the call happened AND capture the callback
+        verify(repository).updateEntrantStatus(
+                eq(TEST_EVENT_ID),
+                eq(targetUserId),
+                eq("waiting"),
+                callbackCaptor.capture(),
+                eq(true)
+        );
+
+        // 3. Now that we captured it, simulate the Repository calling onSuccess
         callbackCaptor.getValue().onSuccess();
 
-        verify(repository).setUserMessage("User returned to waitlist.");
+        // 4. Verify the ViewModel reacts correctly
+        verify(repository).setUserMessage("User returned to waitlist and notified.");
 
-        // Verify re-fetch:
-        // 1 call in constructor + 1 call in onSuccess = 2 total calls
+        // fetchEntrantsByStatus is called once in constructor, and once after success = 2 times total
         verify(repository, times(2)).fetchEntrantsByStatus(TEST_EVENT_ID, null);
     }
 
+    /**
+     * Verifies that {@link EntrantListViewModel#cancelInvite(String)} calls the repository
+     * with the correct parameters ("waiting" status) and triggers a success message upon success.
+     */
     @Test
     public void test_cancelInvite_nullUserId() {
         viewModel.cancelInvite(null);
-        verify(repository, never()).updateEntrantStatus(anyString(), anyString(), anyString(), any());
+        verify(repository, never()).updateEntrantStatus(anyString(), anyString(), anyString(), any(), anyBoolean());
     }
 
+
+    /**
+     * Verifies that {@link EntrantListViewModel#cancelInvite(String)} calls the repository
+     * with the correct parameters (null status) and triggers a failure message upon failure.
+     */
+    @Test
+    public void test_cancelInvite_failure() {
+        String targetUserId = "userToCancel";
+
+        // 1. Trigger the action
+        viewModel.cancelInvite(targetUserId);
+
+        ArgumentCaptor<StatusUpdateCallback> callbackCaptor = ArgumentCaptor.forClass(StatusUpdateCallback.class);
+
+        // 2. Verify the update was called and capture the callback
+        verify(repository).updateEntrantStatus(
+                eq(TEST_EVENT_ID),
+                eq(targetUserId),
+                eq("waiting"),
+                callbackCaptor.capture(),
+                eq(true)
+        );
+
+        callbackCaptor.getValue().onFailure(new Exception("Firestore error"));
+
+        verify(repository, times(1)).fetchEntrantsByStatus(anyString(), any());
+
+        verify(repository, never()).setUserMessage("User returned to waitlist and notified.");
+    }
+
+    /**
+     * Test that {@link EntrantListViewModel#getCapitalizedStatus()} correctly
+     * capitalizes the status string.
+     */
     @Test
     public void test_getCapitalizedStatus() {
         // Default is "waiting"

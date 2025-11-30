@@ -2,8 +2,6 @@ package com.example.lotteryevent.data;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.ServerTimestamp;
 
 /**
  * Represents a single notification in the lottery system.
@@ -19,8 +17,8 @@ public class Notification {
     private String eventId;
     private String eventName;
     private String message;
-    private String organizerId;
-    private String organizerName;
+    private String senderId;
+    private String senderName;
     private String recipientId;
     private Boolean seen;
     private String title;
@@ -51,8 +49,8 @@ public class Notification {
         this.type = type;
         this.eventId = eventId;
         this.eventName = eventName;
-        this.organizerId = organizerId;
-        this.organizerName = organizerName;
+        this.senderId = organizerId;
+        this.senderName = organizerName;
         this.seen = false;
         this.timestamp = Timestamp.now();
         this.notifBannerId = notifBannerId;
@@ -97,16 +95,16 @@ public class Notification {
      * gets the organizer ID
      * @return organizer ID
      */
-    public String getOrganizerId() {
-        return organizerId;
+    public String getSenderId() {
+        return senderId;
     }
 
     /**
      * gets the organizer name
      * @return organizer name
      */
-    public String getOrganizerName() {
-        return organizerName;
+    public String getSenderName() {
+        return senderName;
     }
 
     /**
@@ -189,18 +187,18 @@ public class Notification {
 
     /**
      * sets the organizer id
-     * @param organizerId organizer id
+     * @param senderId organizer id
      */
-    public void setOrganizerId(String organizerId) {
-        this.organizerId = organizerId;
+    public void setSenderId(String senderId) {
+        this.senderId = senderId;
     }
 
     /**
      * sets the organizer name
-     * @param organizerName organizer name
+     * @param senderName organizer name
      */
-    public void setOrganizerName(String organizerName) {
-        this.organizerName = organizerName;
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
     }
 
     /**

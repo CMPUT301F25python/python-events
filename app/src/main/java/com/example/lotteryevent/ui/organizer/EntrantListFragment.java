@@ -213,6 +213,10 @@ public class EntrantListFragment extends Fragment {
                 String text = count + (count == 1 ? " entrant" : " entrants");
                 entrantsCountText.setText(text);
 
+                /**
+                 * If no entrants, shows toast of none to notify, otherwise shows dialog
+                 * @param v view clicked
+                 */
                 sendNotificationButton.setOnClickListener(v -> {
                     if (list.isEmpty()) {
                         Toast.makeText(getContext(), "No entrants to notify.", Toast.LENGTH_SHORT).show();
@@ -222,7 +226,10 @@ public class EntrantListFragment extends Fragment {
                 });
             }
         });
-        // observe user message LiveData and display it as a Toast
+        /**
+         * Observes message, makes toast on value
+         * @param message message to show
+         */
         viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
@@ -274,16 +281,21 @@ public class EntrantListFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setHint("Enter message...");
         builder.setView(input);
+        /**
+         * Callback triggered when the "Notify All" button in the notification dialog is
+         * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+         * bulk notification method.
+         * @param dialog the dialog that triggered the callback
+         */
         builder.setPositiveButton("Notify All", (dialog, which) -> {
-            /**
-             * Callback triggered when the "Notify All" button in the notification dialog is
-             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
-             * bulk notification method.
-             * @param dialog the dialog that triggered the callback
-             */
             String organizerMessage = input.getText().toString().trim();
             viewModel.notifyAllEntrants(organizerMessage);
         });
+        /**
+         * Cancels dialog
+         * @param dialog dialog that triggered callback
+         # @param which button identifier
+         */
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
