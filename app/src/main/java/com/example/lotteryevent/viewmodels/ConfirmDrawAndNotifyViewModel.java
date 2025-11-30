@@ -2,9 +2,11 @@ package com.example.lotteryevent.viewmodels;
 
 import android.content.Context;
 
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
@@ -31,22 +33,18 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
     public LiveData<Event> event;
 
-    public LiveData<String> message;
-
     private final MediatorLiveData<String> _waitingListCount = new MediatorLiveData<>();
     private final MediatorLiveData<String> _availableSpaceCount = new MediatorLiveData<>();
     private final MutableLiveData<Boolean> _navigateBack = new MutableLiveData<>();
+    private final SingleLiveEvent<String> _toastMessage = new SingleLiveEvent<>();
 
     public LiveData<Boolean> navigateBack = _navigateBack;
     public LiveData<String> waitingListCount = _waitingListCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
+    public LiveData<String> toastMessage = _toastMessage;
 
     public LiveData<Boolean> isLoading() {
         return repository.isLoading();
-    }
-
-    public LiveData<String> getMessage() {
-        return repository.getMessage();
     }
 
     // This MediatorLiveData observes other LiveData objects
@@ -65,7 +63,6 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         this.repository = repository;
         this.event = repository.getUserEvent();
-        this.message = repository.getMessage();
 
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
         _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
@@ -170,6 +167,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
 
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
+                _toastMessage.postValue("Entrants notified successfully");
                 _navigateBack.postValue(true);
             });
     }
@@ -185,7 +183,29 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
+                _toastMessage.postValue("Cancelled...Entrants returned to waitlist");
                 _navigateBack.postValue(true);
             });
     }
+
+    public class SingleLiveEvent<T> extends MutableLiveData<T> {
+        private boolean handled = false;
+
+        @Override
+        public void observe(LifecycleOwner owner, Observer<? super T> observer) {
+            super.observe(owner, value -> {
+                if (!handled && value != null) {
+                    handled = true;
+                    observer.onChanged(value);
+                }
+            });
+        }
+
+        @Override
+        public void setValue(T value) {
+            handled = false;
+            super.setValue(value);
+        }
+    }
+
 }

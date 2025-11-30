@@ -182,9 +182,9 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
         });
 
         // Observer for any user-facing messages from the repository.
-        viewModel.message.observe(getViewLifecycleOwner(), message -> {
-            if (message != null && !message.isEmpty()) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+        viewModel.toastMessage.observe(getViewLifecycleOwner(), msg -> {
+            if (msg != null) {
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
 
