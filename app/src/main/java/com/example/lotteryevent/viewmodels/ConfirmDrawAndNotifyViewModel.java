@@ -104,15 +104,15 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
 
         if (waitingListCount != null) {
-            _waitingListCount.postValue(String.valueOf(waitingListCount));
+            _waitingListCount.setValue(String.valueOf(waitingListCount));
         }
 
-        if (availableSpaceCount == null) {
-            _availableSpaceCount.postValue("No Limit");
-        } else if (availableSpaceCount > 0) {
-            _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
-        } else {
-            _availableSpaceCount.postValue(String.valueOf(0));
+        if (availableSpaceCount != null) {
+            if (availableSpaceCount > 0) {
+                _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
+            } else {
+                _availableSpaceCount.postValue("0");
+            }
         }
     }
 
