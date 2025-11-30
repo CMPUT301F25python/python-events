@@ -220,7 +220,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
 
         /**
          * Observes navigating back to organizer events fragment, navigates if true
-         * @parma navigateBack boolean to navigate back
+         * @param navigateBack boolean to navigate back
          */
         viewModel.navigateBack.observe(getViewLifecycleOwner(), navigateBack -> {
             if (navigateBack != null && navigateBack) {

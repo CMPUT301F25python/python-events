@@ -54,7 +54,14 @@ public class AdminImagesFragment extends Fragment {
     }
 
     /**
-     * Called to have the fragment instantiate its user interface view.
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
      */
     @Nullable
     @Override
@@ -65,12 +72,12 @@ public class AdminImagesFragment extends Fragment {
     }
 
     /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}
-     * has returned, but before any saved state has been restored in to the view.
-     * <p>
-     * This method initializes the ViewModel, RecyclerView, Adapter, and Observers.
-     * It also triggers the initial fetch of images.
-     * </p>
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
      */
     @Override
     public void onViewCreated(@NonNull View view,
@@ -167,6 +174,11 @@ public class AdminImagesFragment extends Fragment {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Delete Image?")
                     .setMessage("Are you sure you want to permanently delete this image? This action cannot be undone.")
+                    /**
+                     * Deletes image
+                     * @param dialog triggers callback
+                     * @param which button identifier
+                     */
                     .setPositiveButton("Delete", (dialog, which) -> {
                         // Perform the actual delete
                         viewModel.deleteImage(item.getEventId());
@@ -174,6 +186,11 @@ public class AdminImagesFragment extends Fragment {
                         dialog.dismiss();
                         previewDialog.dismiss();
                     })
+                    /**
+                     * Cancels dialog
+                     * @param dialog triggers callback
+                     * @param which button identifier
+                     */
                     .setNegativeButton("Cancel", null)
                     .show();
         });

@@ -208,6 +208,11 @@ public class AdminUserProfileFragment extends Fragment {
                  * @which button identifier
                  */
                 .setPositiveButton("Delete", (dialog, which) -> performDelete())
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", null)
                 .show();
     }

@@ -12,6 +12,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.function.Consumer;
 
+/**
+ * Utility class for handling Firestore operations related to lottery events.
+ * Provides helper methods to load entrant metrics and cancel lotteries using callbacks
+ * for MVVM-friendly, non-UI Firestore interactions.
+ */
 public class FireStoreUtilities {
         private static final String TAG = "FireStoreUtilities";
 

@@ -212,6 +212,10 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Initializes views in fragment
+     * @param v view to initialize
+     */
     private void initializeViews(View v) {
         detailsList = v.findViewById(R.id.details_list);
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
@@ -225,6 +229,9 @@ public class EventDetailsFragment extends Fragment {
         eventPosterImage = v.findViewById(R.id.event_poster_image);
     }
 
+    /**
+     * Sets up click listeners
+     */
     private void setupClickListeners() {
         /**
          * Adds oneself to the appropriate entrant list
@@ -238,6 +245,9 @@ public class EventDetailsFragment extends Fragment {
         btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
     }
 
+    /**
+     * Sets up observers to update data
+     */
     private void setupObservers() {
         /**
          * Observer for the main event data to show
@@ -359,6 +369,11 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Binds event detail into to show on screen
+     * @param event event to get details for
+     * @param waitingListCount count of entrants in waiting list
+     */
     private void bindEventDetails(Event event, @Nullable Integer waitingListCount) {
         dataList.clear();
         addAny("Name", event.getName());
@@ -378,23 +393,39 @@ public class EventDetailsFragment extends Fragment {
         listAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Hide all bottom buttons
+     */
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);
         textInfoMessage.setVisibility(View.GONE);
         bottomProgressBar.setVisibility(View.GONE);
     }
 
+    /**
+     * Show Info text
+     * @param message text to show
+     */
     private void showInfoText(String message) {
         textInfoMessage.setText(message);
         textInfoMessage.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show one button with text
+     * @param text text to show
+     */
     private void showOneButton(String text) {
         btnActionNegative.setVisibility(View.GONE);
         btnActionPositive.setText(text);
         buttonActionsContainer.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show two buttons
+     * @param positiveText pos buttons text
+     * @param negativeText neg button text
+     */
     private void showTwoButtons(String positiveText, String negativeText) {
         btnActionPositive.setText(positiveText);
         btnActionNegative.setText(negativeText);
@@ -404,6 +435,14 @@ public class EventDetailsFragment extends Fragment {
 
     private final DateFormat DF = new SimpleDateFormat("EEE, MMM d yyyy • h:mm a", Locale.getDefault());
 
+    /**
+     * Adds a formatted label–value pair to {@code dataList} if the provided value is non-null and valid.
+     * Handles specific formatting for {@link Timestamp}, {@link Date}, and numeric "Price" values;
+     * otherwise uses the object's {@code toString()} representation.
+     *
+     * @param label the label to prefix the value with
+     * @param raw   the raw value to format and add; ignored if {@code null} or empty
+     */
     private void addAny(String label, @Nullable Object raw) {
         if (raw == null) return;
         String v;
@@ -423,6 +462,10 @@ public class EventDetailsFragment extends Fragment {
     }
 
     // --- Location Logic ---
+
+    /**
+     * Checks permission for location and requests if needed
+     */
     private void checkPermissionAndAct() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -486,6 +529,9 @@ public class EventDetailsFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Fetches user location and joins waitlist
+     */
     private void fetchLocationAndJoin() {
         // Double-check permission before calling location services (Linter requirement)
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -530,10 +576,20 @@ public class EventDetailsFragment extends Fragment {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Delete Event")
                 .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+                /**
+                 * Deletes event
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // User confirmed, proceed with deletion
                     viewModel.deleteEvent(eventId);
                 })
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     // User cancelled, do nothing
                     dialog.dismiss();
@@ -553,10 +609,20 @@ public class EventDetailsFragment extends Fragment {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Delete Organizer")
                 .setMessage("Are you sure you want to delete this organizer? This action cannot be undone. This action will also delete all events organized by this organizer.")
+                /**
+                 * Deletes organizer
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // User confirmed, proceed with deletion
                     viewModel.deleteOrganizer(organizerId);
                 })
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     // User cancelled, do nothing
                     dialog.dismiss();

@@ -34,10 +34,13 @@ public class AdminProfilesFragment extends Fragment {
     private RecyclerView recycler;
     private AdminProfilesAdapter adapter;
 
+    /**
+     * Default constructor for production use by the Android Framework.
+     */
     public AdminProfilesFragment() { }
 
     /**
-     *
+     * Called by the system to have the fragment instantiate its user interface view.
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
@@ -54,7 +57,9 @@ public class AdminProfilesFragment extends Fragment {
     }
 
     /**
-     *
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.

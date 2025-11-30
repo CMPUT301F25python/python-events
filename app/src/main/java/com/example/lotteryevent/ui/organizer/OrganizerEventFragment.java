@@ -70,7 +70,10 @@ public class OrganizerEventFragment extends Fragment {
     private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
     private Button btnExportEntrantCSV;
 
-    public OrganizerEventFragment() { } // Required empty public constructor
+    /**
+     * Default constructor for production use by the Android Framework.
+     */
+    public OrganizerEventFragment() { }
 
     /**
      * Constructor used for injecting a ViewModelProvider.Factory, primarily for testing.

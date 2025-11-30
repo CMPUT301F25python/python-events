@@ -60,6 +60,11 @@ public class HomeFragment extends Fragment {
      */
     public HomeFragment() { }
 
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     *
+     * @param viewModelFactory The factory to use for creating the ViewModel.
+     */
     public HomeFragment(ViewModelProvider.Factory viewModelFactory) {
         this.viewModelFactory = viewModelFactory;
     }
