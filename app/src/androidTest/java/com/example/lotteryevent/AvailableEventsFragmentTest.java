@@ -105,6 +105,12 @@ public class AvailableEventsFragmentTest {
         return scenario;
     }
 
+    /**
+     * Helper to create a matcher that matches the view at the given index.
+     * @param matcher
+     * @param index
+     * @return A matcher that matches the view at the given index.
+     */
     private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {
         return new TypeSafeMatcher<View>() {
             int currentIndex = 0;
