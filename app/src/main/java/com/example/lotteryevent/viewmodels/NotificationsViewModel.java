@@ -127,4 +127,17 @@ public class NotificationsViewModel extends ViewModel {
         super.onCleared();
         notificationRepository.detachListener();
     }
+
+    /**
+     * Fetches the user's display name from the repository asynchronously.
+     * <p>
+     * This method is primarily used in Admin views where notifications are displayed with
+     * user IDs. It resolves those IDs into human-readable names for better UX.
+     *
+     * @param userId   The unique identifier of the user to look up.
+     * @param callback A callback to handle the result (the user's name) once the async operation completes.
+     */
+    public void fetchUserName(String userId, INotificationRepository.UserNameCallback callback) {
+        notificationRepository.getUserName(userId, callback);
+    }
 }

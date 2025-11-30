@@ -115,24 +115,40 @@ public class NotificationsFragment extends Fragment {
         viewModel = new ViewModelProvider(this, viewModelFactory).get(NotificationsViewModel.class);
 
         // --- UI Setup ---
-        setupRecyclerView(view);
+        setupRecyclerView(view, isAdminView);
         setupObservers(view, eventIdFilter);
 
         // --- Initial Action ---
         // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        viewModel.processInitialNotification(notificationId, notificationCustomManager);
+
+        if (!isAdminView) {
+            viewModel.processInitialNotification(notificationId, notificationCustomManager);
+        }
     }
 
     /**
-     * Initializes the RecyclerView and its Adapter. The item click listener now
-     * delegates the event directly to the ViewModel.
+     * Initializes the RecyclerView and its Adapter.
+     * <p>
+     * This method configures the adapter based on the {@code isAdminView} flag:
+     * <ul>
+     *     <li><b>Admin Mode:</b> Sets the adapter to admin mode. This visually locks the background
+     *     color (disabling read/unread toggling) and changes the click behavior to fetch
+     *     and display the recipient's name instead of navigating.</li>
+     *     <li><b>User Mode:</b> Sets standard behavior where clicking marks a notification
+     *     as seen (changing color) and navigates to the event details.</li>
+     * </ul>
+     *
+     * @param view        The root view of the fragment.
+     * @param isAdminView True if the fragment is being viewed by an admin, false otherwise.
      */
-    private void setupRecyclerView(@NonNull View view) {
+    private void setupRecyclerView(@NonNull View view, boolean isAdminView) {
         markSeenBtn = view.findViewById(R.id.mark_as_seen_btn);
         recyclerView = view.findViewById(R.id.notifications_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
         adapter = new NotificationAdapter(R.layout.item_notification);
+        adapter.setAdminView(isAdminView);
         recyclerView.setAdapter(adapter);
 
         /**
@@ -147,7 +163,20 @@ public class NotificationsFragment extends Fragment {
          * On notif click, marks it as seen and if lottery win, navigates to event
          * @param notification notif clicked
          */
-        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification, notificationCustomManager));
+        adapter.setOnItemClickListener(notification -> {
+            if (isAdminView) {
+                // 1. Admin Mode: Fetch the name using the ViewModel/Repository
+                String userId = notification.getRecipientId();
+
+                viewModel.fetchUserName(userId, name -> {
+                    // 2. Show the Toast with the retrieved name
+                    Toast.makeText(getContext(), "Sent to: " + name, Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                // User Mode: Proceed with normal logic (toggle seen, navigate to event)
+                viewModel.onNotificationClicked(notification, notificationCustomManager);
+            }
+        });
     }
 
     /**
@@ -161,7 +190,10 @@ public class NotificationsFragment extends Fragment {
         if(eventIdFilter != null) {
             viewModel.loadNotificationsForEvent(eventIdFilter);
 
-            // Show notifications for Admin
+            /**
+             * Observe the list of notifications and submit it to the adapter when it changes.
+             * @param notifications list of notifs
+             */
             viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
                 if (notifications != null && !notifications.isEmpty()) {
                     adapter.setNotifications(notifications);
