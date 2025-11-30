@@ -89,7 +89,6 @@ public class OrganizerEventFragmentTest {
         onView(withId(R.id.organizer_button_container)).check(matches(isDisplayed()));
         onView(withId(R.id.btnRunDraw)).check(matches(isDisplayed()));
         onView(withId(R.id.btnFinalize)).check(matches(isDisplayed()));
-        onView(withId(R.id.btnViewWaitingList)).check(matches(isDisplayed()));
     }
 
     @Test
@@ -187,14 +186,13 @@ public class OrganizerEventFragmentTest {
         launchFragment();
 
         // Act
-        onView(withId(R.id.btnViewWaitingList)).perform(click());
+        onView(withId(R.id.btnViewEntrants)).perform(click());
 
         // Assert
         assertEquals(R.id.entrantListFragment, navController.getCurrentDestination().getId());
         Bundle args = navController.getBackStackEntry(R.id.entrantListFragment).getArguments();
         assertNotNull(args);
         assertEquals(TEST_EVENT_ID, args.getString("eventId"));
-        assertEquals("waiting", args.getString("status"));
     }
 
     @Test
