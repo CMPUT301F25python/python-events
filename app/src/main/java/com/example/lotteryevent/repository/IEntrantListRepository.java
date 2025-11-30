@@ -59,8 +59,9 @@ public interface IEntrantListRepository {
      * @param userId    The entrant's user ID.
      * @param newStatus The new status to set.
      * @param callback  A callback to handle success/failure in the ViewModel.
+     * @param sendNotif boolean to indicate whether to notify user of a specific status change
      */
-    void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback);
+    void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback, boolean sendNotif);
 
     /**
      * Simple callback interface for status updates.
