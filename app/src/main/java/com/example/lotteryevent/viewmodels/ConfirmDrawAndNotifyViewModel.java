@@ -183,7 +183,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
         Tasks.whenAllComplete(tasks)
             .addOnCompleteListener(allTask -> {
-                _toastMessage.postValue("Cancelled...Entrants returned to waitlist");
+                _toastMessage.postValue("Cancelled Draw. Entrants returned to waitlist");
                 _navigateBack.postValue(true);
             });
     }
