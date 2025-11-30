@@ -335,7 +335,6 @@ public class AvailableEventsFragment extends Fragment {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(24), dp(16), dp(24), dp(8));
 
-        // ---- Keyword outlined field with search icon ----
         TextInputLayout keywordLayout = new TextInputLayout(themed);
         keywordLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
         keywordLayout.setHint("Keyword");
@@ -351,7 +350,7 @@ public class AvailableEventsFragment extends Fragment {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        // Dae Range label
+        // Date Range label
         TextView label = new TextView(themed);
         label.setText("Event Start Range (inclusive)");
         label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
@@ -399,13 +398,11 @@ public class AvailableEventsFragment extends Fragment {
         endInput.setCursorVisible(false);
         endLayout.addView(endInput);
 
-// Add them stacked (full width)
         LinearLayout.LayoutParams fullWidth =
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         root.addView(startLayout, fullWidth);
 
-// spacer between fields
         View spacer = new View(themed);
         root.addView(spacer, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0
@@ -413,14 +410,13 @@ public class AvailableEventsFragment extends Fragment {
 
         root.addView(endLayout, fullWidth);
 
-// Keep existing temp values + initial text
+        // Keep existing temp values + initial text
         final Long[] tempStart = new Long[]{filterStartDateMs};
         final Long[] tempEnd = new Long[]{filterEndDateMs};
 
         startInput.setText(formatDay(tempStart[0]));
         endInput.setText(formatDay(tempEnd[0]));
 
-// Hook up pickers (same logic as before)
         Runnable openStart = () -> showDayPickerDialog(
                 tempStart[0], null, null,
                 (s, e) -> {
