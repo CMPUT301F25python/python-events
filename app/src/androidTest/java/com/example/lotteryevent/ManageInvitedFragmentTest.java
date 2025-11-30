@@ -137,7 +137,7 @@ public class ManageInvitedFragmentTest {
     }
 
     /**
-     * Verifies the cancellation of an invite action.
+     * Verifies the cancellation of an invite action and its notif send.
      */
     @Test
     public void cancelInvite_updatesRepositoryStatus() {
@@ -166,6 +166,15 @@ public class ManageInvitedFragmentTest {
 
         assertNotNull("Alice should still be in the database", alice);
         assertEquals("Status should be updated to waiting", "waiting", alice.getStatus());
+
+        // Verify repository received correct calls
+        List<Notification> calls = fakeRepository.getNotificationCalls();
+        assertEquals(1, calls.size());
+
+        assertEquals(alice.getUserId(), calls.get(0).getRecipientId());
+        assertEquals(TEST_EVENT_ID, calls.get(0).getEventId());
+        assertEquals("Invitation Update", calls.get(0).getTitle());
+        assertEquals("Your invitation to the event something has been withdrawn.", calls.get(0).getMessage());
     }
 
     /**
