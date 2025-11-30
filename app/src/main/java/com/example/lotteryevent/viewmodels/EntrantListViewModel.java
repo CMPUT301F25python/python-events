@@ -1,6 +1,7 @@
 package com.example.lotteryevent.viewmodels;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -8,6 +9,7 @@ import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.repository.IEntrantListRepository;
 import com.example.lotteryevent.repository.IEntrantListRepository.StatusUpdateCallback;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,8 +23,9 @@ public class EntrantListViewModel extends ViewModel {
 
     private final IEntrantListRepository entrantListRepo;
     private final String eventId;
-    private final MutableLiveData<String> status = new MutableLiveData<>("waiting");
-    private final LiveData<List<Entrant>> filteredEntrants;
+    private final MutableLiveData<String> filterStatus = new MutableLiveData<>("waiting");
+    private final LiveData<List<Entrant>> allEntrantsSource;
+    private final MediatorLiveData<List<Entrant>> displayedEntrants = new MediatorLiveData<>();
 
     /**
      * Creates a new ViewModel instance and injects the repository used for fetching
@@ -35,20 +38,56 @@ public class EntrantListViewModel extends ViewModel {
     public EntrantListViewModel(IEntrantListRepository entrantListRepo, String eventId) {
         this.entrantListRepo = entrantListRepo;
         this.eventId = eventId;
-        this.filteredEntrants = entrantListRepo.fetchEntrantsByStatus(eventId, status.getValue());
+
+        // Fetch ALL entrants
+        this.allEntrantsSource = entrantListRepo.fetchEntrantsByStatus(eventId, null);
+        // Setup Mediator to watch the DATA
+        displayedEntrants.addSource(allEntrantsSource, entrants -> {
+            combineDataAndFilter(entrants, filterStatus.getValue());
+        });
+
+        // Setup Mediator to watch the FILTER
+        displayedEntrants.addSource(filterStatus, status -> {
+            combineDataAndFilter(allEntrantsSource.getValue(), status);
+        });
+    }
+
+    /**
+     * Filters the list in memory
+     * @param allEntrants the list of all entrants
+     * @param status the status filter
+     */
+    private void combineDataAndFilter(List<Entrant> allEntrants, String status) {
+        if (allEntrants == null) {
+            displayedEntrants.setValue(new ArrayList<>());
+            return;
+        }
+
+        // If no filter is selected (shouldn't happen), show all
+        if (status == null) {
+            displayedEntrants.setValue(allEntrants);
+            return;
+        }
+
+        List<Entrant> filteredList = new ArrayList<>();
+
+        // Perform the filtering in Java memory
+        for (Entrant entrant : allEntrants) {
+            if (entrant.getStatus() != null &&
+                    entrant.getStatus().equalsIgnoreCase(status)) {
+                filteredList.add(entrant);
+            }
+        }
+
+        displayedEntrants.setValue(filteredList);
     }
 
     public LiveData<List<Entrant>> getFilteredEntrants() {
-        return filteredEntrants;
+        return displayedEntrants;
     }
+
     public LiveData<String> getStatus() {
-        return status;
-    }
-
-
-    public String getCapitalizedStatus() {
-        if (status == null || status.getValue() == null) return "";
-        return status.getValue().substring(0, 1).toUpperCase() + status.getValue().substring(1);
+        return filterStatus;
     }
 
     /**
@@ -60,13 +99,31 @@ public class EntrantListViewModel extends ViewModel {
     }
 
     /**
+     * Capitalizes the first letter of the status string.
+     * @return the status string with the first letter capitalized
+     */
+    public String getCapitalizedStatus() {
+        if (filterStatus.getValue() == null) return "";
+        String s = filterStatus.getValue();
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
+    }
+
+    /**
+     * Updates the filter immediately.
+     */
+    public void setFilterStatus(String newStatus) {
+        // This triggers 'combineDataAndFilter' via the Mediator
+        filterStatus.setValue(newStatus);
+    }
+
+    /**
      * Sends a notification message to all entrants in the provided list. Iterates
      * through each entrant and delegates the notification sending to the repository.
      * Only valid entrants with non-null user IDs are processed.
      * @param organizerMessage the message content written by the event organizer
      */
     public void notifyAllEntrants(String organizerMessage) {
-        List<Entrant> currentList = filteredEntrants.getValue();
+        List<Entrant> currentList = displayedEntrants.getValue();
 
         if (currentList == null || currentList.isEmpty()) {
             entrantListRepo.setUserMessage("No entrants to notify.");
@@ -86,15 +143,6 @@ public class EntrantListViewModel extends ViewModel {
     }
 
     /**
-     * Changes the status of the entrants we wish to see and filters accordingly
-     * @param newStatus the new status to filter by
-     */
-    public void changeCurrentStatus(String newStatus) {
-        this.status.postValue(newStatus);
-        entrantListRepo.fetchEntrantsByStatus(eventId, newStatus);
-    }
-
-    /**
      * Cancels an invitation for a specific user.
      * Sets their status back to "waiting".
      * On success, it refreshes the list automatically via the repository logic (or we trigger a re-fetch).
@@ -106,8 +154,7 @@ public class EntrantListViewModel extends ViewModel {
             @Override
             public void onSuccess() {
                 entrantListRepo.setUserMessage("User returned to waitlist.");
-                // Refresh the list
-                entrantListRepo.fetchEntrantsByStatus(eventId, status.getValue());
+                entrantListRepo.fetchEntrantsByStatus(eventId, null);
             }
 
             @Override

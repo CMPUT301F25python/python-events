@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,6 +22,7 @@ import com.example.lotteryevent.adapters.EntrantListAdapter;
 import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
 
@@ -43,6 +43,7 @@ public class EntrantListFragment extends Fragment {
     private EntrantListAdapter adapter;
     private ProgressBar progressBar;
     private Button sendNotificationButton;
+    private ChipGroup statusChipGroup;
 
     // --- Data ---
     private String eventId;
@@ -126,7 +127,9 @@ public class EntrantListFragment extends Fragment {
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
 
         // --- The rest of the method is the same ---
+        setupFilterChips();
         setupObservers();
+        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
     }
 
     /**
@@ -138,7 +141,9 @@ public class EntrantListFragment extends Fragment {
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress_bar);
         sendNotificationButton = view.findViewById(R.id.send_notification_button);
+        statusChipGroup = view.findViewById(R.id.status_chip_group);
     }
+
 
     /**
      * Configures the RecyclerView with a {@link LinearLayoutManager} and sets up the
@@ -148,6 +153,33 @@ public class EntrantListFragment extends Fragment {
         adapter = new EntrantListAdapter(new ArrayList<>());
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
+    }
+
+    /**
+     * Sets up the listener for the Status Filter Chips.
+     * When a chip is clicked, it updates the ViewModel.
+     */
+    private void setupFilterChips() {
+        statusChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+
+            // Get the first checked ID
+            int checkedId = checkedIds.get(0);
+            String newStatus = "waiting";
+
+            if (checkedId == R.id.chip_waiting) {
+                newStatus = "waiting";
+            } else if (checkedId == R.id.chip_invited) {
+                newStatus = "invited";
+            } else if (checkedId == R.id.chip_accepted) {
+                newStatus = "accepted";
+            } else if (checkedId == R.id.chip_cancelled) {
+                newStatus = "cancelled";
+            }
+
+            // Update ViewModel
+            viewModel.setFilterStatus(newStatus);
+        });
     }
 
     /**
@@ -173,7 +205,6 @@ public class EntrantListFragment extends Fragment {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
-                sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
             }
         });
         // observe user message LiveData and display it as a Toast
@@ -184,10 +215,36 @@ public class EntrantListFragment extends Fragment {
         });
         viewModel.getStatus().observe(getViewLifecycleOwner(), status -> {
             if (status != null) {
-                Toast.makeText(getContext(), "Status changed to " + status, Toast.LENGTH_SHORT).show();
-                Toast.makeText(getContext(), "Capitalized status is" + viewModel.getCapitalizedStatus(), Toast.LENGTH_SHORT).show();
+                updateActiveChip(status);
             }
         });
+    }
+
+    /**
+     * Updates the highlighted chip based on the string status.
+     * Useful for setting the initial state.
+     */
+    private void updateActiveChip(String status) {
+        int chipId;
+        switch (status.toLowerCase()) {
+            case "invited":
+                chipId = R.id.chip_invited;
+                break;
+            case "accepted":
+                chipId = R.id.chip_accepted;
+                break;
+            case "cancelled":
+                chipId = R.id.chip_cancelled;
+                break;
+            case "waiting":
+            default:
+                chipId = R.id.chip_waiting;
+                break;
+        }
+
+        if (statusChipGroup.getCheckedChipId() != chipId) {
+            statusChipGroup.check(chipId);
+        }
     }
 
     /**
