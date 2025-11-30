@@ -171,13 +171,20 @@ public class ManageInvitedFragment extends Fragment {
         // Show loading indicator initially
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
 
-        // Observe the list of entrants
+        /**
+         * Observes list of entrants, updates adapter on value and shows notif dialog
+         * @param entrants list of entrants
+         */
         viewModel.getEntrants().observe(getViewLifecycleOwner(), entrants -> {
             if (progressBar != null) progressBar.setVisibility(View.GONE);
 
             if (entrants != null) {
                 // Update the adapter with the new list of Entrant objects
                 adapter.setEntrants(entrants);
+                /**
+                 * If entrants list empty, makes toast of no entrants to notify, otherwise shows dialog
+                 * @param v view clicked
+                 */
                 sendNotificationButton.setOnClickListener(v -> {
                     if (entrants.isEmpty()) {
                         Toast.makeText(getContext(), "No entrants to notify.", Toast.LENGTH_SHORT).show();
@@ -188,7 +195,10 @@ public class ManageInvitedFragment extends Fragment {
             }
         });
 
-        // Observe user feedback messages (e.g., "User returned to waitlist")
+        /**
+         * Observes messsage, makes toast on value
+         * @param message message to show
+         */
         viewModel.getUserMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
@@ -208,16 +218,21 @@ public class ManageInvitedFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setHint("Enter message...");
         builder.setView(input);
+        /**
+         * Callback triggered when the "Notify All" button in the notification dialog is
+         * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+         * bulk notification method.
+         * @param dialog the dialog that triggered the callback
+         */
         builder.setPositiveButton("Notify All", (dialog, which) -> {
-            /**
-             * Callback triggered when the "Notify All" button in the notification dialog is
-             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
-             * bulk notification method.
-             * @param dialog the dialog that triggered the callback
-             */
             String organizerMessage = input.getText().toString().trim();
             viewModel.notifyAllEntrants(organizerMessage);
         });
+        /**
+         * Cancels dialog
+         * @param dialog dialog that triggered callback
+         * @param which button identifier
+         */
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();

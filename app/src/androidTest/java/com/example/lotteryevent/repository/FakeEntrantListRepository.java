@@ -143,6 +143,9 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback, boolean sendNotif) {
         if (shouldReturnError) {
             if (callback != null) {
+                /**
+                 * Throws exception on failure
+                 */
                 callback.onFailure(new Exception("Simulated database failure"));
             }
             return;
@@ -174,6 +177,9 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
             }
         } else {
             if (callback != null) {
+                /**
+                 * Throws exception on failure
+                 */
                 callback.onFailure(new Exception("User ID not found in fake data"));
             }
         }

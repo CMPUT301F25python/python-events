@@ -41,10 +41,18 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     public LiveData<String> waitingListCount = _waitingListCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
 
+    /**
+     * Gets whether loading status is active
+     * @return loading boolean
+     */
     public LiveData<Boolean> isLoading() {
         return repository.isLoading();
     }
 
+    /**
+     * Gets posted message from repo
+     * @return message
+     */
     public LiveData<String> getMessage() {
         return repository.getMessage();
     }
@@ -67,15 +75,39 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         this.event = repository.getUserEvent();
         this.message = repository.getMessage();
 
+        /**
+         * Recalculates entrant counts whenever the waiting list count updates
+         * @param event The updated waiting list count
+         */
         _waitingListCount.addSource(repository.getWaitingListCount(), event -> calculateEntrantCounts());
+        /**
+         * Recalculates entrant counts whenever the available space count updates
+         * @param event The updated avail space count
+         */
         _availableSpaceCount.addSource(repository.getAvailableSpaceCount(), event -> calculateEntrantCounts());
 
+        /**
+         * Recalculates ui state when user event changes
+         * @param event The updated user event
+         */
         _bottomUiState.addSource(repository.getUserEvent(), event -> calculateUiState());
+        /**
+         * Recalculates entrant counts and ui state when loading boolean changes
+         * @param isLoading The updated loading boolean value
+         */
         _bottomUiState.addSource(repository.isLoading(), isLoading -> {
             calculateEntrantCounts();
             calculateUiState();
         });
+        /**
+         * Recalculates ui state when available space count changes
+         * @param count the available space count
+         */
         _bottomUiState.addSource(repository.getAvailableSpaceCount(), count -> calculateUiState());
+        /**
+         * Recalculates ui state when waiting list count changes
+         * @param count the waiting list count
+         */
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
 
@@ -136,7 +168,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     }
 
     /**
-     * Notifies selected entrants to accept, notifies unchosen entrants of loss, navigates back to event details screen
+     * Notifies selected entrants to accept, notifies of lottery loss, navigates back to event details screen
      */
     public void onPositiveButtonClicked(ArrayList<String> newChosenEntrants, ArrayList<String> newUnchosenEntrants) {
         if (notifManager == null) {
@@ -154,6 +186,10 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
 
         Tasks.whenAllComplete(tasks)
+            /**
+             * Navigates back when all tasks complete
+             * @param allTask contains all tasks
+             */
             .addOnCompleteListener(allTask -> {
                 _navigateBack.postValue(true);
             });
@@ -201,6 +237,10 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             tasks.add(task);
         }
         Tasks.whenAllComplete(tasks)
+            /**
+             * Navigates back when all tasks complete
+             * @param allTask contains all tasks
+             */
             .addOnCompleteListener(allTask -> {
                 _navigateBack.postValue(true);
             });

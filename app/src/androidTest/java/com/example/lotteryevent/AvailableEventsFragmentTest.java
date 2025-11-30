@@ -1,6 +1,7 @@
 package com.example.lotteryevent;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.fragment.app.testing.FragmentScenario;
 import androidx.navigation.Navigation;
@@ -9,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import android.widget.DatePicker;
+import androidx.test.espresso.contrib.PickerActions;
 
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.FakeAvailableEventsRepository;
@@ -19,6 +22,9 @@ import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 import com.google.firebase.Timestamp;
 
@@ -36,9 +42,13 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
+import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.not;
 
 /***
  * Unit tests for {@link AvailableEventsFragment}.
@@ -93,6 +103,39 @@ public class AvailableEventsFragmentTest {
         });
 
         return scenario;
+    }
+
+    /**
+     * Helper to create a matcher that matches the view at the given index.
+     * @param matcher
+     * @param index
+     * @return A matcher that matches the view at the given index.
+     */
+    private static Matcher<View> withIndex(final Matcher<View> matcher, final int index) {
+        return new TypeSafeMatcher<View>() {
+            int currentIndex = 0;
+
+            /**
+             * The description to be built or appended to.
+             * @param description
+             */
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with index: " + index + " ");
+                matcher.describeTo(description);
+            }
+
+            /**
+             * Matches the view at the given index.
+             * @param view
+             * @return True if the view at the given index matches the matcher.
+             */
+            @Override
+            protected boolean matchesSafely(View view) {
+                if (!matcher.matches(view)) return false;
+                return currentIndex++ == index;
+            }
+        };
     }
 
     /**
@@ -340,8 +383,12 @@ public class AvailableEventsFragmentTest {
         // Open the keyword filter dialog via the filter button
         onView(withId(R.id.filter_button)).perform(click());
 
-        // Type a keyword that should match only the "Board Games Night" event
-        onView(withHint("Enter a keyword")).perform(replaceText("game"));
+        // Keyword field is the only focusable TextInputEditText in the dialog
+        onView(allOf(
+            isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+            androidx.test.espresso.matcher.ViewMatchers.isFocusable(),
+            isDisplayed()
+            )).perform(replaceText("game"));
 
         // Apply the filter
         onView(withText("Apply")).perform(click());
@@ -350,4 +397,83 @@ public class AvailableEventsFragmentTest {
         onView(withText("Board Games Night")).check(matches(isDisplayed()));
         onView(withText("Cooking Workshop")).check(doesNotExist());
     }
+
+    /**
+     * This test verifies that when the "Filter" button is clicked, the date range filter dialog is
+     * shown.
+     */
+    @Test
+    public void filterButton_filtersEventsByDateRange_onEventStartDate() {
+        List<Event> events = new ArrayList<>();
+
+        // Create 3 events with known eventStartDateTime values
+        Calendar cal = Calendar.getInstance();
+
+        // Before range: Jan 5, 2025
+        cal.set(2025, Calendar.JANUARY, 5, 12, 0, 0);
+        Event before = new Event();
+        before.setEventId("before-id");
+        before.setName("Before Range Event");
+        before.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(before);
+
+        // In range: Jan 20, 2025
+        cal.set(2025, Calendar.JANUARY, 20, 12, 0, 0);
+        Event inRange = new Event();
+        inRange.setEventId("inrange-id");
+        inRange.setName("In Range Event");
+        inRange.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(inRange);
+
+        // After range: Feb 3, 2025
+        cal.set(2025, Calendar.FEBRUARY, 3, 12, 0, 0);
+        Event after = new Event();
+        after.setEventId("after-id");
+        after.setName("After Range Event");
+        after.setEventStartDateTime(new Timestamp(cal.getTime()));
+        events.add(after);
+
+        fakeRepository.setEventsToReturn(events);
+
+        launchFragment();
+
+        // All visible before filtering
+        onView(withText("Before Range Event")).check(matches(isDisplayed()));
+        onView(withText("In Range Event")).check(matches(isDisplayed()));
+        onView(withText("After Range Event")).check(matches(isDisplayed()));
+
+        // Open filter dialog
+        onView(withId(R.id.filter_button)).perform(click());
+
+        // Select From: Jan 15, 2025
+        onView(withIndex(allOf(
+                isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+                not(androidx.test.espresso.matcher.ViewMatchers.isFocusable()),
+                isDisplayed()
+        ), 0)).perform(click());
+
+        onView(isAssignableFrom(DatePicker.class))
+                .perform(PickerActions.setDate(2025, 1, 15)); // month is 1-12 here
+        onView(withId(android.R.id.button1)).perform(click()); // OK
+
+        // Select To: Jan 31, 2025
+        onView(withIndex(allOf(
+                isAssignableFrom(com.google.android.material.textfield.TextInputEditText.class),
+                not(androidx.test.espresso.matcher.ViewMatchers.isFocusable()),
+                isDisplayed()
+        ), 1)).perform(click());
+
+        onView(isAssignableFrom(DatePicker.class))
+                .perform(PickerActions.setDate(2025, 1, 31));
+        onView(withId(android.R.id.button1)).perform(click()); // OK
+
+        // Apply the filter
+        onView(withText("Apply")).perform(click());
+
+        // Assert: only in-range event remains
+        onView(withText("In Range Event")).check(matches(isDisplayed()));
+        onView(withText("Before Range Event")).check(doesNotExist());
+        onView(withText("After Range Event")).check(doesNotExist());
+    }
+
 }

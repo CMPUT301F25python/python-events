@@ -34,10 +34,13 @@ public class AdminProfilesFragment extends Fragment {
     private RecyclerView recycler;
     private AdminProfilesAdapter adapter;
 
+    /**
+     * Default constructor for production use by the Android Framework.
+     */
     public AdminProfilesFragment() { }
 
     /**
-     *
+     * Called by the system to have the fragment instantiate its user interface view.
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
@@ -54,7 +57,9 @@ public class AdminProfilesFragment extends Fragment {
     }
 
     /**
-     *
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
@@ -80,6 +85,10 @@ public class AdminProfilesFragment extends Fragment {
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         // Add navigation to user profile details
+        /**
+         * Handles clicks on a user item in the list and navigates to that user's profile
+         * @param user selected user
+         */
         adapter = new AdminProfilesAdapter(user -> {
             // 2. Create the Bundle with the userId
             Bundle bundle = new Bundle();
@@ -104,12 +113,20 @@ public class AdminProfilesFragment extends Fragment {
      * </p>
      */
     private void setupObservers() {
+        /**
+         * Observes profiles list, updates adapter on change
+         * @param list contains profiles
+         */
         viewModel.getProfiles().observe(getViewLifecycleOwner(), list -> {
             if (list != null) {
                 adapter.setProfiles(list);
             }
         });
 
+        /**
+         * Observes message, if updates makes toast
+         * @param msg message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();

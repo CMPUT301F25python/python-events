@@ -56,6 +56,16 @@ public class RunDrawFragment extends Fragment {
     // ViewModel
     private RunDrawViewModel viewModel;
 
+    /**
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -92,7 +102,7 @@ public class RunDrawFragment extends Fragment {
 
     /**
      * Initializes and binds UI components using XML IDs.
-     *
+     * @param v view to initialize
      */
     private void initializeViews(View v) {
         numSelectedEntrants = v.findViewById(R.id.numSelectedEntrants);
@@ -127,14 +137,20 @@ public class RunDrawFragment extends Fragment {
      */
     private void setupObservers() {
 
-        // Waiting list count
+        /**
+         * Observes for waiting list count and shows on screen
+         * @param count count to show
+         */
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
             if (count != null) {
                 waitingListCountText.setText(String.valueOf(count));
             }
         });
 
-        // Available spaces count
+        /**
+         * Observes for available space count and shows on screen
+         * @param count count to show
+         */
         viewModel.availableSpaceCount.observe(getViewLifecycleOwner(), count -> {
             if (count == null || count < 0) {
                 availableSpaceCountText.setText("No Limit");
@@ -143,30 +159,52 @@ public class RunDrawFragment extends Fragment {
             }
         });
 
-        // Toast messages for user
+        /**
+         * Observes message, shows toast on value
+         * @param msg to show
+         */
         viewModel.message.observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
 
+        /**
+         * Observes loading, shows draw button conditionally
+         * @param isLoading boolean for loading
+         */
         viewModel.isLoading.observe(getViewLifecycleOwner(), isLoading -> {
             runDrawButton.setEnabled(!isLoading);
         });
 
+        /**
+         * Observes old entrants status
+         * @param oldEntrantStatus old status of entrants
+         */
         viewModel.oldEntrantsStatus.observe(getViewLifecycleOwner(), oldEntrantsStatus -> {
             this.oldEntrantsStatus = oldEntrantsStatus;
         });
 
+        /**
+         * Observes new chosen entrants status
+         * @param newChosenEntrants new chosen entrants
+         */
         viewModel.newChosenEntrants.observe(getViewLifecycleOwner(), newChosenEntrants -> {
             this.newChosenEntrants = newChosenEntrants;
         });
 
+        /**
+         * Observes new unchosen entrants status
+         * @param newUnchosenEntrants new unchosen entrants
+         */
         viewModel.newUnchosenEntrants.observe(getViewLifecycleOwner(), newUnchosenEntrants -> {
             this.newUnchosenEntrants = newUnchosenEntrants;
         });
 
-        // Navigation trigger on successful draw
+        /**
+         * Navigation trigger on successful draw
+         * @param success boolean for success
+         */
         viewModel.drawSuccess.observe(getViewLifecycleOwner(), success -> {
             if (success != null && success) {
                 Bundle bundle = new Bundle();
@@ -180,7 +218,10 @@ public class RunDrawFragment extends Fragment {
             }
         });
 
-        // Navigation trigger on successful cancel draw
+        /**
+         * Navigation trigger on successful cancel draw
+         * @boolean success boolean for success
+         */
         viewModel.cancelSuccess.observe(getViewLifecycleOwner(), success -> {
             if (success != null && success) {
                 Navigation.findNavController(requireView()).navigateUp();
@@ -194,6 +235,10 @@ public class RunDrawFragment extends Fragment {
      */
     private void setupListeners(View root) {
 
+        /**
+         * Gets input for draw and validates before running draw
+         * @param v view clicked
+         */
         runDrawButton.setOnClickListener(v -> {
 
             String inputText = numSelectedEntrants.getText().toString().trim();
@@ -235,6 +280,10 @@ public class RunDrawFragment extends Fragment {
             viewModel.runDraw(eventId, numToSelect);
         });
 
+        /**
+         * Navigates back
+         * @param v view clicked
+         */
         cancelButton.setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp()
         );
