@@ -5,16 +5,32 @@ import androidx.lifecycle.LiveData;
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.User;
 
+/**
+ * Inferace for updating, deleting profile and updating notif preferences
+ */
 public interface IUserRepository {
+    /**
 
+     Returns a LiveData object holding the current loading state (true if loading, false otherwise).
+     @return LiveData Boolean representing the loading state.
+     */
     LiveData<Boolean> isLoading();
 
     /**
-     * gets the notif preference for the user
-     * @return notif preference
+     * Returns LiveData of notif preferences
+     * @return boolean of notif preference
      */
     LiveData<Boolean> getNotifPreference();
+    /**
+     Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     @return LiveData String containing an message.
+     */
     LiveData<String> getMessage();
+
+    /**
+     * Returns LiveData of current user
+     * @return User
+     */
     LiveData<User> getCurrentUser();
 
     /**

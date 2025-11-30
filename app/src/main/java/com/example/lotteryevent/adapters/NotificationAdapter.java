@@ -139,7 +139,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             timestamp = itemView.findViewById(R.id.notification_timestamp);
             notifications_material_card = itemView.findViewById(R.id.notifications_material_card);
 
-            // Set a click listener on the entire tile view.
+            /**
+             * On the click of an item in the notif list, changed the item's background color and triggers
+             * a callback for the specific item
+             * @param v view clicked
+             */
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
 

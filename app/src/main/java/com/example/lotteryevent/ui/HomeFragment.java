@@ -60,6 +60,11 @@ public class HomeFragment extends Fragment {
      */
     public HomeFragment() { }
 
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     *
+     * @param viewModelFactory The factory to use for creating the ViewModel.
+     */
     public HomeFragment(ViewModelProvider.Factory viewModelFactory) {
         this.viewModelFactory = viewModelFactory;
     }
@@ -117,7 +122,7 @@ public class HomeFragment extends Fragment {
 
         // Setup Toolbar title and menu
         if (getActivity() instanceof AppCompatActivity) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Your Events");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("My Events");
         }
 
         // Setup main UI components
@@ -157,6 +162,10 @@ public class HomeFragment extends Fragment {
         eventAdapter = new EventAdapter(R.layout.tile_event);
         recyclerView.setAdapter(eventAdapter);
 
+        /**
+         * Navigate to Organizer event page if event has ID, otherwise show toast of error
+         * @param event event to go to
+         */
         eventAdapter.setOnItemClickListener(event -> {
             // Make sure the event ID is not null before navigating
             if (event.getEventId() != null) {
@@ -178,23 +187,32 @@ public class HomeFragment extends Fragment {
      * - Observes the loading status to show or hide the {@link SwipeRefreshLayout} progress indicator.
      */
     private void setupObservers() {
-        // Observe the list of events from the ViewModel. When the data changes (e.g., after a fetch),
-        // update the RecyclerView adapter with the new list.
+        /**
+         * Observe the list of events from the ViewModel. When the data changes (e.g., after a fetch),
+         * update the RecyclerView adapter with the new list.
+         * @param events list of events
+         */
         homeViewModel.getEvents().observe(getViewLifecycleOwner(), events -> {
             if (events != null) {
                 eventAdapter.setEvents(events);
             }
         });
 
-        // Observe the loading state to show/hide the SwipeRefreshLayout's spinner.
-        // This provides visual feedback to the user during data fetching.
+        /**
+         * Observe the loading state to show/hide the SwipeRefreshLayout's spinner.
+         * This provides visual feedback to the user during data fetching.
+         * @param isLoading boolean for loading
+         */
         homeViewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading != null) {
                 swipeRefreshLayout.setRefreshing(isLoading);
             }
         });
 
-        // Observe messages and display them as a Toast message.
+        /**
+         * Observe messages and display them as a Toast message.
+         * @param message message to show
+         */
         homeViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();

@@ -125,6 +125,10 @@ public class AdminUserProfileFragment extends Fragment {
         setupDeleteButton();
 
         // 5. Observe User Profile
+        /**
+         * Observes user profile, if user update, gets user's name and sets header title
+         * @param user user from profile
+         */
         viewModel.getUserProfile().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 String name = user.getName() != null ? user.getName() : "Unknown User";
@@ -149,6 +153,10 @@ public class AdminUserProfileFragment extends Fragment {
         }
 
         // 6. Observe Delete Status
+        /**
+         * Observes organizer deleted boolean, if true, makes toast and navigates back
+         * @param isDeleted boolean of whether organizer is deleted
+         */
         viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
             if (Boolean.TRUE.equals(isDeleted)) {
                 Toast.makeText(getContext(), "User deleted successfully", Toast.LENGTH_SHORT).show();
@@ -176,6 +184,10 @@ public class AdminUserProfileFragment extends Fragment {
             deleteButton.setVisibility(View.GONE);
         } else {
             deleteButton.setVisibility(View.VISIBLE);
+            /**
+             * On delete button click, shows confirmation dialog
+             * @param v view clicked on
+             */
             deleteButton.setOnClickListener(v -> showDeleteConfirmation());
         }
     }
@@ -190,7 +202,17 @@ public class AdminUserProfileFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete User?")
                 .setMessage("Are you sure you want to delete this user? This will remove their profile, events, and notifications.")
+                /**
+                 * Deletes user
+                 * @param dialog dialog that triggered callback
+                 * @which button identifier
+                 */
                 .setPositiveButton("Delete", (dialog, which) -> performDelete())
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", null)
                 .show();
     }
@@ -222,17 +244,22 @@ public class AdminUserProfileFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setHint("Enter message...");
         builder.setView(input);
+        /**
+         * Callback triggered when the "Notify" button in the notification dialog is
+         * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
+         * notification method.
+         * @param dialog the dialog that triggered the callback
+         */
         builder.setPositiveButton("Notify", (dialog, which) -> {
-            /**
-             * Callback triggered when the "Notify All" button in the notification dialog is
-             * pressed. Retrieves the user's input from the EditText and triggers the ViewModel's
-             * bulk notification method.
-             * @param dialog the dialog that triggered the callback
-             */
             String organizerMessage = input.getText().toString().trim();
             NotificationCustomManager manager = new NotificationCustomManager(requireContext());
             viewModel.notifyEntrant(userId, organizerMessage, manager);
         });
+        /**
+         * Cancels dialog on button click
+         * @param dialog dialog that triggered callback
+         * @param which button identifier
+         */
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();

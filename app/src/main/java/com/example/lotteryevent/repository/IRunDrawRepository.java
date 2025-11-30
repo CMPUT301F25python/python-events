@@ -22,43 +22,62 @@ public interface IRunDrawRepository {
 
     /**
      * LiveData for number of entrants currently on waitling list
+     * @return count
      */
     LiveData<Integer> getWaitingListCount();
 
     /**
      * LiveData for nubmer of available spaces left for event
+     * @return count
      */
     LiveData<Integer> getAvailableSpaceCount();
 
     /**
-     * LiveData for number of entrants with status "invited
+     * LiveData for number of entrants with status "invited"
+     * @return count
      */
     LiveData<Integer> getSelectedCount();
 
     /**
      * LiveData to verify firestore operation running
+     * @return loading boolean
      */
     LiveData<Boolean> isLoading();
 
     /**
      * LiveData containing toast messages for user
+     * @return message
      */
     LiveData<String> getMessage();
 
     /**
      * LiveData indicating draw completion
+     * @return success boolean
      */
     LiveData<Boolean> getDrawSuccess();
 
     /**
      * LiveData indicating cancel lottery completion
+     * @return cancel success
      */
     LiveData<Boolean> getCancelSuccess();
 
+    /**
+     * LiveData for old entrant statuses
+     * @return statuses
+     */
     public LiveData<String> getOldEntrantsStatus();
 
+    /**
+     * LiveData of new chosen entrants
+     * @return chosen entrants
+     */
     public LiveData<String> getNewChosenEntrants();
 
+    /**
+     * LiveData of new unchosen entrants
+     * @return unchosen entrants
+     */
     public LiveData<String> getNewUnchosenEntrants();
 
     /**
