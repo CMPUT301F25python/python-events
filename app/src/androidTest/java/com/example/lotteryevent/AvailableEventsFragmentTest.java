@@ -115,12 +115,21 @@ public class AvailableEventsFragmentTest {
         return new TypeSafeMatcher<View>() {
             int currentIndex = 0;
 
+            /**
+             * The description to be built or appended to.
+             * @param description
+             */
             @Override
             public void describeTo(Description description) {
                 description.appendText("with index: " + index + " ");
                 matcher.describeTo(description);
             }
 
+            /**
+             * Matches the view at the given index.
+             * @param view
+             * @return True if the view at the given index matches the matcher.
+             */
             @Override
             protected boolean matchesSafely(View view) {
                 if (!matcher.matches(view)) return false;
