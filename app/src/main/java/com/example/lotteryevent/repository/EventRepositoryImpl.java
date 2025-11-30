@@ -42,6 +42,7 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
+    private final MutableLiveData<String> _organizerName = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -88,6 +89,9 @@ public class EventRepositoryImpl implements IEventRepository {
      Returns a LiveData object holding the current loading state (true if loading, false otherwise).
      @return LiveData Boolean representing the loading state.
      */
+    @Override
+    public LiveData<String> getOrganizerName() { return _organizerName; }
+
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
@@ -150,32 +154,52 @@ public class EventRepositoryImpl implements IEventRepository {
     @Override
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
-        db.collection("events").document(eventId).get()
-                /**
-                 * Gets event to post to mutable live data and fetches entrant counts for the event
-                 * @param documentSnapshot contains event
-                 */
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot != null && documentSnapshot.exists()) {
-                        Event event = documentSnapshot.toObject(Event.class);
-                        _event.postValue(event);
 
-                        fetchEntrantsCountsTask(eventId);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        db.collection("users").document(currentUser.getUid()).get()
+            /**
+             * Gets organizer name nad fetches entrants count
+             * @param doc contains user
+             */
+            .addOnSuccessListener(doc -> {
+                _organizerName.postValue(doc.getString("name"));
+                db.collection("events").document(eventId).get()
+                    /**
+                     * Posts event to mutable live data and fetches entrants count
+                     * @param documentSnapshot contains event
+                     */
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot != null && documentSnapshot.exists()) {
+                            Event event = documentSnapshot.toObject(Event.class);
+                            _event.postValue(event);
+
+                            fetchEntrantsCountsTask(eventId);
+                            _isLoading.postValue(false);
+                        } else {
+                            _isLoading.postValue(false);
+                            _userMessage.postValue("Error: Event not found.");
+                        }
+                    })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
+                    .addOnFailureListener(e -> {
                         _isLoading.postValue(false);
-                    } else {
-                        _isLoading.postValue(false);
-                        _userMessage.postValue("Error: Event not found.");
-                    }
-                })
-                /**
-                 * Logs exception thrown
-                 * @param e exception thrown
-                 */
-                .addOnFailureListener(e -> {
-                    _isLoading.postValue(false);
-                    _userMessage.postValue("Error: Failed to load event.");
-                    Log.e(TAG, "fetchEvent failed", e);
-                });
+                        _userMessage.postValue("Error: Failed to load event.");
+                        Log.e(TAG, "fetchEvent failed", e);
+                    });
+            })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
+            .addOnFailureListener(e -> {
+                _isLoading.postValue(false);
+                _userMessage.postValue("Error: Failed to get logged in user.");
+                Log.e(TAG, "fetchEvent failed", e);
+            });
     }
 
     /**

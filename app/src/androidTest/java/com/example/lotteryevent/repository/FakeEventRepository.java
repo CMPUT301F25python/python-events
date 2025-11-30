@@ -28,6 +28,7 @@ public class FakeEventRepository implements IEventRepository {
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
+    private final MutableLiveData<String> _organizerName = new MutableLiveData<>();
 
     // --- In-memory "database" ---
     // These lists hold the state of our fake repository.
@@ -94,6 +95,9 @@ public class FakeEventRepository implements IEventRepository {
         return _message;
     }
 
+    @Override
+    public LiveData<String> getOrganizerName() { return _organizerName; }
+
     /**
      * Helper method for testing
      * @param value value to set loading to
@@ -127,6 +131,8 @@ public class FakeEventRepository implements IEventRepository {
     @Override
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
+
+        _organizerName.postValue("Test Organizer");
 
         if (shouldReturnError) {
             _message.postValue("Test Error: Could not fetch event.");

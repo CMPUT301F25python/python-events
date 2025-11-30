@@ -10,14 +10,10 @@ import com.google.firebase.Timestamp;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Date;
-
 /**
  * Unit Tests for Data Notification, testing its constructor, getters, and setters
  */
 public class NotificationTest {
-
-    private Notification notification;
 
     private String uid;
     private String title;
@@ -25,8 +21,8 @@ public class NotificationTest {
     private String type;
     private String eventId;
     private String eventName;
-    private String organizerId;
-    private String organizerName;
+    private String senderId;
+    private String senderName;
     private Integer notifBannerID;
 
     /**
@@ -40,8 +36,8 @@ public class NotificationTest {
         type = "lottery_win";
         eventId = "2HY5fqDbrNjxiTGjNh8J";
         eventName = "Event Name";
-        organizerId = "aIJocfaDTrWhIp3N3FjvADBbTuv";
-        organizerName = "Organizer Name";
+        senderId = "aIJocfaDTrWhIp3N3FjvADBbTuv";
+        senderName = "Organizer Name";
         notifBannerID = 123;
     }
 
@@ -51,7 +47,7 @@ public class NotificationTest {
     @Test
     public void testConstructor() {
 
-        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerID);
+        Notification notification = new Notification(uid, title, message, type, eventId, eventName, senderId, senderName, notifBannerID);
 
         assertEquals(uid, notification.getRecipientId());
         assertEquals(title, notification.getTitle());
@@ -59,8 +55,8 @@ public class NotificationTest {
         assertEquals(type, notification.getType());
         assertEquals(eventId, notification.getEventId());
         assertEquals(eventName, notification.getEventName());
-        assertEquals(organizerId, notification.getOrganizerId());
-        assertEquals(organizerName, notification.getOrganizerName());
+        assertEquals(senderId, notification.getSenderId());
+        assertEquals(senderName, notification.getSenderName());
         assertEquals(false, notification.getSeen());
         assertNotEquals(null, notification.getTimestamp());
         assertEquals(notifBannerID, notification.getNotifBannerId());
@@ -80,8 +76,8 @@ public class NotificationTest {
         notification.setType(type);
         notification.setEventId(eventId);
         notification.setEventName(eventName);
-        notification.setOrganizerId(organizerId);
-        notification.setOrganizerName(organizerName);
+        notification.setSenderId(senderId);
+        notification.setSenderName(senderName);
         notification.setSeen(true);
         notification.setTimestamp(now);
         notification.setNotificationId("12345abcde");
@@ -93,8 +89,8 @@ public class NotificationTest {
         assertEquals(type, notification.getType());
         assertEquals(eventId, notification.getEventId());
         assertEquals(eventName, notification.getEventName());
-        assertEquals(organizerId, notification.getOrganizerId());
-        assertEquals(organizerName, notification.getOrganizerName());
+        assertEquals(senderId, notification.getSenderId());
+        assertEquals(senderName, notification.getSenderName());
         assertEquals(true, notification.getSeen());
         assertEquals(now, notification.getTimestamp());
         assertEquals("12345abcde", notification.getNotificationId());
