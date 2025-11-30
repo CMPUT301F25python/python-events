@@ -55,37 +55,81 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     private final MutableLiveData<String> _newChosenEntrants = new MutableLiveData<>();
     private final MutableLiveData<String> _newUnchosenEntrants = new MutableLiveData<>();
 
+    /**
+     * Assigns context on instance creation
+     * @param context fragment context
+     */
     public RunDrawRepositoryImpl(Context context) {
         this.context = context;
     }
 
+    /**
+     * LiveData for number of entrants currently on waitling list
+     * @return count
+     */
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
 
+    /**
+     * LiveData for nubmer of available spaces left for event
+     * @return count
+     */
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
 
+    /**
+     * LiveData for number of entrants with status "invited"
+     * @return count
+     */
     @Override
     public LiveData<Integer> getSelectedCount() { return _selectedCount; }
 
+    /**
+     * LiveData to verify firestore operation running
+     * @return loading boolean
+     */
     @Override
     public LiveData<Boolean> isLoading() { return _isLoading; }
 
+    /**
+     * LiveData containing toast messages for user
+     * @return message
+     */
     @Override
     public LiveData<String> getMessage() { return _message; }
 
+    /**
+     * LiveData indicating draw completion
+     * @return success boolean
+     */
     @Override
     public LiveData<Boolean> getDrawSuccess() { return _drawSuccess; }
 
+    /**
+     * LiveData indicating cancel lottery completion
+     * @return cancel success
+     */
     @Override
     public LiveData<Boolean> getCancelSuccess() { return _cancelSuccess; }
 
+    /**
+     * LiveData for old entrant statuses
+     * @return statuses
+     */
     @Override
     public LiveData<String> getOldEntrantsStatus() { return _oldEntrantsStatus; }
 
+    /**
+     * LiveData of new chosen entrants
+     * @return chosen entrants
+     */
     @Override
     public LiveData<String> getNewChosenEntrants() { return _newChosenEntrants; }
 
+    /**
+     * LiveData of new unchosen entrants
+     * @return unchosen entrants
+     */
     @Override
     public LiveData<String> getNewUnchosenEntrants() { return _newUnchosenEntrants; }
 
@@ -122,6 +166,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
 
         db.collection("events").document(eventId).collection("entrants")
             .get()
+            /**
+             * Loads an event's entrants, draws lottery from the waiting entrants, and changes their status to invited
+             * @param entrantsQuery contains entrants of event
+             */
             .addOnSuccessListener(entrantsQuery -> {
                 List<Entrant> entrants = new ArrayList<>();
                 for (DocumentSnapshot d : entrantsQuery.getDocuments()) {
@@ -141,6 +189,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     .collection("entrants")
                     .whereEqualTo("status", "waiting")
                     .get()
+                    /**
+                     * Runs lottery and update status of chosen entrants
+                     * @param query contains waiting entrants
+                     */
                     .addOnSuccessListener(query -> {
 
                         List<String> waitlist = new ArrayList<>();
@@ -183,23 +235,39 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                         }
 
                         batch.commit()
+                                /**
+                                 * Logs draw success and posts to mutable live data
+                                 * @param unused unusable data
+                                 */
                                 .addOnSuccessListener(unused -> {
                                     _message.postValue("Draw Complete!");
                                     _drawSuccess.postValue(true);
                                     _isLoading.postValue(false);
                                 })
+                                /**
+                                 * Logs exception thrown
+                                 * @param e exception thrown
+                                 */
                                 .addOnFailureListener(e -> {
                                     Log.e(TAG, "Batch update failed", e);
                                     _message.postValue("Error updating user statuses");
                                     _isLoading.postValue(false);
                                 });
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _message.postValue("Error loading waitlist");
                         _isLoading.postValue(false);
                     });
 
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 _message.postValue("Error loading entrants");
                 _isLoading.postValue(false);
@@ -215,6 +283,11 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     public void cancelLottery(String eventId) {
         _isLoading.postValue(true);
 
+        /**
+         * Upon success, logs success and posts to mutable live data
+         * Upon error, logs error and posts to mutable live data
+         * @param err error returned
+         */
         FireStoreUtilities.cancelLottery(
                 db,
                 eventId,

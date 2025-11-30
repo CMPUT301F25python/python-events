@@ -217,6 +217,9 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
     public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback, boolean sendNotif) {
         if (eventId == null || userId == null || newStatus == null) {
             if (callback != null) {
+                /**
+                 * Raises exception on callback failure
+                 */
                 callback.onFailure(new IllegalArgumentException("Invalid arguments for status update"));
             }
             return;
@@ -233,6 +236,10 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                         .collection("entrants")
                         .document(userId)
                         .update("status", newStatus)
+                        /**
+                         * Logs and calls callback's specific success behaviour
+                         * @param aVoid unusable data
+                         */
                         .addOnSuccessListener(aVoid -> {
                             Log.d(TAG, "Entrant " + userId + " status updated to " + newStatus);
 

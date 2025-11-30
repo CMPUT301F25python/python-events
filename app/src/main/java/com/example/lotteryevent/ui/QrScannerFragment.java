@@ -112,7 +112,10 @@ public class QrScannerFragment extends Fragment {
                 .build();
         scanner = BarcodeScanning.getClient(options);
 
-        // Observe ViewModel for successful scans
+        /**
+         * Observe ViewModel for successful scans, if success navigate to event details
+         * @param eventId event to go to
+         */
         viewModel.getScannedEventId().observe(getViewLifecycleOwner(), eventId -> {
             if (eventId != null) {
                 navigateToEventDetails(eventId);
@@ -175,6 +178,10 @@ public class QrScannerFragment extends Fragment {
         InputImage image = InputImage.fromMediaImage(imageProxy.getImage(), imageProxy.getImageInfo().getRotationDegrees());
 
         scanner.process(image)
+                /**
+                 * Get barcode and process content
+                 * @param barcodes list of barcodes
+                 */
                 .addOnSuccessListener(barcodes -> {
                     // Check if we found a barcode and we are not already processing one
                     if (!barcodes.isEmpty()) {
@@ -183,7 +190,15 @@ public class QrScannerFragment extends Fragment {
                         viewModel.processScannedContent(barcode.getRawValue());
                     }
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> Log.e("QrScannerFragment", "Barcode scanning failed", e))
+                /**
+                 * Closes the image proxy when the task completes.
+                 * @param task The completed task.
+                 */
                 .addOnCompleteListener(task -> imageProxy.close());
     }
 

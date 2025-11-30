@@ -22,11 +22,24 @@ public class AdminProfilesViewModel extends ViewModel {
     private final MutableLiveData<List<User>> _profiles = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
+    /**
+     * Sets repository used in object creation
+     * @param repo repository to use
+     */
     public AdminProfilesViewModel(IAdminProfilesRepository repo) {
         this.repo = repo;
     }
 
+    /**
+     * Gets profiles of users
+     * @return list of users
+     */
     public LiveData<List<User>> getProfiles() { return _profiles; }
+
+    /**
+     * Gets message posted
+     * @return message
+     */
     public LiveData<String> getMessage() { return _message; }
 
     /**
@@ -35,11 +48,19 @@ public class AdminProfilesViewModel extends ViewModel {
      */
     public void fetchProfiles() {
         repo.getAllProfiles(new IAdminProfilesRepository.ProfilesCallback() {
+            /**
+             * Posts users to the profiles list
+             * @param users users shown in profiles
+             */
             @Override
             public void onSuccess(List<User> users) {
                 _profiles.postValue(users);
             }
 
+            /**
+             * Posts exception to message
+             * @param e exception thrown
+             */
             @Override
             public void onFailure(Exception e) {
                 _message.postValue("Failed to load profiles");

@@ -46,19 +46,49 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
-    // The ViewModel will observe these public, immutable LiveData objects
+    /**
+
+     Returns a LiveData object holding the list of events for the current user.
+     The UI can observe this to get real-time updates.
+     @return LiveData list of Events.
+     */
     @Override
     public LiveData<List<Event>> getUserEvents() {
         return _events;
     }
+    /**
+
+     Returns a LiveData object holding a specific event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Event> getUserEvent() {
         return _event;
     }
+    /**
+
+     Returns a LiveData object holding the count of the number of entrants in the waiting list of a
+     specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
+    /**
+
+     Returns a LiveData object holding the count of the number of the number of spaces available of
+     a specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
+    /**
+
+     Returns a LiveData object holding the current loading state (true if loading, false otherwise).
+     @return LiveData Boolean representing the loading state.
+     */
     @Override
     public LiveData<String> getOrganizerName() { return _organizerName; }
 
@@ -66,11 +96,18 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
+    /**
+     Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     @return LiveData String containing an message.
+     */
     @Override
     public LiveData<String> getMessage() {
         return _userMessage;
     }
 
+    /**
+     Triggers the process of fetching events from the data source for the currently logged-in user.
+     */
     @Override
     public void fetchUserEvents() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -88,6 +125,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 .whereEqualTo("organizerId", userId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
+                /**
+                 * Adds organiser events to list and posts to mutable live data
+                 * @param task contains result of query
+                 */
                 .addOnCompleteListener(task -> {
                     _isLoading.setValue(false);
                     if (task.isSuccessful()) {
@@ -106,6 +147,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
+    /**
+     * Fetches an specified event and its entrants.
+     * @param eventId The unique identifier of the event to load.
+     */
     @Override
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
@@ -157,6 +202,10 @@ public class EventRepositoryImpl implements IEventRepository {
             });
     }
 
+    /**
+     * Fetches entrant counts of an event
+     * @param eventId event to get counts for
+     */
     private void fetchEntrantsCountsTask(String eventId) {
         FireStoreUtilities.fillEntrantMetrics(
                 db,
@@ -168,16 +217,35 @@ public class EventRepositoryImpl implements IEventRepository {
         );
     }
 
+    /**
+     * Updates an attribute of an entrant of an event
+     * @param eventId event to access its entrants
+     * @param entrantId entrant's ID in db
+     * @param fieldName attribute of entrants to modify
+     * @param newValue new value to set
+     */
     @Override
     public Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue) {
         DocumentReference entrantRef = db.collection("events").document(eventId).collection("entrants").document(entrantId);
         return entrantRef.update(fieldName, newValue)
+                /**
+                 * Logs update success
+                 * @param query unusable data
+                 */
                 .addOnSuccessListener(query -> {
                     _userMessage.postValue("Entrant updated successfully");
                 })
+                /**
+                 * Logs failure
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> _userMessage.postValue("Error updating entrant"));
     }
 
+    /**
+     * Creates a new event in Firebase
+     * The result (success or failure) will be posted to the message LiveData
+     */
     @Override
     public void createEvent(Event event) {
         _isLoading.setValue(true);
@@ -190,6 +258,10 @@ public class EventRepositoryImpl implements IEventRepository {
         }
         String userId = currentUser.getUid();
         db.collection("users").document(userId).get()
+                /**
+                 * Sets event's organizer and saves event to db
+                 * @param documentSnapshot contains user
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     String organizerName = "Unknown Organizer";
                     if (documentSnapshot != null && documentSnapshot.exists()) {
@@ -202,17 +274,29 @@ public class EventRepositoryImpl implements IEventRepository {
 
                     // Step 3: Add the fully formed event to the "events" collection.
                     db.collection("events").add(event)
+                            /**
+                             * Logs save success
+                             * @param documentReference contains reference to doc saved
+                             */
                             .addOnSuccessListener(documentReference -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Event created successfully!");
                                 Log.d(TAG, "Event created with ID: " + documentReference.getId());
                             })
+                            /**
+                             * Logs exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Error: Could not save event.");
                                 Log.e(TAG, "Error creating event", e);
                             });
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     // This listener catches failures in fetching the user's name.
                     _isLoading.setValue(false);
