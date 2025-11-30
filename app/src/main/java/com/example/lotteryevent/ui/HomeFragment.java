@@ -117,7 +117,7 @@ public class HomeFragment extends Fragment {
 
         // Setup Toolbar title and menu
         if (getActivity() instanceof AppCompatActivity) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Your Events");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("My Events");
         }
 
         // Setup main UI components

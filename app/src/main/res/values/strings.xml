@@ -133,8 +133,15 @@
     <string name="mark_all_notifs_as_seen">Mark All As Seen</string>
     <string name="user_not_found">User not found</string>
     <string name="phone_number">Phone Number</string>
-    <string name="loading">loading...</string>
+    <string name="loading">loading…</string>
     <string name="email">Email</string>
     <string name="email_icon">Email Icon</string>
     <string name="phone_icon">Phone Icon</string>
+    <string name="waiting_list_label">Waiting List Count</string>
+    <string name="spots_available_label">Available Spots</string>
+    <string name="select_participants_label">Number of Participants to Draw</string>
+    <string name="select_participants_hint">Enter the number of participants</string>
+    <string name="cancel">Cancel</string>
+    <string name="draw_successful">Draw Successful!</string>
+    <string name="users_selected_label">Participants Selected</string>
 </resources>
