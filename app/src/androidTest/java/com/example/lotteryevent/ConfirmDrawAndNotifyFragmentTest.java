@@ -87,12 +87,12 @@ public class ConfirmDrawAndNotifyFragmentTest {
 
         // Assert:
         // 1. The list titles are displayed.
-        onView(withText(containsString("Draw Successful!"))).check(matches(isDisplayed()));
-        onView(withText(containsString("Waiting List:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Draw Successful"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Waiting List Count"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("2")));
-        onView(withText(containsString("Spots Available:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Available Spots"))).check(matches(isDisplayed()));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
-        onView(withText(containsString("Users Selected:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Participants Selected"))).check(matches(isDisplayed()));
         onView(withId(R.id.selected_users_count)).check(matches(withText("0")));
 
         // 2. The correct button is visible.
@@ -136,11 +136,11 @@ public class ConfirmDrawAndNotifyFragmentTest {
 
         // Assert:
         // 1. The list titles are displayed.
-        onView(withText(containsString("Waiting List:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Waiting List Count"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
-        onView(withText(containsString("Spots Available:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Available Spots"))).check(matches(isDisplayed()));
         onView(withId(R.id.available_space_count)).check(matches(withText("0")));
-        onView(withText(containsString("Users Selected:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Participants Selected"))).check(matches(isDisplayed()));
         onView(withId(R.id.selected_users_count)).check(matches(withText("2")));
     }
 
@@ -182,11 +182,11 @@ public class ConfirmDrawAndNotifyFragmentTest {
 
         // Assert:
         // 1. The list titles are displayed.
-        onView(withText(containsString("Waiting List:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Waiting List Count"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("1")));
-        onView(withText(containsString("Spots Available:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Available Spots"))).check(matches(isDisplayed()));
         onView(withId(R.id.available_space_count)).check(matches(withText("1")));
-        onView(withText(containsString("Users Selected:"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Participants Selected"))).check(matches(isDisplayed()));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
     }
 }

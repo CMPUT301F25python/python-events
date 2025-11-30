@@ -152,7 +152,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         }
 
         // check changes screen to the confirmation page
-        onView(withText(containsString("Confirm Draw and Notify"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
@@ -186,7 +186,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         }
 
         // checks screen changes to confirmation screen
-        onView(withText(containsString("Confirm Draw and Notify"))).check(matches(isDisplayed()));
+        onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
