@@ -45,28 +45,65 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
-    // The ViewModel will observe these public, immutable LiveData objects
+    /**
+
+     Returns a LiveData object holding the list of events for the current user.
+     The UI can observe this to get real-time updates.
+     @return LiveData list of Events.
+     */
     @Override
     public LiveData<List<Event>> getUserEvents() {
         return _events;
     }
+    /**
+
+     Returns a LiveData object holding a specific event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Event> getUserEvent() {
         return _event;
     }
+    /**
+
+     Returns a LiveData object holding the count of the number of entrants in the waiting list of a
+     specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
+    /**
+
+     Returns a LiveData object holding the count of the number of the number of spaces available of
+     a specified event which is specified through calling fetchEventAndEntrants().
+     The UI can observe this to get real-time updates.
+     @return LiveData Event.
+     */
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
+    /**
+
+     Returns a LiveData object holding the current loading state (true if loading, false otherwise).
+     @return LiveData Boolean representing the loading state.
+     */
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
+    /**
+     Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     @return LiveData String containing an message.
+     */
     @Override
     public LiveData<String> getMessage() {
         return _userMessage;
     }
 
+    /**
+     Triggers the process of fetching events from the data source for the currently logged-in user.
+     */
     @Override
     public void fetchUserEvents() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -106,6 +143,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
+    /**
+     * Fetches an specified event and its entrants.
+     * @param eventId The unique identifier of the event to load.
+     */
     @Override
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
@@ -152,6 +193,13 @@ public class EventRepositoryImpl implements IEventRepository {
         );
     }
 
+    /**
+     * Updates an attribute of an entrant of an event
+     * @param eventId event to access its entrants
+     * @param entrantId entrant's ID in db
+     * @param fieldName attribute of entrants to modify
+     * @param newValue new value to set
+     */
     @Override
     public Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue) {
         DocumentReference entrantRef = db.collection("events").document(eventId).collection("entrants").document(entrantId);
@@ -170,6 +218,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 .addOnFailureListener(e -> _userMessage.postValue("Error updating entrant"));
     }
 
+    /**
+     * Creates a new event in Firebase
+     * The result (success or failure) will be posted to the message LiveData
+     */
     @Override
     public void createEvent(Event event) {
         _isLoading.setValue(true);

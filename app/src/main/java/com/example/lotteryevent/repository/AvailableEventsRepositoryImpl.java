@@ -16,6 +16,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class implements IAvailableEventsRepository.
+ * This class gets all available events in the db.
+ */
 public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository {
     private static final String TAG = "AvailableEventRepository";
 

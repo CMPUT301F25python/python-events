@@ -55,37 +55,81 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     private final MutableLiveData<String> _newChosenEntrants = new MutableLiveData<>();
     private final MutableLiveData<String> _newUnchosenEntrants = new MutableLiveData<>();
 
+    /**
+     * Assigns context on instance creation
+     * @param context fragment context
+     */
     public RunDrawRepositoryImpl(Context context) {
         this.context = context;
     }
 
+    /**
+     * LiveData for number of entrants currently on waitling list
+     * @return count
+     */
     @Override
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
 
+    /**
+     * LiveData for nubmer of available spaces left for event
+     * @return count
+     */
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
 
+    /**
+     * LiveData for number of entrants with status "invited"
+     * @return count
+     */
     @Override
     public LiveData<Integer> getSelectedCount() { return _selectedCount; }
 
+    /**
+     * LiveData to verify firestore operation running
+     * @return loading boolean
+     */
     @Override
     public LiveData<Boolean> isLoading() { return _isLoading; }
 
+    /**
+     * LiveData containing toast messages for user
+     * @return message
+     */
     @Override
     public LiveData<String> getMessage() { return _message; }
 
+    /**
+     * LiveData indicating draw completion
+     * @return success boolean
+     */
     @Override
     public LiveData<Boolean> getDrawSuccess() { return _drawSuccess; }
 
+    /**
+     * LiveData indicating cancel lottery completion
+     * @return cancel success
+     */
     @Override
     public LiveData<Boolean> getCancelSuccess() { return _cancelSuccess; }
 
+    /**
+     * LiveData for old entrant statuses
+     * @return statuses
+     */
     @Override
     public LiveData<String> getOldEntrantsStatus() { return _oldEntrantsStatus; }
 
+    /**
+     * LiveData of new chosen entrants
+     * @return chosen entrants
+     */
     @Override
     public LiveData<String> getNewChosenEntrants() { return _newChosenEntrants; }
 
+    /**
+     * LiveData of new unchosen entrants
+     * @return unchosen entrants
+     */
     @Override
     public LiveData<String> getNewUnchosenEntrants() { return _newUnchosenEntrants; }
 

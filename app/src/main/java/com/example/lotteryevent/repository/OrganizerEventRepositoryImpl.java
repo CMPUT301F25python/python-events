@@ -18,6 +18,11 @@ import com.google.firebase.firestore.Query;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Implements IOrganizerEventRepository
+ * Allows for the fetching of event details and their entrants. It allows for event poster upload
+ * and finalizing an event
+ */
 public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     private static final String TAG = "OrganizerEventRepo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -225,6 +230,11 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
         });
     }
 
+    /**
+     * Updates the poster image (Base64) for the specified event.
+     * @param eventId The ID of the event to update.
+     * @param posterImageUrl The Base64-encoded poster image data.
+     */
     @Override
     public void updateEventPoster(String eventId, String posterImageUrl) {
         if (eventId == null || eventId.isEmpty()) {

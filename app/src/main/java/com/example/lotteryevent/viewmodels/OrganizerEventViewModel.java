@@ -50,12 +50,42 @@ public class OrganizerEventViewModel extends ViewModel {
     private final MutableLiveData<String> _csvContent = new MutableLiveData<>();
 
     // --- Exposed LiveData ---
+
+    /**
+     * Returns LiveData event for the organizer
+     * @return event
+     */
     public LiveData<Event> getEvent() { return event; }
+
+    /**
+     * Returns LiveData boolean of whether run draw button is enabled
+     * @return draw button boolean
+     */
     public LiveData<Boolean> isRunDrawButtonEnabled() { return isRunDrawButtonEnabled; }
+    /**
+     * Returns LiveData event for loading
+     * @return loading boolean
+     */
     public LiveData<Boolean> isLoading() { return isLoading; }
+    /**
+     * Returns LiveData event for message
+     * @return message
+     */
     public LiveData<String> getMessage() { return message; }
+    /**
+     * Returns LiveData UIState
+     * @return UIState
+     */
     public LiveData<UiState> getUiState() { return _uiState; }
+    /**
+     * Returns LiveData bitmap for QR code
+     * @return bitmap
+     */
     public LiveData<Bitmap> getQrCodeBitmap() { return _qrCodeBitmap; }
+    /**
+     * Returns LiveData CSV content
+     * @return CSV string content
+     */
     public LiveData<String> getCsvContent() { return _csvContent; }
 
 

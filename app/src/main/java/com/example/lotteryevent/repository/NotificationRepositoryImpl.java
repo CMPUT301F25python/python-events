@@ -17,6 +17,10 @@ import com.google.firebase.firestore.Query;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implements INotificationRepository
+ * Allows for marking notifs as seen and detaching notif listener
+ */
 public class NotificationRepositoryImpl implements INotificationRepository {
     private static final String TAG = "NotificationRepository";
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
@@ -29,25 +33,41 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     private ListenerRegistration listenerRegistration; // To manage the real-time listener
 
 
+    /**
+     * attaches listener on instance creation
+     * @param context context of fragment
+     */
     public NotificationRepositoryImpl(Context context) {
         attachListener();
     }
 
+    /**
+     * Returns a LiveData list of notifications for the current user, updated in real-time.
+     */
     @Override
     public LiveData<List<Notification>> getNotifications() {
         return _notifications;
     }
 
+    /**
+     * Returns the current loading state.
+     */
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
 
+    /**
+     * Returns any user-facing messages (errors, success confirmations).
+     */
     @Override
     public LiveData<String> getMessage() {
         return _message;
     }
 
+    /**
+     * Attaches listener to get notifications
+     */
     private void attachListener() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
@@ -83,6 +103,11 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                 });
     }
 
+    /**
+     * Marks a specific notification as 'seen' in the database.
+     * @param notificationId The ID of the notification to update.
+     * @param notificationCustomManager notification custom manager used to remove notif banners
+     */
     @Override
     public void markNotificationAsSeen(String notificationId, NotificationCustomManager notificationCustomManager) {
         if (notificationId == null || notificationId.isEmpty()) return;
@@ -156,6 +181,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                 });
     }
 
+    /**
+     * Detaches the real-time Firestore listener to prevent memory leaks.
+     * This must be called when the data is no longer needed.
+     */
     @Override
     public void detachListener() {
         // This is crucial to prevent memory leaks and stop listening when the view is destroyed.

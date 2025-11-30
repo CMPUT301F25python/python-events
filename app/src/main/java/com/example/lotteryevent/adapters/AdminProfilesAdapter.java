@@ -35,10 +35,19 @@ public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdap
 
     private final OnItemClickListener listener;
     private List<User> _profileList = new ArrayList<>();
+
+    /**
+     * Adds listener to instance
+     * @param listener listener to add
+     */
     public AdminProfilesAdapter(OnItemClickListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * sets profile list and notify of update
+     * @param list profile list
+     */
     public void setProfiles(List<User> list) {
         this._profileList = list;
         notifyDataSetChanged();

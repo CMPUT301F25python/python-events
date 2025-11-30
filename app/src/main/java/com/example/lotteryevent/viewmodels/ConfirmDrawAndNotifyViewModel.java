@@ -41,10 +41,18 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     public LiveData<String> waitingListCount = _waitingListCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
 
+    /**
+     * Gets whether loading status is active
+     * @return loading boolean
+     */
     public LiveData<Boolean> isLoading() {
         return repository.isLoading();
     }
 
+    /**
+     * Gets posted message from repo
+     * @return message
+     */
     public LiveData<String> getMessage() {
         return repository.getMessage();
     }

@@ -18,6 +18,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Implements IUserRepository.
+ * Allows for updating, deleting profile and updating notif preferences
+ */
 public class UserRepositoryImpl implements IUserRepository {
 
     private static final String TAG = "UserRepository";
@@ -98,19 +102,36 @@ public class UserRepositoryImpl implements IUserRepository {
         }
     }
 
+    /**
+
+     Returns a LiveData object holding the current loading state (true if loading, false otherwise).
+     @return LiveData Boolean representing the loading state.
+     */
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
     }
 
+    /**
+     * Returns LiveData of notif preferences
+     * @return boolean of notif preference
+     */
     @Override
     public LiveData<Boolean> getNotifPreference() { return _notifPreference; }
 
+    /**
+     Returns a LiveData object holding any messages (success or error) that occur during data fetching.
+     @return LiveData String containing an message.
+     */
     @Override
     public LiveData<String> getMessage() {
         return _userMessage;
     }
 
+    /**
+     * Returns LiveData of current user
+     * @return User
+     */
     @Override
     public LiveData<User> getCurrentUser() {
         return _currentUser;

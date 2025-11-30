@@ -40,10 +40,18 @@ public class EntrantListViewModel extends ViewModel {
         this.entrants = entrantListRepo.fetchEntrantsByStatus(eventId, status);
     }
 
+    /**
+     * Get a list of entrants for an event
+     * @return list of entrants
+     */
     public LiveData<List<Entrant>> getEntrants() {
         return entrants;
     }
 
+    /**
+     * Get status of an entrant with the first letter capitalized
+     * @return status
+     */
     public String getCapitalizedStatus() {
         if (status == null || status.isEmpty()) return "";
         return status.substring(0, 1).toUpperCase() + status.substring(1);

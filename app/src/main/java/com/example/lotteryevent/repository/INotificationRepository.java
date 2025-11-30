@@ -6,6 +6,9 @@ import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
 import java.util.List;
 
+/**
+ * Interface for marking notifs as seen and detaching notif listener
+ */
 public interface INotificationRepository {
 
     /**

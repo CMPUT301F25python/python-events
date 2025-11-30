@@ -39,13 +39,21 @@ public class AvailableEventsFragment extends Fragment {
     private String currentKeyword = "";
     private boolean filterAvailableToday = false;
 
+    /**
+     * Default constructor for production use by the Android Framework.
+     */
     public AvailableEventsFragment() { }
 
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     * @param viewModelFactory The factory to use for creating the ViewModel.
+     */
     public AvailableEventsFragment(ViewModelProvider.Factory viewModelFactory) {
         this.viewModelFactory = viewModelFactory;
     }
 
     /**
+     * Called by the system to have the fragment instantiate its user interface view.
      * @param inflater           The LayoutInflater object that can be used to inflate
      *                           any views in the fragment,
      * @param container          If non-null, this is the parent view that the fragment's
@@ -71,6 +79,9 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      *                           from a previous saved state as given here.

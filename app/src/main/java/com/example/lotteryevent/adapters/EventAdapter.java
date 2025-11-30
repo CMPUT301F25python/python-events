@@ -31,6 +31,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     private final int rowLayoutResId;
 
+    /**
+     * Sets adapter instance's row layout res ID
+     * @param rowLayoutResId ID to set
+     */
     public EventAdapter(@LayoutRes int rowLayoutResId) {
         this.rowLayoutResId = rowLayoutResId;
     }

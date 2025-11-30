@@ -22,11 +22,24 @@ public class AdminProfilesViewModel extends ViewModel {
     private final MutableLiveData<List<User>> _profiles = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
+    /**
+     * Sets repository used in object creation
+     * @param repo repository to use
+     */
     public AdminProfilesViewModel(IAdminProfilesRepository repo) {
         this.repo = repo;
     }
 
+    /**
+     * Gets profiles of users
+     * @return list of users
+     */
     public LiveData<List<User>> getProfiles() { return _profiles; }
+
+    /**
+     * Gets message posted
+     * @return message
+     */
     public LiveData<String> getMessage() { return _message; }
 
     /**

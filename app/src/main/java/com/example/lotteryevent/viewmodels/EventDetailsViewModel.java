@@ -47,6 +47,11 @@ public class EventDetailsViewModel extends ViewModel {
     private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<BottomUiState> bottomUiState = _bottomUiState;
 
+    /**
+     * Sets repositories and adds sources to live data for updates when instance is created
+     * @param repository event details repository
+     * @param userRepo admin user profile repository
+     */
     public EventDetailsViewModel(IEventDetailsRepository repository, IAdminUserProfileRepository userRepo) {
         this.repository = repository;
         this.userRepo = userRepo;
@@ -85,6 +90,7 @@ public class EventDetailsViewModel extends ViewModel {
 
     /**
      * The entry point for the Fragment to start loading data.
+     * @param eventId event's ID to load for
      */
     public void loadEventDetails(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
@@ -277,6 +283,8 @@ public class EventDetailsViewModel extends ViewModel {
     // --- Location Methods ---
     /**
      * Called by the Fragment after it successfully retrieves the location.
+     * @param latitude latitude coord
+     * @param longitude longitude coord
      */
     public void onLocationRetrieved(double latitude, double longitude) {
         _requestLocationPermission.setValue(false);

@@ -7,6 +7,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class implemetns IAdminProfilesRepository
+ * This class for the retrieval of all profiles in the db for the admin to view
+ */
 public class AdminProfilesRepositoryImpl implements IAdminProfilesRepository {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
