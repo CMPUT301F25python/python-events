@@ -54,11 +54,29 @@ public class NotificationsFragment extends Fragment {
         this.viewModelFactory = factory;
     }
 
+    /**
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_notifications, container, false);
     }
 
+    /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -117,10 +135,18 @@ public class NotificationsFragment extends Fragment {
         adapter = new NotificationAdapter(R.layout.item_notification);
         recyclerView.setAdapter(adapter);
 
+        /**
+         * Marks all messages as seen and clears notification banners
+         * @param v view clicked
+         */
         markSeenBtn.setOnClickListener(v -> {
             viewModel.onMarkAllSeenClicked(notificationCustomManager);
             notificationCustomManager.clearNotifications();
         });
+        /**
+         * On notif click, marks it as seen and if lottery win, navigates to event
+         * @param notification notif clicked
+         */
         adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification, notificationCustomManager));
     }
 
@@ -128,6 +154,10 @@ public class NotificationsFragment extends Fragment {
      * Sets up observers on the ViewModel's LiveData to react to data and state changes.
      */
     private void setupObservers(@NonNull View view, String eventIdFilter) {
+        /**
+         * Observe the list of notifications and submit it to the adapter when it changes.
+         * @param notifications list of notifs
+         */
         if(eventIdFilter != null) {
             viewModel.loadNotificationsForEvent(eventIdFilter);
 
@@ -143,7 +173,6 @@ public class NotificationsFragment extends Fragment {
                 }
             });
         } else {
-            // Observe the list of notifications and submit it to the adapter when it changes.
             viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
                 if (notifications != null && !notifications.isEmpty()) {
                     adapter.setNotifications(notifications);
@@ -156,14 +185,20 @@ public class NotificationsFragment extends Fragment {
             });
         }
 
-        // Observe for user-facing messages (errors, etc.) and show them in a Toast.
+        /**
+         * Observe for user-facing messages (errors, etc.) and show them in a Toast.
+         * @param message message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Observe the navigation event.
+        /**
+         * Observe the navigation event for navigation
+         * @param eventId event to go to
+         */
         viewModel.getNavigateToEventDetails().observe(getViewLifecycleOwner(), eventId -> {
             if (eventId != null) {
                 // An eventId was posted, so we need to navigate.

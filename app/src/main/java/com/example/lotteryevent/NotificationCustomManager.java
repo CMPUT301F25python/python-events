@@ -122,7 +122,15 @@ public class NotificationCustomManager {
 
         // adds notif doc to the user's notif collection
         return db.collection("notifications").add(notification)
+                /**
+                 * Logs notif added to db
+                 * @param v document reference to the addition
+                 */
                 .addOnSuccessListener(v -> Log.d(TAG, "Notification added for user ID " + uid + " with notification ID " + v.getId()))
+                /**
+                 * Logs of exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Failed to add notification for user " + uid, e);
                     Toast.makeText(myContext, "Failed to send notification to user " + uid, Toast.LENGTH_SHORT).show();
@@ -185,6 +193,11 @@ public class NotificationCustomManager {
      */
     public void checkAndDisplayUnreadNotifications(String uid) {
         db.collection("users").document(uid).get()
+                /**
+                 * If opted in for notifications, gets unseen notifs and if only one, creates its banner,
+                 * if multiple, creates an X number of notifs missed banner
+                 * @param doc contains user
+                 */
             .addOnSuccessListener(doc -> {
                 Boolean optOut = doc.getBoolean("optOutNotifications");
                 if (optOut != null && optOut) {
@@ -194,6 +207,11 @@ public class NotificationCustomManager {
                 db.collection("notifications")
                     .whereEqualTo("recipientId", uid)
                     .whereEqualTo("seen", false).get()
+                        /**
+                         * If only one unseen notif, creates its banner,
+                         * if multiple, creates an X number of notifs missed banner
+                         * @param notifs contains unseen notifs
+                         */
                     .addOnSuccessListener(notifs -> {
                         // One notif, can notify with its contents
                         int size = notifs.size();
@@ -218,11 +236,19 @@ public class NotificationCustomManager {
                             generateNotification(title, message, null, null, null);
                         }
                     })
+                    /**
+                     * Logs of exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         Log.w(TAG, "Failed to get notifications for user " + uid, e);
                         Toast.makeText(myContext, "Failed to get notification for user", Toast.LENGTH_SHORT).show();
                     });
             })
+            /**
+             * Logs of exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 Log.e(TAG, "Failed to get user information for user ID " + uid + " to determine whether to send notifications: ", e);
             });
@@ -240,7 +266,15 @@ public class NotificationCustomManager {
         Log.d(TAG, "Attaching listener for uid=" + uid + " instance=" + this.hashCode());
         AtomicBoolean isFirstListener = new AtomicBoolean(true);
         listener = db.collection("notifications").whereEqualTo("recipientId", uid).whereEqualTo("seen", false)
+                /**
+                 * Listener for notifs that are for the logged in user and are unseen, generates banner for them
+                 */
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    /**
+                     * Generates banner for unseen notifs if its not the first listener retrieval.
+                     * @param value The value of the event. {@code null} if there was an error.
+                     * @param e The error if there was error. {@code null} otherwise.
+                     */
                     @Override
                     public void onEvent(@Nullable QuerySnapshot value,
                                         @Nullable FirebaseFirestoreException e) {
@@ -258,6 +292,10 @@ public class NotificationCustomManager {
                         }
 
                         db.collection("users").document(uid).get()
+                            /**
+                             * If opted in for notifs, generates notif banner
+                             * @param doc contains user
+                             */
                             .addOnSuccessListener(doc -> {
                                 Boolean optOut = doc.getBoolean("optOutNotifications");
                                 if (optOut == null || optOut) {
@@ -281,6 +319,10 @@ public class NotificationCustomManager {
                                     }
                                 }
                             })
+                            /**
+                             * Logs exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e2 -> {
                                 Log.e(TAG, "Failed to get user information for user ID " + uid + " to determine whether to send notifications: ", e2);
                             });
@@ -306,9 +348,17 @@ public class NotificationCustomManager {
         db.collection("notifications")
             .document(notificationId)
             .update("seen", true)
+            /**
+             * Logs successful update
+             * @param documentReference unusable data
+             */
             .addOnSuccessListener(documentReference -> {
                 Log.d("FIRESTORE_SUCCESS", "Notification updated with ID: " + notificationId);
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 Log.w("FIRESTORE_ERROR", "Error updating document", e);
                 Toast.makeText(myContext, "Error updating notification", Toast.LENGTH_LONG).show();

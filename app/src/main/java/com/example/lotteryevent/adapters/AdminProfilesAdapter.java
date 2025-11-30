@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lotteryevent.R;
+import com.example.lotteryevent.data.AdminImageItem;
 import com.example.lotteryevent.data.User;
 
 import java.util.ArrayList;
@@ -21,16 +22,32 @@ import java.util.List;
  */
 public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdapter.ProfileViewHolder> {
 
+    /**
+     * Interface definition for a callback to be invoked when a profile is clicked.
+     */
     public interface OnItemClickListener {
+        /**
+         * Called when an item has been clicked.
+         * @param user The {@link User} that was clicked.
+         */
         void onClick(User user);
     }
 
     private final OnItemClickListener listener;
     private List<User> _profileList = new ArrayList<>();
+
+    /**
+     * Adds listener to instance
+     * @param listener listener to add
+     */
     public AdminProfilesAdapter(OnItemClickListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * sets profile list and notify of update
+     * @param list profile list
+     */
     public void setProfiles(List<User> list) {
         this._profileList = list;
         notifyDataSetChanged();
@@ -77,11 +94,20 @@ public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdap
 
         private final TextView name;
 
+        /**
+         * gets name of the view holder
+         * @param itemView item being shown
+         */
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.entrant_name_text_view);
         }
 
+        /**
+         * Displays name of the user being shown
+         * @param user user being shown in holder
+         * @param listener sets behaviour on click
+         */
         public void bind(User user, OnItemClickListener listener) {
             String displayName = user.getName();
 
@@ -90,6 +116,10 @@ public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdap
             }
 
             name.setText(displayName);
+            /**
+             * Sets behaviour on item click
+             * @param v view clickec
+             */
             itemView.setOnClickListener(v -> listener.onClick(user));
         }
     }
