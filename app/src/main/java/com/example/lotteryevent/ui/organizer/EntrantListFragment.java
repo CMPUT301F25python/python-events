@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -44,6 +45,7 @@ public class EntrantListFragment extends Fragment {
     private ProgressBar progressBar;
     private Button sendNotificationButton;
     private ChipGroup statusChipGroup;
+    private TextView entrantsCountText;
 
     // --- Data ---
     private String eventId;
@@ -142,6 +144,7 @@ public class EntrantListFragment extends Fragment {
         progressBar = view.findViewById(R.id.loading_progress_bar);
         sendNotificationButton = view.findViewById(R.id.send_notification_button);
         statusChipGroup = view.findViewById(R.id.status_chip_group);
+        entrantsCountText = view.findViewById(R.id.entrants_count_text);
     }
 
 
@@ -205,6 +208,10 @@ public class EntrantListFragment extends Fragment {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
+                int count = list.size();
+                String text = count + (count == 1 ? " entrant" : " entrants");
+                entrantsCountText.setText(text);
+
             }
         });
         // observe user message LiveData and display it as a Toast
