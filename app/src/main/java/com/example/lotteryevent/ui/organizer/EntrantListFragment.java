@@ -131,7 +131,6 @@ public class EntrantListFragment extends Fragment {
         // --- The rest of the method is the same ---
         setupFilterChips();
         setupObservers();
-        sendNotificationButton.setOnClickListener(v -> showNotificationDialog());
     }
 
     /**
@@ -214,6 +213,13 @@ public class EntrantListFragment extends Fragment {
                 String text = count + (count == 1 ? " entrant" : " entrants");
                 entrantsCountText.setText(text);
 
+                sendNotificationButton.setOnClickListener(v -> {
+                    if (list.isEmpty()) {
+                        Toast.makeText(getContext(), "No entrants to notify.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showNotificationDialog();
+                    }
+                });
             }
         });
         // observe user message LiveData and display it as a Toast

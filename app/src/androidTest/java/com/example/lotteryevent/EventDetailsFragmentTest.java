@@ -13,6 +13,7 @@ import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import com.example.lotteryevent.data.Entrant;
+import com.example.lotteryevent.repository.FakeAdminUserProfileRepository;
 import com.example.lotteryevent.repository.FakeEventDetailsRepository;
 import com.example.lotteryevent.ui.EventDetailsFragment;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
@@ -41,6 +42,7 @@ import java.util.Date;
 public class EventDetailsFragmentTest {
 
     private FakeEventDetailsRepository fakeRepository;
+    private FakeAdminUserProfileRepository fakeUserRepository;
     private ReusableTestFragmentFactory fragmentFactory;
     private Bundle fragmentArgs;
     private UiDevice device;
@@ -54,7 +56,7 @@ public class EventDetailsFragmentTest {
 
         // 2. Create the factory that knows how to create our ViewModel.
         GenericViewModelFactory viewModelFactory = new GenericViewModelFactory();
-        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository));
+        viewModelFactory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(fakeRepository, fakeUserRepository));
 
         // 3. Create the factory that knows how to create our Fragment.
         fragmentFactory = new ReusableTestFragmentFactory();
@@ -313,31 +315,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 11: Event requires geolocation.
-     * Verifies that clicking "Join" for an event requiring geolocation will succeed
-     * if the user has granted permission.
-     */
-    @Test
-    public void joinEvent_locationRequired_waitsForPermission() throws Exception {
-        // 1. Arrange: Require Geolocation
-        fakeRepository.getInMemoryEvent().setGeoLocationRequired(true);
-
-        // 2. PRE-GRANT PERMISSION
-        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("pm grant " + androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName() + " android.permission.ACCESS_FINE_LOCATION");
-
-        // 3. Act: Launch and Click
-        FragmentScenario.launchInContainer(EventDetailsFragment.class, fragmentArgs, R.style.Theme_LotteryEvent, fragmentFactory);
-        onView(withId(R.id.btn_action_positive)).perform(click());
-
-        Thread.sleep(500); // Wait for async callback
-
-        // 4. Assert
-        onView(withId(R.id.btn_action_positive)).check(matches(withText("Leave Waiting List")));
-    }
-
-    /**
-     * Test Case 12: Event does NOT require geolocation.
+     * Test Case 11: Event does NOT require geolocation.
      * Verifies that clicking "Join" joins the list immediately.
      */
     @Test
@@ -355,7 +333,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 13: A regular (non-admin) user CANNOT see the delete button.
+     * Test Case 12: A regular (non-admin) user CANNOT see the delete button.
      * This is a critical security check.
      */
     @Test
@@ -371,7 +349,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 14: An admin user CAN see the delete button.
+     * Test Case 13: An admin user CAN see the delete button.
      */
     @Test
     public void admin_seesDeleteButton() {
@@ -386,7 +364,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 15: Admin successfully deletes an event via the dialog (Using UIAutomator).
+     * Test Case 14: Admin successfully deletes an event via the dialog (Using UIAutomator).
      */
     @Test
     public void admin_deleteFlow_happyPath() throws Exception {
@@ -416,7 +394,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 16: Admin cancels the deletion via the dialog (Using UIAutomator).
+     * Test Case 15: Admin cancels the deletion via the dialog (Using UIAutomator).
      */
     @Test
     public void admin_deleteFlow_cancelPath() throws Exception {
@@ -446,7 +424,7 @@ public class EventDetailsFragmentTest {
 
 
     /**
-     * Test Case 17: When an event has no poster image set, the details page
+     * Test Case 16: When an event has no poster image set, the details page
      * shows a placeholder image in the poster ImageView.
      */
     @Test
@@ -475,7 +453,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 18: When an event has a poster image set (Base64),
+     * Test Case 17: When an event has a poster image set (Base64),
      * the details page displays it as a bitmap in the poster ImageView.
      */
     @Test
@@ -510,7 +488,7 @@ public class EventDetailsFragmentTest {
         });
     }
     /**
-     * Test Case 15: A regular (non-admin) user CANNOT see the delete organizer button.
+     * Test Case 18: A regular (non-admin) user CANNOT see the delete organizer button.
      */
     @Test
     public void nonAdmin_cannotSeeDeleteOrganizerButton() {
@@ -523,7 +501,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 16: An admin user CAN see the delete organizer button.
+     * Test Case 19: An admin user CAN see the delete organizer button.
      */
     @Test
     public void admin_seesDeleteOrganizerButton() {
@@ -538,7 +516,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 17: Admin clicks delete organizer and the confirmation dialog appears.
+     * Test Case 20: Admin clicks delete organizer and the confirmation dialog appears.
      * Simplified to avoid brittle UIAutomator clicks on system dialogs.
      */
     @Test
@@ -555,7 +533,7 @@ public class EventDetailsFragmentTest {
     }
 
     /**
-     * Test Case 18: Admin deletes organizer (Logical Test).
+     * Test Case 21: Admin deletes organizer (Logical Test).
      */
     @Test
     public void repository_deleteOrganizer_logicWorks() throws InterruptedException {

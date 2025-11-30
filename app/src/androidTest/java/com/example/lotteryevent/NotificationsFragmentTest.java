@@ -179,7 +179,7 @@ public class NotificationsFragmentTest {
         // --- Arrange ---
         Notification n1 = new Notification();
         n1.setNotificationId("info_1");
-        n1.setType("event_update"); // Different type that implies no navigation
+        n1.setType("lottery_loss"); // Different type that implies no navigation
         n1.setEventName("Waitlist Event");
         n1.setSeen(false);
         n1.setTimestamp(Timestamp.now());
@@ -191,7 +191,7 @@ public class NotificationsFragmentTest {
         launchFragment(null);
 
         // --- Act ---
-        onView(withText(containsString("spot just opened for Waitlist Event"))).perform(click());
+        onView(withText(containsString("You weren't selected"))).perform(click());
 
         // --- Assert ---
         // Destination should remain 'notificationsFragment'

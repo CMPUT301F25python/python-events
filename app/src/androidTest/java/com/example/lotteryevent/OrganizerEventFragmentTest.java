@@ -20,10 +20,13 @@ import org.junit.runner.RunWith;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.RootMatchers.isDialog;
+import static androidx.test.espresso.matcher.ViewMatchers.Visibility.VISIBLE;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
+import static androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
@@ -89,6 +92,7 @@ public class OrganizerEventFragmentTest {
         onView(withId(R.id.organizer_button_container)).check(matches(isDisplayed()));
         onView(withId(R.id.btnRunDraw)).check(matches(isDisplayed()));
         onView(withId(R.id.btnFinalize)).check(matches(isDisplayed()));
+        onView(withId(R.id.organizer_button_container)).check(matches(withEffectiveVisibility(VISIBLE)));
     }
 
     @Test
@@ -131,7 +135,7 @@ public class OrganizerEventFragmentTest {
         launchFragment();
 
         // Act: Click Finalize
-        onView(withId(R.id.btnFinalize)).perform(click());
+        onView(withId(R.id.btnFinalize)).perform(scrollTo(), click());
 
         // Assert: Dialog appears
         onView(withText("Finalize Event")).check(matches(isDisplayed()));
@@ -158,7 +162,7 @@ public class OrganizerEventFragmentTest {
         launchFragment();
 
         // Act
-        onView(withId(R.id.btnFinalize)).perform(click());
+        onView(withId(R.id.btnFinalize)).perform(scrollTo(), click());
         // Click Cancel (Standard Negative Button is android.R.id.button2)
         onView(withId(android.R.id.button2))
                 .inRoot(isDialog())
@@ -201,7 +205,7 @@ public class OrganizerEventFragmentTest {
         launchFragment();
 
         // Act
-        onView(withId(R.id.btnRunDraw)).perform(click());
+        onView(withId(R.id.btnRunDraw)).perform(scrollTo(), click());
 
         // Assert
         assertEquals(R.id.runDrawFragment, navController.getCurrentDestination().getId());
