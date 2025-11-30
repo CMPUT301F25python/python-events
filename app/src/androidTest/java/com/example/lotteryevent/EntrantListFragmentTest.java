@@ -30,12 +30,30 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 
+
+/**
+ * Instrumented UI test suite for {@link com.example.lotteryevent.ui.organizer.EntrantListFragment}.
+ * This class verifies fragment behavior using Espresso, including UI rendering,
+ * LiveData observation, and notification dispatch logic. A
+ * {@link FakeEntrantListRepository} is injected for deterministic and isolated
+ * test scenarios.
+ * <p>Tests are executed using the AndroidJUnit4 runner and utilize
+ * {@link androidx.fragment.app.testing.FragmentScenario} to launch the fragment
+ * in a container.</p>
+ */
 @RunWith(AndroidJUnit4.class)
 public class EntrantListFragmentTest {
 
     private FakeEntrantListRepository fakeRepository;
     private ReusableTestFragmentFactory fragmentFactory;
 
+    /**
+     * Initializes the fake repository, injects it into a ViewModel using a
+     * {@link GenericViewModelFactory}, and registers the fragment with a custom
+     * {@link ReusableTestFragmentFactory}. This setup ensures that each launched
+     * fragment receives controlled test dependencies.
+     * <p>Executed before each test case.</p>
+     */
     @Before
     public void setup() {
         fakeRepository = new FakeEntrantListRepository();
