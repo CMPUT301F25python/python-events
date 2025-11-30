@@ -353,19 +353,22 @@ public class AvailableEventsFragment extends Fragment {
 
         // Dae Range label
         TextView label = new TextView(themed);
-        label.setText("Date Range");
-        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        label.setPadding(0, dp(14), 0, 0);
+        label.setText("Event Start Range (inclusive)");
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        label.setPadding(0, dp(14), 0, 10);
 
         int onSurfaceVariant = MaterialColors.getColor(root, com.google.android.material.R.attr.colorOnSurfaceVariant);
         label.setTextColor(onSurfaceVariant);
 
         root.addView(label);
 
-        // Date range row
-        LinearLayout row = new LinearLayout(themed);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, dp(10), 0, 0);
+        // Date range
+        LinearLayout col = new LinearLayout(themed);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(0, 0, 0, 0);
+
+        LinearLayout.LayoutParams fullWidthLp =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
         LinearLayout.LayoutParams leftLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         leftLp.setMarginEnd(dp(12));
@@ -373,7 +376,8 @@ public class AvailableEventsFragment extends Fragment {
 
         TextInputLayout startLayout = new TextInputLayout(themed);
         startLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        startLayout.setHint("Start Date");
+
+        startLayout.setHint("Earliest Start Date");
         startLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
         startLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
 
@@ -381,10 +385,11 @@ public class AvailableEventsFragment extends Fragment {
         startInput.setFocusable(false);
         startInput.setClickable(true);
         startInput.setCursorVisible(false);
+        startLayout.addView(startInput);
 
         TextInputLayout endLayout = new TextInputLayout(themed);
         endLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        endLayout.setHint("End Date");
+        endLayout.setHint("Latest Start Date");
         endLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
         endLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
 
@@ -392,20 +397,30 @@ public class AvailableEventsFragment extends Fragment {
         endInput.setFocusable(false);
         endInput.setClickable(true);
         endInput.setCursorVisible(false);
-
-        startLayout.addView(startInput);
         endLayout.addView(endInput);
 
-        row.addView(startLayout, leftLp);
-        row.addView(endLayout, rightLp);
-        root.addView(row);
+// Add them stacked (full width)
+        LinearLayout.LayoutParams fullWidth =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        root.addView(startLayout, fullWidth);
+
+// spacer between fields
+        View spacer = new View(themed);
+        root.addView(spacer, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0
+        ));
+
+        root.addView(endLayout, fullWidth);
+
+// Keep existing temp values + initial text
         final Long[] tempStart = new Long[]{filterStartDateMs};
         final Long[] tempEnd = new Long[]{filterEndDateMs};
 
         startInput.setText(formatDay(tempStart[0]));
         endInput.setText(formatDay(tempEnd[0]));
 
+// Hook up pickers (same logic as before)
         Runnable openStart = () -> showDayPickerDialog(
                 tempStart[0], null, null,
                 (s, e) -> {
