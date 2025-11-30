@@ -63,6 +63,19 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        Button markAsSeenBtn = view.findViewById(R.id.mark_as_seen_btn);
+
+        boolean isAdminView = false;
+        if (getArguments() != null) {
+            isAdminView = getArguments().getBoolean("isAdminView", false);
+        }
+
+        if (isAdminView) {
+            markAsSeenBtn.setVisibility(View.GONE);
+        } else {
+            markAsSeenBtn.setVisibility(View.VISIBLE);
+        }
+
         notificationCustomManager = new NotificationCustomManager(requireContext());
 
         noNotification = view.findViewById(R.id.text_no_notifications);
