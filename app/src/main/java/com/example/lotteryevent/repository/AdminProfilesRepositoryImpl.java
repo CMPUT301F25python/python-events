@@ -20,6 +20,11 @@ public class AdminProfilesRepositoryImpl implements IAdminProfilesRepository {
     public void getAllProfiles(ProfilesCallback callback) {
         db.collection("users")
                 .get()
+                /**
+                 * Adds users from the db to a list and calls callback's success
+                 * behaviour with this list
+                 * @param query snapshot containing all documents returned by the Firestore query
+                 */
                 .addOnSuccessListener(query -> {
                     List<User> list = new ArrayList<>();
                     for (DocumentSnapshot doc : query.getDocuments()) {
@@ -30,6 +35,9 @@ public class AdminProfilesRepositoryImpl implements IAdminProfilesRepository {
                     }
                     callback.onSuccess(list);
                 })
+                /**
+                 * Calls the callback's failure behaviour on failure
+                 */
                 .addOnFailureListener(callback::onFailure);
     }
 }

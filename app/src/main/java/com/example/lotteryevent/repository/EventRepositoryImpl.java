@@ -84,6 +84,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 .whereEqualTo("organizerId", userId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
+                /**
+                 * Adds organiser events to list and posts to mutable live data
+                 * @param task contains result of query
+                 */
                 .addOnCompleteListener(task -> {
                     _isLoading.setValue(false);
                     if (task.isSuccessful()) {
@@ -106,6 +110,10 @@ public class EventRepositoryImpl implements IEventRepository {
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
         db.collection("events").document(eventId).get()
+                /**
+                 * Gets event to post to mutable live data and fetches entrant counts for the event
+                 * @param documentSnapshot contains event
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot != null && documentSnapshot.exists()) {
                         Event event = documentSnapshot.toObject(Event.class);
@@ -118,6 +126,10 @@ public class EventRepositoryImpl implements IEventRepository {
                         _userMessage.postValue("Error: Event not found.");
                     }
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     _isLoading.postValue(false);
                     _userMessage.postValue("Error: Failed to load event.");
@@ -125,6 +137,10 @@ public class EventRepositoryImpl implements IEventRepository {
                 });
     }
 
+    /**
+     * Fetches entrant counts of an event
+     * @param eventId event to get counts for
+     */
     private void fetchEntrantsCountsTask(String eventId) {
         FireStoreUtilities.fillEntrantMetrics(
                 db,
@@ -140,9 +156,17 @@ public class EventRepositoryImpl implements IEventRepository {
     public Task<Void> updateEntrantAttribute(String eventId, String entrantId, String fieldName, Object newValue) {
         DocumentReference entrantRef = db.collection("events").document(eventId).collection("entrants").document(entrantId);
         return entrantRef.update(fieldName, newValue)
+                /**
+                 * Logs update success
+                 * @param query unusable data
+                 */
                 .addOnSuccessListener(query -> {
                     _userMessage.postValue("Entrant updated successfully");
                 })
+                /**
+                 * Logs failure
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> _userMessage.postValue("Error updating entrant"));
     }
 
@@ -158,6 +182,10 @@ public class EventRepositoryImpl implements IEventRepository {
         }
         String userId = currentUser.getUid();
         db.collection("users").document(userId).get()
+                /**
+                 * Sets event's organizer and saves event to db
+                 * @param documentSnapshot contains user
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     String organizerName = "Unknown Organizer";
                     if (documentSnapshot != null && documentSnapshot.exists()) {
@@ -170,17 +198,29 @@ public class EventRepositoryImpl implements IEventRepository {
 
                     // Step 3: Add the fully formed event to the "events" collection.
                     db.collection("events").add(event)
+                            /**
+                             * Logs save success
+                             * @param documentReference contains reference to doc saved
+                             */
                             .addOnSuccessListener(documentReference -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Event created successfully!");
                                 Log.d(TAG, "Event created with ID: " + documentReference.getId());
                             })
+                            /**
+                             * Logs exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Error: Could not save event.");
                                 Log.e(TAG, "Error creating event", e);
                             });
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     // This listener catches failures in fetching the user's name.
                     _isLoading.setValue(false);

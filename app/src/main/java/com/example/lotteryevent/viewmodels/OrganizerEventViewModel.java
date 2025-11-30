@@ -84,6 +84,11 @@ public class OrganizerEventViewModel extends ViewModel {
         event = repository.getEvent();
         isRunDrawButtonEnabled = repository.isRunDrawButtonEnabled();
         isLoading = repository.isLoading();
+
+        /**
+         * Sets message based on server message updates (from repository)
+         * @param serverMsg message to set
+         */
         message.addSource(repository.getMessage(), serverMsg -> {
             message.setValue(serverMsg);
         });

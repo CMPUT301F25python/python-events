@@ -122,6 +122,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
 
         db.collection("events").document(eventId).collection("entrants")
             .get()
+            /**
+             * Loads an event's entrants, draws lottery from the waiting entrants, and changes their status to invited
+             * @param entrantsQuery contains entrants of event
+             */
             .addOnSuccessListener(entrantsQuery -> {
                 List<Entrant> entrants = new ArrayList<>();
                 for (DocumentSnapshot d : entrantsQuery.getDocuments()) {
@@ -141,6 +145,10 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                     .collection("entrants")
                     .whereEqualTo("status", "waiting")
                     .get()
+                    /**
+                     * Runs lottery and update status of chosen entrants
+                     * @param query contains waiting entrants
+                     */
                     .addOnSuccessListener(query -> {
 
                         List<String> waitlist = new ArrayList<>();
@@ -183,23 +191,39 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
                         }
 
                         batch.commit()
+                                /**
+                                 * Logs draw success and posts to mutable live data
+                                 * @param unused unusable data
+                                 */
                                 .addOnSuccessListener(unused -> {
                                     _message.postValue("Draw Complete!");
                                     _drawSuccess.postValue(true);
                                     _isLoading.postValue(false);
                                 })
+                                /**
+                                 * Logs exception thrown
+                                 * @param e exception thrown
+                                 */
                                 .addOnFailureListener(e -> {
                                     Log.e(TAG, "Batch update failed", e);
                                     _message.postValue("Error updating user statuses");
                                     _isLoading.postValue(false);
                                 });
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _message.postValue("Error loading waitlist");
                         _isLoading.postValue(false);
                     });
 
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 _message.postValue("Error loading entrants");
                 _isLoading.postValue(false);
@@ -215,6 +239,11 @@ public class RunDrawRepositoryImpl implements IRunDrawRepository{
     public void cancelLottery(String eventId) {
         _isLoading.postValue(true);
 
+        /**
+         * Upon success, logs success and posts to mutable live data
+         * Upon error, logs error and posts to mutable live data
+         * @param err error returned
+         */
         FireStoreUtilities.cancelLottery(
                 db,
                 eventId,

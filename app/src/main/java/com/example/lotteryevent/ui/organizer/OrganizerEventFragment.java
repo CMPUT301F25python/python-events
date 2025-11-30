@@ -152,7 +152,10 @@ public class OrganizerEventFragment extends Fragment {
      * Sets up observers on the ViewModel's LiveData to reactively update the UI.
      */
     private void setupObservers() {
-        // Observer for event details (e.g., event name)
+        /**
+         * Observes event details, displays poster
+         * @param event event to show poster
+         */
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 eventNameLabel.setText(event.getName());
@@ -207,12 +210,18 @@ public class OrganizerEventFragment extends Fragment {
             }
         });
 
-        // Observer to enable/disable the "Run Draw" button based on capacity
+        /**
+         * Observer to enable/disable the "Run Draw" button based on capacity
+         * @param isEnabled boolean for enabling button
+         */
         viewModel.isRunDrawButtonEnabled().observe(getViewLifecycleOwner(), isEnabled -> {
             btnRunDraw.setEnabled(isEnabled);
         });
 
-        // Observer to show the QR code dialog when a bitmap is generated
+        /**
+         * Observer to show the QR code dialog when a bitmap is generated
+         * @param bitmap view of QR code
+         */
         viewModel.getQrCodeBitmap().observe(getViewLifecycleOwner(), bitmap -> {
             if (bitmap != null) {
                 showQrCodeDialog(bitmap);
@@ -220,14 +229,20 @@ public class OrganizerEventFragment extends Fragment {
             }
         });
 
-        // Observer for any messages (e.g., errors) from the ViewModel
+        /**
+         * Observer for any messages (e.g., errors) from the ViewModel
+         * @param message message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Observer for the CSV content to be exported
+        /**
+         * Observer for the CSV content to be exported
+         * @param csvContent content for CSV
+         */
         viewModel.getCsvContent().observe(getViewLifecycleOwner(), csvContent -> {
             if (csvContent != null) {
                 saveCsvToDownloads(csvContent);
@@ -262,6 +277,10 @@ public class OrganizerEventFragment extends Fragment {
     private void setupClickListeners() {
         qrCodeRequest.setOnClickListener(v -> viewModel.generateQrCode(eventId));
         uploadPosterButton.setOnClickListener(v -> openPosterPicker());
+        /**
+         * Navigates to run draw fragment
+         * @param v view clicked
+         */
         btnRunDraw.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("eventId", eventId);
@@ -269,6 +288,10 @@ public class OrganizerEventFragment extends Fragment {
                     .navigate(R.id.action_organizerEventPageFragment_to_runDrawFragment, bundle);
         });
 
+        /**
+         * Navigates to the appropriate entrant list fragment
+         * @param v view clicked
+         */
         View.OnClickListener entrantListNavListener = v -> {
             String status;
             int id = v.getId();
@@ -299,6 +322,10 @@ public class OrganizerEventFragment extends Fragment {
         btnInvitedParticipants.setOnClickListener(entrantListNavListener);
         btnCancelledParticipants.setOnClickListener(entrantListNavListener);
 
+        /**
+         * Makes toast that the functionality hasn't been implemented yet
+         * @param view clicked
+         */
         View.OnClickListener notImplementedListener = v -> {
             Button b = (Button) v;
             Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
@@ -539,10 +566,19 @@ public class OrganizerEventFragment extends Fragment {
                 .setMessage("Are you sure you want to finalize this event? \n\n" +
                         "This will prevent further entrants from joining and invited entrants from accepting their invitations. " +
                         "This action cannot be undone.")
+                /**
+                 * Call the ViewModel to execute the logic
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Finalize", (dialog, which) -> {
-                    // Call the ViewModel to execute the logic
                     viewModel.finalizeEvent(eventId);
                 })
+                /**
+                 * Dismisses dialog
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     dialog.dismiss();
                 })
@@ -568,6 +604,10 @@ public class OrganizerEventFragment extends Fragment {
         builder.setView(dialogView);
         AlertDialog dialog = builder.create();
 
+        /**
+         * Saves bitmap to device's images and makes toast
+         * @param v view clicked
+         */
         saveButton.setOnClickListener(v -> {
             Uri uri = saveBitmapToPictures(qrCodeBitmap);
             if (uri != null) {
@@ -577,7 +617,15 @@ public class OrganizerEventFragment extends Fragment {
             }
         });
 
+        /**
+         * Shares QR code
+         * @param v view clicked
+         */
         shareButton.setOnClickListener(v -> shareQrCode(qrCodeBitmap));
+        /**
+         * Dismisses dialog
+         * @param v view clicked
+         */
         closeButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }

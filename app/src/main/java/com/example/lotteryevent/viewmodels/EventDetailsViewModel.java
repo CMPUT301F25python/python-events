@@ -56,10 +56,30 @@ public class EventDetailsViewModel extends ViewModel {
         this.waitingListCount = repository.getWaitingListCount();
 
         // Add the sources that the UI state depends on.
+        /**
+         * Recalculates bottom UI state whenever getting event details change
+         * @param event event changed
+         */
         _bottomUiState.addSource(repository.getEventDetails(), event -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever entrant status changes
+         * @param event entrant whose status changed
+         */
         _bottomUiState.addSource(repository.getEntrantStatus(), entrant -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever loading is updated
+         * @param isLoading boolean for loading
+         */
         _bottomUiState.addSource(repository.isLoading(), isLoading -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever attendee count changes
+         * @param count count update
+         */
         _bottomUiState.addSource(repository.getAttendeeCount(), count -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever waiting list count changes
+         * @param count count update
+         */
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
 
@@ -152,6 +172,10 @@ public class EventDetailsViewModel extends ViewModel {
 
     // --- User Actions ---
 
+    /**
+     * Join waiting list/accept invite/leave waiting list
+     * Request for location if joining waitlist
+     */
     public void onPositiveButtonClicked() {
         BottomUiState currentState = _bottomUiState.getValue();
         if (currentState == null || currentState.positiveButtonText == null) return;
@@ -175,6 +199,9 @@ public class EventDetailsViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Declines invitation if action is that
+     */
     public void onNegativeButtonClicked() {
         BottomUiState currentState = _bottomUiState.getValue();
         if (currentState == null || currentState.negativeButtonText == null) return;
@@ -327,11 +354,19 @@ public class EventDetailsViewModel extends ViewModel {
      */
     public void loadUserProfile(String userId) {
         userRepo.getUserProfile(userId, new IAdminUserProfileRepository.UserProfileCallback() {
+            /**
+             * Sets the user for the user profile.
+             * @param user The {@link User} object containing the fetched profile details.
+             */
             @Override
             public void onSuccess(User user) {
                 userProfile.setValue(user);
             }
 
+            /**
+             * Sets error state with the exception's message
+             * @param e The exception detailing the cause of the failure (e.g., network error, user not found).
+             */
             @Override
             public void onFailure(Exception e) {
                 errorState.setValue(e.getMessage());

@@ -35,11 +35,19 @@ public class AdminProfilesViewModel extends ViewModel {
      */
     public void fetchProfiles() {
         repo.getAllProfiles(new IAdminProfilesRepository.ProfilesCallback() {
+            /**
+             * Posts users to the profiles list
+             * @param users users shown in profiles
+             */
             @Override
             public void onSuccess(List<User> users) {
                 _profiles.postValue(users);
             }
 
+            /**
+             * Posts exception to message
+             * @param e exception thrown
+             */
             @Override
             public void onFailure(Exception e) {
                 _message.postValue("Failed to load profiles");

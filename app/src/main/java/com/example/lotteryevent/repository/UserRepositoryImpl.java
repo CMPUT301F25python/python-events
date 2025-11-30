@@ -60,6 +60,10 @@ public class UserRepositoryImpl implements IUserRepository {
     private void fetchFirestoreUserProfile(String uid, boolean systemNotifEnabled) {
         _isLoading.setValue(true);
         db.collection("users").document(uid).get()
+                /**
+                 * Gets user's profile and notif preference
+                 * @param task contains user
+                 */
                 .addOnCompleteListener(task -> {
                     _isLoading.setValue(false);
                     if (task.isSuccessful() && task.getResult() != null) {
@@ -128,6 +132,10 @@ public class UserRepositoryImpl implements IUserRepository {
         _isLoading.setValue(true);
 
         db.collection("users").document(firebaseUser.getUid()).get()
+            /**
+             * Updates user's profile, keeps their notif preference the same
+             * @param doc contains user
+             */
             .addOnSuccessListener(doc -> {
                 Boolean optOutNotifications = doc.getBoolean("optOutNotifications");
                 if (optOutNotifications != null) {
@@ -135,18 +143,30 @@ public class UserRepositoryImpl implements IUserRepository {
                 }
 
                 db.collection("users").document(firebaseUser.getUid()).set(user)
+                    /**
+                     * Logs profile update success
+                     * @param aVoid unusable data
+                     */
                     .addOnSuccessListener(aVoid -> {
                         _isLoading.setValue(false);
                         _currentUser.postValue(user);
                         _userMessage.postValue("Profile updated successfully.");
                         Log.d(TAG, "User profile updated successfully.");
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _isLoading.setValue(false);
                         _userMessage.postValue("Profile update failed: " + e.getMessage());
                         Log.e(TAG, "Error updating profile", e);
                     });
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> Log.e(TAG, "Error getting user", e));
     }
 
@@ -185,6 +205,10 @@ public class UserRepositoryImpl implements IUserRepository {
         Task<Void> deleteOrganizedTask = deleteEventsOrganized(uid);
 
         Tasks.whenAllComplete(clearProfileTask, deleteHistoryTask, deleteNotificationsTask, deleteFromEventsTask, deleteOrganizedTask)
+                /**
+                 * Logs tasks success or failure
+                 * @param task list of tasks completed
+                 */
                 .addOnCompleteListener(task -> {
                     _isLoading.setValue(false);
                     if (task.isSuccessful()) {
@@ -225,6 +249,10 @@ public class UserRepositoryImpl implements IUserRepository {
      */
     private Task<Void> deleteSubcollection(String userUid, String subcollectionName) {
         return db.collection("users").document(userUid).collection(subcollectionName).get()
+                /**
+                 * Throws exception if task contains exception, otherwise deletes user's subcollection
+                 * @param task contains subcollection of user
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) {
                         throw task.getException();
@@ -246,6 +274,10 @@ public class UserRepositoryImpl implements IUserRepository {
      */
     private Task<Void> deleteNotifications(String uid) {
         return db.collection("notifications").whereEqualTo("recipientId", uid).get()
+                /**
+                 * Throws exception if task contains exception, otherwise deletes notifications
+                 * @param task task contains notifications
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     WriteBatch batch = db.batch();
@@ -263,6 +295,10 @@ public class UserRepositoryImpl implements IUserRepository {
      * @return A {@link Task} that completes upon batch deletion.
      */
     private Task<Void> deleteFromEventsCol(String uid) {
+        /**
+         * Throws exception if task contains exception, otherwise removed user from "entrants" subcollection of events
+         * @param task task contains events
+         */
         return db.collection("events").get().continueWithTask(task -> {
             if (!task.isSuccessful()) throw task.getException();
             WriteBatch batch = db.batch();
@@ -281,6 +317,10 @@ public class UserRepositoryImpl implements IUserRepository {
      */
     private Task<Void> deleteEventsOrganized(String uid) {
         return db.collection("events").whereEqualTo("organizerId", uid).get()
+                /**
+                 * Throws exception if task contains exception, otherwise deletes events organized by user
+                 * @param task task contains events
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) throw task.getException();
                     WriteBatch batch = db.batch();
@@ -309,6 +349,11 @@ public class UserRepositoryImpl implements IUserRepository {
         _isLoading.setValue(true);
 
         db.collection("users").document(firebaseUser.getUid()).update("optOutNotifications", !enabled)
+                /**
+                 * Removes notif banners if notifs disabled, notifies of any unseen notifs if enabled,
+                 * logs change
+                 * @param aVoid unusable data
+                 */
                 .addOnSuccessListener(aVoid -> {
                     _isLoading.setValue(false);
                     fetchNotifPreference(enabled, systemNotifPreference);
@@ -323,6 +368,10 @@ public class UserRepositoryImpl implements IUserRepository {
                     }
                     Log.d(TAG, "Notification preferences updated successfully in db.");
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     _isLoading.setValue(false);
                     _userMessage.postValue("Notification preference update failed: " + e.getMessage());

@@ -92,6 +92,9 @@ public class EntrantListViewModel extends ViewModel {
         if (userId == null) return;
 
         entrantListRepo.updateEntrantStatus(this.eventId, userId, "waiting", new StatusUpdateCallback() {
+            /**
+             * Message that entrant sent to waitlist and update list
+             */
             @Override
             public void onSuccess() {
                 entrantListRepo.setUserMessage("User returned to waitlist.");
@@ -99,6 +102,10 @@ public class EntrantListViewModel extends ViewModel {
                 entrantListRepo.fetchEntrantsByStatus(eventId, status);
             }
 
+            /**
+             * On exception do nothing for now
+             * @param e exception thrown
+             */
             @Override
             public void onFailure(Exception e) {
             }

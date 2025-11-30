@@ -154,7 +154,11 @@ public class UserProfileFragment extends Fragment {
      * This is the core of the reactive UI.
      */
     private void setupObservers() {
-        // Observe the current user's profile data
+        /**
+         * Observe the current user's profile data, populate fields accordingly
+         * If logged out, hangle through navigating back
+         * @param user user to populate with
+         */
         viewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 // When the User object is loaded or updated, populate the fields
@@ -168,11 +172,18 @@ public class UserProfileFragment extends Fragment {
             }
         });
 
-        // Observe notification preferences for user of the specific device
+        /**
+         * Observe notification preferences for user of the specific device
+         * @param pref notif preference
+         */
         viewModel.getNotifPreference().observe(getViewLifecycleOwner(), pref -> {
             toggleAllowNotifs.setChecked(pref == true);
         });
 
+        /**
+         * Observe loading. Update buttons based on whether loading
+         * @param isLoading boolean for loading
+         */
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             if (isLoading) {
                 updateInfoButton.setEnabled(false);
@@ -183,7 +194,10 @@ public class UserProfileFragment extends Fragment {
             }
         });
 
-        // Observe messages (for errors or success confirmations)
+        /**
+         * Observe messages (for errors or success confirmations) and makes toast
+         * @param message message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 makeToast(message);
@@ -200,9 +214,25 @@ public class UserProfileFragment extends Fragment {
      * Sets up the OnClickListener for buttons to delegate actions to the ViewModel.
      */
     private void setupClickListeners() {
+        /**
+         * Handle profile update
+         * @param v view clicked
+         */
         updateInfoButton.setOnClickListener(v -> handleUpdateProfile());
+        /**
+         * Handle confirming to delete profile and deleting
+         * @param v view clicked
+         */
         deleteProfileButton.setOnClickListener(v -> confirmProfileDeletion());
+        /**
+         * View registration history
+         * @param v view clicked
+         */
         registrationHistoryButton.setOnClickListener(v -> viewRegistrationHistory(v));
+        /**
+         * Handle toggling notif preferences
+         * @param v view clicked
+         */
         toggleAllowNotifs.setOnClickListener(v -> handleNotifToggle());
     }
 
@@ -234,10 +264,20 @@ public class UserProfileFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Profile")
                 .setMessage("This will clear your profile and delete all associated data. This action cannot be undone. Are you sure?")
+                /**
+                 * Deletes profile
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Yes, Delete", (dialog, which) -> {
                     // Tell the ViewModel to start the deletion process
                     viewModel.deleteUserProfile();
                 })
+                /**
+                 * Removes dialog
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("No", null)
                 .show();
     }
@@ -277,13 +317,14 @@ public class UserProfileFragment extends Fragment {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle("Enable Notifications");
         builder.setMessage("Notifications are disabled in your device's settings. Get redirected to your settings to enable them.");
+        /**
+         * Callback triggered when the "Open Settings" button in the dialog is
+         * pressed. Open's the app's system level notifications settings.
+         * On return, it updates the checkbox accordingly
+         * @param dialog dialog that triggered callback
+         * @param which button identifier
+         */
         builder.setPositiveButton("Open Settings", (dialog, which) -> {
-            /**
-             * Callback triggered when the "Open Settings" button in the dialog is
-             * pressed. Open's the app's system level notifications settings.
-             * On return, it updates the checkbox accordingly
-             * @param dialog the dialog that triggered the callback
-             */
             Intent intent = new Intent();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -299,6 +340,11 @@ public class UserProfileFragment extends Fragment {
             }
             appNotifSettingsLauncher.launch(intent);
         });
+        /**
+         * Deletes profile
+         * @param dialog dialog that triggered callback
+         * @param which button identifier
+         */
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();

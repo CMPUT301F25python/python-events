@@ -49,7 +49,9 @@ public class FakeAdminImagesRepository implements IAdminImagesRepository {
      */
     @Override
     public void getAllImages(ImagesCallback callback) {
-        // Simulate success immediately
+        /**
+         * Simulate success immediately
+         */
         callback.onSuccess(itemsToReturn);
     }
 
@@ -67,6 +69,9 @@ public class FakeAdminImagesRepository implements IAdminImagesRepository {
     @Override
     public void deleteImage(String eventId, DeleteCallback callback) {
         if (shouldFail) {
+            /**
+             * Throws exception on failure
+             */
             callback.onFailure(new Exception("Network Error"));
         } else {
             deleteWasCalled = true;

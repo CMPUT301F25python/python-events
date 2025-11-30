@@ -161,7 +161,15 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      * Sets up click listeners for the confirm and notify and cancel buttons
      */
     private void setupClickListeners() {
+        /**
+         * Notifies entrants of lottery win/loss, navigates to another fragment
+         * @param v view clicked on
+         */
         btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked(newChosenEntrants, newUnchosenEntrants));
+        /**
+         * Restores old status of entrants
+         * @param v view clicked on
+         */
         btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked(oldEntrantsStatus));
     }
 
@@ -169,33 +177,51 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
      * Sets up observers for counts, message, and screen state to display
      */
     private void setupObservers() {
+        /**
+         * Observes waiting list count, binds value on change
+         * @param waitingListCount new count
+         */
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), waitingListCount -> {
             if (waitingListCount != null) {
                 bindWaitingListCount(waitingListCount);
             }
         });
 
+        /**
+         * Observes available space count, binds value on change
+         * @param availableSpaceCount new count
+         */
         viewModel.availableSpaceCount.observe(getViewLifecycleOwner(), availableSpaceCount -> {
             if (availableSpaceCount != null) {
                 bindAvailableSpaceCount(availableSpaceCount);
             }
         });
 
-        // Observer for any user-facing messages from the repository.
+        /**
+         * Observes message, makes toast on message
+         * @param message message to show
+         */
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // The primary observer for the dynamic bottom bar.
-        // It receives a simple state object and renders the UI accordingly.
+        /**
+         * The primary observer for the dynamic bottom bar
+         * It receives a simple state object and renders the UI accordingly
+         * @param uiState new state
+         */
         viewModel.bottomUiState.observe(getViewLifecycleOwner(), uiState -> {
             if (uiState != null) {
                 renderBottomUi(uiState);
             }
         });
 
+        /**
+         * Observes navigating back to organizer events fragment, navigates if true
+         * @parma navigateBack boolean to navigate back
+         */
         viewModel.navigateBack.observe(getViewLifecycleOwner(), navigateBack -> {
             if (navigateBack != null && navigateBack) {
                 ConfirmDrawAndNotifyFragmentDirections.ActionConfirmDrawAndNotifyFragmentToOrganizerEventPageFragment action =

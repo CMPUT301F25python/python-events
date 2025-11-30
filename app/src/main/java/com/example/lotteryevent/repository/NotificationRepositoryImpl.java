@@ -60,6 +60,11 @@ public class NotificationRepositoryImpl implements INotificationRepository {
         listenerRegistration = db.collection("notifications")
                 .whereEqualTo("recipientId", currentUser.getUid())
                 .orderBy("timestamp", Query.Direction.DESCENDING)
+                /**
+                 * Adds notification of the recipient to a list and posts to mutable live data if successful, otherwise logs exception thrown
+                 * @param value contains notif docs
+                 * @param error exception thrown
+                 */
                 .addSnapshotListener((value, error) -> {
                     _isLoading.postValue(false);
                     if (error != null) {
@@ -83,6 +88,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
         if (notificationId == null || notificationId.isEmpty()) return;
 
         db.collection("notifications").document(notificationId).get()
+                /**
+                 * Sets a notif's seen as true and removes its notif banner
+                 * @param doc contains notif
+                 */
                 .addOnSuccessListener(doc -> {
 
                     Long notifBannerIdLong = doc.getLong("notifBannerId");
@@ -97,6 +106,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                     // sets notification seen as true in db
                     db.collection("notifications").document(notificationId)
                             .update("seen", true)
+                            /**
+                             * Removed notif's banner if it exists and all notif banners if all notifs now seen
+                             * @param aVoid unusable data
+                             */
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Notification " + notificationId + " marked as seen.");
 
@@ -108,19 +121,35 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                                 if (recipientId != null) {
                                     // if all notifs seen, clear all system banners
                                     db.collection("notifications").whereEqualTo("recipientId", recipientId).whereEqualTo("seen", false).get()
+                                            /**
+                                             * Clears all notif banners
+                                             * @param query contains unseen notifs
+                                             */
                                             .addOnSuccessListener(query -> {
                                                 if (query.isEmpty()) {
                                                     notificationCustomManager.clearNotifications();
                                                 }
                                             })
+                                            /**
+                                             * Logs exception thrown
+                                             * @param e exception thrown
+                                             */
                                             .addOnFailureListener(e -> Log.e(TAG, "Error getting remaining unseen notifications", e));
                                 }
                             })
+                            /**
+                             * Logs exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Error marking notification as seen", e);
                                 _message.postValue("Failed to update notification status.");
                             });
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to fetch notification", e);
                     _message.postValue("Failed to fetch notification.");

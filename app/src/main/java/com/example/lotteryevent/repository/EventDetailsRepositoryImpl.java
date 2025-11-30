@@ -71,6 +71,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     public void fetchEventAndEntrantDetails(String eventId) {
         _isLoading.postValue(true);
         db.collection("events").document(eventId).get()
+                /**
+                 * Extracts even from doc and fetches entrant statuses and entrants counts
+                 * @param documentSnapshot contains event from db
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot != null && documentSnapshot.exists()) {
                         Event event = documentSnapshot.toObject(Event.class);
@@ -91,6 +95,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                         _message.postValue("Error: Event not found.");
                     }
                 })
+                /**
+                 * Logs and messages of exception
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     _isLoading.postValue(false);
                     _message.postValue("Error: Failed to load event details.");
@@ -105,6 +113,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
             return Tasks.forResult(null); // Return an already completed task.
         }
         return getEntrantDocRef(eventId, currentUser.getUid()).get()
+                /**
+                 * Extracts entrant from doc and posts to mutable live data
+                 * @param doc contains entrant
+                 */
                 .addOnSuccessListener(doc -> {
                     Entrant entrant = (doc != null && doc.exists()) ? doc.toObject(Entrant.class) : null;
                     _entrantStatus.postValue(entrant);
@@ -116,14 +128,26 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
         // Query 1: Count of "accepted" entrants
         AggregateQuery acceptedCountQuery = entrantsRef.whereEqualTo("status", "accepted").count();
+        /**
+         * Gets tasks from aggregate query snapshot
+         * @param snapshot contains aggregate query result
+         */
         Task<Long> acceptedTask = acceptedCountQuery.get(AggregateSource.SERVER).onSuccessTask(snapshot -> Tasks.forResult(snapshot.getCount()));
 
         // Query 2: Count of "waiting" entrants
         AggregateQuery waitingCountQuery = entrantsRef.whereEqualTo("status", "waiting").count();
+        /**
+         * Gets tasks from aggregate query snapshot
+         * @param snapshot contains aggregate query result
+         */
         Task<Long> waitingTask = waitingCountQuery.get(AggregateSource.SERVER).onSuccessTask(snapshot -> Tasks.forResult(snapshot.getCount()));
 
         // Run both count queries in parallel and wait for them to succeed.
         return Tasks.whenAllSuccess(acceptedTask, waitingTask)
+                /**
+                 * Posts attendee and waiting list counts to mutable live data
+                 * @param results stores counts
+                 */
                 .addOnSuccessListener(results -> {
                     // results is a List<Object> where results.get(0) is the result of acceptedTask,
                     // and results.get(1) is the result of waitingTask.
@@ -148,6 +172,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
         // 1. Fetch the user's profile to get their specific "name" field
         db.collection("users").document(currentUser.getUid()).get()
+                /**
+                 * Adds user to the waiting list of an event
+                 * @param userSnapshot contains user to be added
+                 */
                 .addOnSuccessListener(userSnapshot -> {
 
                     // Default to "Anonymous"  if the field is missing
@@ -172,6 +200,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
                     // 3. Save the Entrant to the Event's subcollection
                     getEntrantDocRef(eventId, currentUser.getUid()).set(newEntrant)
+                            /**
+                             * Fetches entrant status and counts as an update after adding entrant to event's waiting list
+                             * @param aVoid unusable data
+                             */
                             .addOnSuccessListener(aVoid -> {
                                 _message.postValue("Successfully joined the waiting list!");
 
@@ -180,6 +212,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                                 Task<List<Object>> entrantCountsTask = fetchEntrantCountsTask(eventId);
 
                                 Tasks.whenAllComplete(entrantStatusTask, entrantCountsTask)
+                                        /**
+                                         * Sets loading to false
+                                         * @param allTasks tasks completed
+                                         */
                                         .addOnCompleteListener(allTasks -> _isLoading.postValue(false));
                             })
                             .addOnFailureListener(e -> {
@@ -189,6 +225,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                             });
 
                 })
+                /**
+                 * Logs exception
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     // Failed to fetch the user profile name
                     _isLoading.postValue(false);
@@ -204,12 +244,20 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         if (currentUser == null) { /* Handle not logged in */ return; }
 
         getEntrantDocRef(eventId, currentUser.getUid()).delete()
+                /**
+                 * Updates entrants statuses and counts after entrant leaves waiting list
+                 * @param aVoid unusable data
+                 */
                 .addOnSuccessListener(aVoid -> {
                     _message.postValue("You have left the event.");
                     Task<DocumentSnapshot> entrantStatusTask = fetchEntrantStatusTask(eventId);
                     Task<List<Object>> entrantCountsTask = fetchEntrantCountsTask(eventId);
 
                     Tasks.whenAllComplete(entrantStatusTask, entrantCountsTask)
+                            /**
+                             * Sets loading to false
+                             * @param allTasks tasks completed
+                             */
                             .addOnCompleteListener(allTasks -> {
                                 _isLoading.postValue(false); // All loading is now finished.
                             });
@@ -228,6 +276,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         if (currentUser == null) { /* Handle not logged in */ return; }
 
         getEntrantDocRef(eventId, currentUser.getUid()).update("status", newStatus)
+                /**
+                 * Updates entrant statuses and counts after user accepts/declines inviatation
+                 * @param aVoid unusable data
+                 */
                 .addOnSuccessListener(aVoid -> {
                     String successMessage = "accepted".equals(newStatus) ? "Invitation accepted!" : "Invitation declined.";
                     _message.postValue(successMessage);
@@ -235,10 +287,18 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                     Task<List<Object>> entrantCountsTask = fetchEntrantCountsTask(eventId);
 
                     Tasks.whenAllComplete(entrantStatusTask, entrantCountsTask)
+                            /**
+                             * Sets loading to false
+                             * @param allTasks tasks completed
+                             */
                             .addOnCompleteListener(allTasks -> {
                                 _isLoading.postValue(false); // All loading is now finished.
                             });
                 })
+                /**
+                 * Logs exception
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     _isLoading.postValue(false);
                     _message.postValue("Failed to update invitation status.");
@@ -271,6 +331,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         }
 
         db.collection("users").document(userId).get()
+                /**
+                 * Sets if user is admin or not to mutable live data
+                 * @parma documentSnapshot contains user
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Boolean admin = documentSnapshot.getBoolean("admin");
@@ -307,6 +371,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         CollectionReference entrantsRef = db.collection("events").document(eventId).collection("entrants");
 
         // 1. First, get all entrants
+        /**
+         * Deletes event and its entrants
+         * @param querySnapshot contains entrants of event
+         */
         entrantsRef.get().addOnSuccessListener(querySnapshot -> {
             // Create a batch writer
             WriteBatch batch = db.batch();
@@ -322,11 +390,19 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
             // 3. Commit everything at once
             batch.commit()
+                    /**
+                     * Logs successful deletion
+                     * @param aVoid unusable data
+                     */
                     .addOnSuccessListener(aVoid -> {
                         _isLoading.postValue(false);
                         _isDeleted.postValue(true);
                         _message.postValue("Event deleted successfully.");
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _isLoading.postValue(false);
                         _isDeleted.postValue(false);
@@ -334,7 +410,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                         Log.e(TAG, "deleteEvent batch failed", e);
                     });
 
-        }).addOnFailureListener(e -> {
+        })
+        /**
+         * Logs exception thrown
+         * @param e exception thrown
+         */
+        .addOnFailureListener(e -> {
             _isLoading.postValue(false);
             Log.e(TAG, "Failed to fetch entrants for deletion", e);
         });
@@ -374,6 +455,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
 
         // Wait for all cleanup tasks to finish
         Tasks.whenAllComplete(deleteUserDoc, deleteNotifications, deleteOrganizedEvents, deleteFromEntrants)
+                /**
+                 * Logs successful and failed deletions
+                 * @param task list of tasks completed
+                 */
                 .addOnCompleteListener(task -> {
                     _isLoading.postValue(false);
                     // Check if ANY of the tasks failed
@@ -410,6 +495,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         return db.collection("notifications")
                 .whereEqualTo("recipientId", userId)
                 .get()
+                /**
+                 * Continues the query by deleting all returned documents.
+                 *
+                 * @param task The completed query task containing documents to delete.
+                 * @return A task for committing the batch delete, or a null result if no documents exist.
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful() || task.getResult().isEmpty()) {
                         return Tasks.forResult(null);
@@ -436,6 +527,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         return db.collection("events")
                 .whereEqualTo("organizerId", userId)
                 .get()
+                /**
+                 * Continues the query by deleting each event and its related subcollections.
+                 *
+                 * @param task The completed query task containing the event documents.
+                 * @return A task that commits the batch delete after all subcollection deletions are prepared.
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful() || task.getResult().isEmpty()) {
                         return Tasks.forResult(null);
@@ -470,6 +567,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
      */
     private Task<Void> deleteSubcollectionToBatch(String eventId, String subcollectionName, WriteBatch batch) {
         return db.collection("events").document(eventId).collection(subcollectionName).get()
+                /**
+                 * Continues the task by deleting all documents returned by the query.
+                 *
+                 * @param task The completed query task containing documents to delete.
+                 * @return Always returns null after processing the deletions.
+                 */
                 .continueWith(task -> {
                     if (task.isSuccessful() && task.getResult() != null) {
                         for (DocumentSnapshot doc : task.getResult().getDocuments()) {
@@ -492,6 +595,12 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
     private Task<Void> removeUserFromAllWaitingLists(String userId) {
         return db.collectionGroup("entrants")
                 .get()
+                /**
+                 * Continues the query by deleting documents matching the given user ID.
+                 *
+                 * @param task The completed collection group query task.
+                 * @return A task that commits the batch delete if any documents match, or a null result otherwise.
+                 */
                 .continueWithTask(task -> {
                     if (!task.isSuccessful()) {
                         Log.e(TAG, "Collection Group Query failed", task.getException());
@@ -532,6 +641,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         String senderId = admin.getUid();
 
         db.collection("users").document(senderId).get()
+            /**
+             * Sends notification from the admin
+             * @param doc contains sender user
+             */
             .addOnSuccessListener(doc -> {
                 String senderName = doc.getString("name");
                 if (senderName == null) {
@@ -545,6 +658,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                 manager.sendNotification(userId, title, message, type, null, null, senderId, senderName);
                 _message.postValue("Notification Sent!");
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 Log.e(TAG, "Failed to fetch admin user's profile", e);
             });

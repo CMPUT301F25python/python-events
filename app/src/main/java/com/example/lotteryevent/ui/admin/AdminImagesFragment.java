@@ -103,14 +103,24 @@ public class AdminImagesFragment extends Fragment {
      * Handles updates for the image list, loading state, and toast messages.
      */
     private void setupObservers() {
+        /**
+         * Observes list of images, updates adapter when changed
+         * @param list contains list of images
+         */
         viewModel.getImages().observe(getViewLifecycleOwner(), list -> {
             adapter.setImages(list);
         });
-
+        /**
+         * Observes loading boolean, shows progress conditionally based on loading
+         * @param loading boolean of whether loading or not
+         */
         viewModel.isLoading().observe(getViewLifecycleOwner(), loading -> {
             progress.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
-
+        /**
+         * Observes message, if updates and contains one, make a toast
+         * @param msg message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
@@ -148,6 +158,11 @@ public class AdminImagesFragment extends Fragment {
                 .create();
 
         // 4. Handle Delete Button Click -> Show Confirmation Dialog
+        /**
+         * Opens a confirmation dialog when the delete button is clicked.
+         *
+         * @param v The view that was clicked.
+         */
         deleteButton.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Delete Image?")

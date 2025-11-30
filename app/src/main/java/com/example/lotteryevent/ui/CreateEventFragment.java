@@ -114,12 +114,18 @@ public class CreateEventFragment extends Fragment {
      * Sets up observers on the ViewModel's LiveData to react to state changes.
      */
     private void setupObservers() {
-        // Observe loading state to enable/disable the save button.
+        /**
+         * Observe loading state to enable/disable the save button
+         * @param isLoading boolean for loading
+         */
         viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
             buttonSave.setEnabled(!isLoading);
         });
 
-        // Observe messages to show success/error toasts and handle navigation.
+        /**
+         * Observe messages to show success/error toasts and handle navigation
+         * @param message message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
@@ -213,20 +219,57 @@ public class CreateEventFragment extends Fragment {
      */
     private void setupClickListeners() {
         // Set up the picker dialogs for each date and time field
+        /**
+         * Shows date picker dialog on click
+         * @param view clicked
+         */
         editTextEventStartDate.setOnClickListener(v -> showDatePickerDialog(eventStartCalendar, editTextEventStartDate));
+        /**
+         * Shows time picker dialog on click
+         * @param view clicked
+         */
         editTextEventStartTime.setOnClickListener(v -> showTimePickerDialog(eventStartCalendar, editTextEventStartTime));
-
+        /**
+         * Shows date picker dialog on click
+         * @param view clicked
+         */
         editTextEventEndDate.setOnClickListener(v -> showDatePickerDialog(eventEndCalendar, editTextEventEndDate));
+        /**
+         * Shows time picker dialog on click
+         * @param view clicked
+         */
         editTextEventEndTime.setOnClickListener(v -> showTimePickerDialog(eventEndCalendar, editTextEventEndTime));
-
+        /**
+         * Shows date picker dialog on click
+         * @param view clicked
+         */
         editTextRegistrationStartDate.setOnClickListener(v -> showDatePickerDialog(registrationStartCalendar, editTextRegistrationStartDate));
+        /**
+         * Shows time picker dialog on click
+         * @param view clicked
+         */
         editTextRegistrationStartTime.setOnClickListener(v -> showTimePickerDialog(registrationStartCalendar, editTextRegistrationStartTime));
-
+        /**
+         * Shows date picker dialog on click
+         * @param view clicked
+         */
         editTextRegistrationEndDate.setOnClickListener(v -> showDatePickerDialog(registrationEndCalendar, editTextRegistrationEndDate));
+        /**
+         * Shows time picker dialog on click
+         * @param view clicked
+         */
         editTextRegistrationEndTime.setOnClickListener(v -> showTimePickerDialog(registrationEndCalendar, editTextRegistrationEndTime));
 
+        /**
+         * Shows poster picker on click
+         * @param view clicked
+         */
         buttonUploadPoster.setOnClickListener(v -> openPosterPicker());
 
+        /**
+         * Removes poster, resets UI
+         * @param view clicked
+         */
         buttonRemovePoster.setOnClickListener(v -> {
             // 1. Clear the variable
             selectedPosterBase64 = null;
@@ -237,7 +280,10 @@ public class CreateEventFragment extends Fragment {
 
         });
 
-        // Set a click listener on the save button to trigger the ViewModel action
+        /**
+         * Set a click listener on the save button to trigger the ViewModel action
+         * @param view clicked
+         */
         buttonSave.setOnClickListener(v -> handleSaveEvent());
     }
 
@@ -248,6 +294,13 @@ public class CreateEventFragment extends Fragment {
      * @param editText The EditText field to update with the formatted date string.
      */
     private void showDatePickerDialog(Calendar calendar, EditText editText) {
+        /**
+         * Handles the date selected from the DatePicker dialog and updates the UI field
+         * @param view date picker view
+         * @param year selected year
+         * @param month selected month (0-indexed)
+         * @param dayOfMonth selected day of the month
+         */
         DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
@@ -258,7 +311,11 @@ public class CreateEventFragment extends Fragment {
         DatePickerDialog dialog = new DatePickerDialog(requireContext(), dateSetListener, calendar.get(Calendar.YEAR),
                 calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
 
-        // Add a "Clear" button
+        /**
+         * Clears input
+         * @param d dialog interface
+         * @param which button identifier
+         */
         dialog.setButton(DatePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
             editText.setText(""); // Clear the visible text
         });
@@ -273,6 +330,12 @@ public class CreateEventFragment extends Fragment {
      * @param editText The EditText field to update with the formatted time string.
      */
     private void showTimePickerDialog(Calendar calendar, EditText editText) {
+        /**
+         * Handles the time selected from the TimePicker dialog and updates the UI field
+         * @param view time picker view
+         * @param hourOfDay selected hour (24-hour format)
+         * @param minute selected minute
+         */
         TimePickerDialog.OnTimeSetListener timeSetListener = (view, hourOfDay, minute) -> {
             calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
             calendar.set(Calendar.MINUTE, minute);
@@ -282,7 +345,11 @@ public class CreateEventFragment extends Fragment {
         TimePickerDialog dialog = new TimePickerDialog(requireContext(), timeSetListener, calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE), true);
 
-        // Add "Clear" button to the dialog
+        /**
+         * Clears input
+         * @param d dialog interface
+         * @param which button identifier
+         */
         dialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear", (d, which) -> {
             editText.setText(""); // Clear the visible text in the EditText
         });

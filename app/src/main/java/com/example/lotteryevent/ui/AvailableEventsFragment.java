@@ -108,6 +108,10 @@ public class AvailableEventsFragment extends Fragment {
         adapter = new EventAdapter(R.layout.item_event);
         recyclerView.setAdapter(adapter);
 
+        /**
+         * Makes toast if id of event is invalid, otherwise navigates to that event details fragment
+         * @param event event to navigate to
+         */
         adapter.setOnItemClickListener(event -> {
             String id = event.getEventId();
             if (id == null || id.trim().isEmpty() || "null".equals(id)) {
@@ -133,6 +137,10 @@ public class AvailableEventsFragment extends Fragment {
      * - Observes user-facing messages and shows them using a {@link Toast}
      */
     public void setupObservers() {
+        /**
+         * Observes events, updates adapter
+         * @param events list of events
+         */
         availableEventsViewModel.getFilteredEvents().observe(getViewLifecycleOwner(), events -> {
             if (adapter == null) {
                 return;
@@ -145,6 +153,10 @@ public class AvailableEventsFragment extends Fragment {
             }
         });
 
+        /**
+         * Observe message to show on update
+         * @param message message to show
+         */
         availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
@@ -165,13 +177,19 @@ public class AvailableEventsFragment extends Fragment {
         View availableTodayButton = view.findViewById(R.id.available_today_button);
         View filterButton = view.findViewById(R.id.filter_button);
 
-        // Toggle "available today" filter
+        /**
+         * Toggle "available today" filter
+         * @param v view clicked
+         */
         availableTodayButton.setOnClickListener(v -> {
             filterAvailableToday = !filterAvailableToday;
             applyFiltersAndUpdateList();
         });
 
-        // Show a simple dialog to enter a keyword for interest-based filtering
+        /**
+         * Show a simple dialog to enter a keyword for interest-based filtering
+         * @param v view clicked
+         */
         filterButton.setOnClickListener(v -> showKeywordDialog());
     }
 

@@ -135,7 +135,12 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             titleTextView = itemView.findViewById(R.id.event_title_text);
             posterImageView = itemView.findViewById(R.id.event_poster_image);
 
-            // Set a click listener on the entire tile view.
+            /**
+             * Sets the behavior that runs when the event item is clicked.
+             * This listener retrieves the adapter position and, if valid,
+             * triggers the external item click callback with the selected event.
+             * @param v view clicked
+             */
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
                 // Ensure the position is valid and a listener is registered before triggering the callback.

@@ -200,12 +200,23 @@ public class EventDetailsFragment extends Fragment {
     }
 
     private void setupClickListeners() {
+        /**
+         * Adds oneself to the appropriate entrant list
+         * @param v view clicked
+         */
         btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
+        /**
+         * Unadds oneself
+         * @param v view clicked
+         */
         btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
     }
 
     private void setupObservers() {
-        // Observer for the main event data.
+        /**
+         * Observer for the main event data to show
+         * @param event event to show
+         */
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
               Integer count = viewModel.waitingListCount.getValue();
@@ -214,41 +225,61 @@ public class EventDetailsFragment extends Fragment {
             }
         });
 
-        // Observer for any user-facing messages from the repository.
+        /**
+         * Observer for any user-facing messages from the repository to show in toast
+         * @param message message to show
+         */
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
+        /**
+         * Observes event is deleted, navigates back one fragment
+         * @param isDeleted boolean for deleted
+         */
         viewModel.getIsDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
             if (isDeleted) {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
+        /**
+         * Observes organizer is deleted, navigates back one fragment
+         * @param isDeleted boolean for deleted
+         */
         viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isOrganizerDeleted -> {
             if (isOrganizerDeleted) {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
-        // The primary observer for the dynamic bottom bar.
-        // It receives a simple state object and renders the UI accordingly.
+        /**
+         * The primary observer for the dynamic bottom bar.
+         * It receives a simple state object and renders the UI accordingly.
+         * @param uiState state to show
+         */
         viewModel.bottomUiState.observe(getViewLifecycleOwner(), uiState -> {
             if (uiState != null) {
                 renderBottomUi(uiState);
             }
         });
 
-        // Listener for location permission requests
+        /**
+         * Listener for location permission requests
+         * @param shouldRequest boolean for request
+         */
         viewModel.requestLocationPermission.observe(getViewLifecycleOwner(), shouldRequest -> {
             if (shouldRequest != null && shouldRequest) {
                 checkPermissionAndAct();
             }
         });
 
-        // observer to display waitinglistCount
+        /**
+         * Observer to display waitinglistCount
+         * @param count count to show
+         */
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
             if (count != null && viewModel.eventDetails.getValue() != null) {
                 // Rebind details including the count
@@ -375,9 +406,19 @@ public class EventDetailsFragment extends Fragment {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Location Required")
                     .setMessage("This event requires geolocation verification to join. Please grant location permission.")
+                    /**
+                     * Requests for location
+                     * @param dialog dialog that triggered callback
+                     * @param which button identifier
+                     */
                     .setPositiveButton("OK", (dialog, which) -> {
                         requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                     })
+                    /**
+                     * Acts on location permission denied, cancels dialog
+                     * @param dialog dialog that triggered callback
+                     * @param which button identifier
+                     */
                     .setNegativeButton("Cancel", (dialog, which) -> {
                         viewModel.onLocationPermissionDenied();
                         dialog.dismiss();
@@ -398,12 +439,22 @@ public class EventDetailsFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Permission Denied")
                 .setMessage("You have permanently denied location permission. To join this event, you must enable it in the app settings.")
+                /**
+                 * Goes to settings for permission
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Go to Settings", (dialog, which) -> {
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     Uri uri = Uri.fromParts("package", requireActivity().getPackageName(), null);
                     intent.setData(uri);
                     startActivity(intent);
                 })
+                /**
+                 * Closes dialog
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
@@ -417,6 +468,10 @@ public class EventDetailsFragment extends Fragment {
         }
 
         fusedLocationClient.getLastLocation()
+                /**
+                 * Gets location or makes toast to get location first
+                 * @param location location of user
+                 */
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location != null) {
                         // Pass data back to ViewModel
@@ -427,6 +482,10 @@ public class EventDetailsFragment extends Fragment {
                         viewModel.onLocationPermissionDenied();
                     }
                 })
+                /**
+                 * Toasts of error getting location, acts on location permission denied
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Error getting location.", Toast.LENGTH_SHORT).show();
                     viewModel.onLocationPermissionDenied();

@@ -80,6 +80,10 @@ public class AdminProfilesFragment extends Fragment {
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         // Add navigation to user profile details
+        /**
+         * Handles clicks on a user item in the list and navigates to that user's profile
+         * @param user selected user
+         */
         adapter = new AdminProfilesAdapter(user -> {
             // 2. Create the Bundle with the userId
             Bundle bundle = new Bundle();
@@ -104,12 +108,20 @@ public class AdminProfilesFragment extends Fragment {
      * </p>
      */
     private void setupObservers() {
+        /**
+         * Observes profiles list, updates adapter on change
+         * @param list contains profiles
+         */
         viewModel.getProfiles().observe(getViewLifecycleOwner(), list -> {
             if (list != null) {
                 adapter.setProfiles(list);
             }
         });
 
+        /**
+         * Observes message, if updates makes toast
+         * @param msg message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();

@@ -42,6 +42,11 @@ public class AdminUserProfileRepositoryImpl implements IAdminUserProfileReposito
         }
 
         db.collection("users").document(userId).get()
+                /**
+                 * Call's callback's success with user extracted from the db if successful,
+                 * otherwise calls failure behaviour
+                 * @param document document containing user
+                 */
                 .addOnSuccessListener(document -> {
                     if (document.exists()) {
                         User user = document.toObject(User.class);
@@ -55,6 +60,9 @@ public class AdminUserProfileRepositoryImpl implements IAdminUserProfileReposito
                         callback.onFailure(new Exception("User not found"));
                     }
                 })
+                /**
+                 * Calls callback's failure behaviour
+                 */
                 .addOnFailureListener(callback::onFailure);
     }
 }
