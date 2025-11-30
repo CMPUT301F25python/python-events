@@ -79,7 +79,7 @@ public class AdminProfilesAdapter extends RecyclerView.Adapter<AdminProfilesAdap
 
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
-            name = itemView.findViewById(R.id.entrant_name_text_view);
+            name = itemView.findViewById(R.id.entrant_name_text);
         }
 
         public void bind(User user, OnItemClickListener listener) {

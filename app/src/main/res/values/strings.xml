@@ -124,4 +124,5 @@
     <string name="delete_user_profile">Delete User Profile</string>
     <string name="send_notification">Send Notification</string>
     <string name="_0_entrants">0 entrants</string>
+    <string name="entrant_name">Entrant Name</string>
 </resources>

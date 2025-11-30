@@ -153,7 +153,9 @@ public class EntrantListFragment extends Fragment {
      * {@link EntrantListAdapter}.
      */
     private void setupRecyclerView() {
-        adapter = new EntrantListAdapter(new ArrayList<>());
+        adapter = new EntrantListAdapter(new ArrayList<>(), userId -> {
+            viewModel.cancelInvite(userId);
+        });
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
     }
