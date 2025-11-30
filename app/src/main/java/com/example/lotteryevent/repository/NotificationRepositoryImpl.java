@@ -83,6 +83,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
         if (notificationId == null || notificationId.isEmpty()) return;
 
         db.collection("notifications").document(notificationId).get()
+                /**
+                 * Gets notification's banner, sets notification seen as true, clears notif banner
+                 * @param doc contains notif
+                 */
                 .addOnSuccessListener(doc -> {
 
                     Long notifBannerIdLong = doc.getLong("notifBannerId");
@@ -97,6 +101,10 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                     // sets notification seen as true in db
                     db.collection("notifications").document(notificationId)
                             .update("seen", true)
+                            /**
+                             * Clears notif's banner, clears all notif banners if all notifs seen
+                             * @param aVoid unusable data
+                             */
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Notification " + notificationId + " marked as seen.");
 
@@ -108,19 +116,35 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                                 if (recipientId != null) {
                                     // if all notifs seen, clear all system banners
                                     db.collection("notifications").whereEqualTo("recipientId", recipientId).whereEqualTo("seen", false).get()
+                                            /**
+                                             * Clears all notif banners
+                                             * @param query contains unseen notifs for the user
+                                             */
                                             .addOnSuccessListener(query -> {
                                                 if (query.isEmpty()) {
                                                     notificationCustomManager.clearNotifications();
                                                 }
                                             })
+                                            /**
+                                             * Logs error exception thrown
+                                             * @param e exception thrown
+                                             */
                                             .addOnFailureListener(e -> Log.e(TAG, "Error getting remaining unseen notifications", e));
                                 }
                             })
+                            /**
+                             * Logs error exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Error marking notification as seen", e);
                                 _message.postValue("Failed to update notification status.");
                             });
                 })
+                /**
+                 * Logs error exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to fetch notification", e);
                     _message.postValue("Failed to fetch notification.");

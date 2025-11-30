@@ -113,9 +113,17 @@ public class EventRepositoryImpl implements IEventRepository {
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
         db.collection("users").document(currentUser.getUid()).get()
+            /**
+             * Gets organizer name nad fetches entrants count
+             * @param doc contains user
+             */
             .addOnSuccessListener(doc -> {
                 _organizerName.postValue(doc.getString("name"));
                 db.collection("events").document(eventId).get()
+                    /**
+                     * Posts event to mutable live data and fetches entrants count
+                     * @param documentSnapshot contains event
+                     */
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot != null && documentSnapshot.exists()) {
                             Event event = documentSnapshot.toObject(Event.class);
@@ -128,12 +136,20 @@ public class EventRepositoryImpl implements IEventRepository {
                             _userMessage.postValue("Error: Event not found.");
                         }
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _isLoading.postValue(false);
                         _userMessage.postValue("Error: Failed to load event.");
                         Log.e(TAG, "fetchEvent failed", e);
                     });
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 _isLoading.postValue(false);
                 _userMessage.postValue("Error: Failed to get logged in user.");

@@ -532,6 +532,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
         String senderId = admin.getUid();
 
         db.collection("users").document(senderId).get()
+            /**
+             * Send notif from admin
+             * @param doc sender user
+             */
             .addOnSuccessListener(doc -> {
                 String senderName = doc.getString("name");
                 if (senderName == null) {
@@ -545,6 +549,10 @@ public class EventDetailsRepositoryImpl implements IEventDetailsRepository {
                 manager.sendNotification(userId, title, message, type, null, null, senderId, senderName);
                 _message.postValue("Notification Sent!");
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 Log.e(TAG, "Failed to fetch admin user's profile", e);
             });

@@ -194,6 +194,10 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                             _userMessage.postValue("Failed to send notification.");
                         });
             })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
             .addOnFailureListener(e -> {
                 _userMessage.postValue("Error: Failed to get logged in user.");
                 Log.e(TAG, "notifyEntrant failed", e);
@@ -279,6 +283,10 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                                 }
                             }
                         })
+                        /**
+                         * Logs exception thrown
+                         * @param e exception thrown
+                         */
                         .addOnFailureListener(e -> {
                             Log.e(TAG, "Failed to update entrant status", e);
                             _userMessage.postValue("Failed to update status.");
@@ -287,6 +295,10 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                             }
                         });
                     })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> {
                 _userMessage.postValue("Error: Failed to get logged in user.");
                 Log.e(TAG, "notifyEntrant failed", e);

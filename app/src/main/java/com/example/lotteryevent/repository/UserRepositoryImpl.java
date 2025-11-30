@@ -128,6 +128,10 @@ public class UserRepositoryImpl implements IUserRepository {
         _isLoading.setValue(true);
 
         db.collection("users").document(firebaseUser.getUid()).get()
+            /**
+             * Sets opt out notifs to what it was before, updates profile
+             * @param doc contains user
+             */
             .addOnSuccessListener(doc -> {
                 Boolean optOutNotifications = doc.getBoolean("optOutNotifications");
                 if (optOutNotifications != null) {
@@ -135,18 +139,30 @@ public class UserRepositoryImpl implements IUserRepository {
                 }
 
                 db.collection("users").document(firebaseUser.getUid()).set(user)
+                    /**
+                     * Updates user saved and shows message
+                     * @param aVoid unusable data
+                     */
                     .addOnSuccessListener(aVoid -> {
                         _isLoading.setValue(false);
                         _currentUser.postValue(user);
                         _userMessage.postValue("Profile updated successfully.");
                         Log.d(TAG, "User profile updated successfully.");
                     })
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         _isLoading.setValue(false);
                         _userMessage.postValue("Profile update failed: " + e.getMessage());
                         Log.e(TAG, "Error updating profile", e);
                     });
             })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
             .addOnFailureListener(e -> Log.e(TAG, "Error getting user", e));
     }
 
