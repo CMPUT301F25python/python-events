@@ -54,7 +54,14 @@ public class AdminImagesFragment extends Fragment {
     }
 
     /**
-     * Called to have the fragment instantiate its user interface view.
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
      */
     @Nullable
     @Override
@@ -65,12 +72,12 @@ public class AdminImagesFragment extends Fragment {
     }
 
     /**
-     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}
-     * has returned, but before any saved state has been restored in to the view.
-     * <p>
-     * This method initializes the ViewModel, RecyclerView, Adapter, and Observers.
-     * It also triggers the initial fetch of images.
-     * </p>
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
      */
     @Override
     public void onViewCreated(@NonNull View view,
@@ -103,14 +110,24 @@ public class AdminImagesFragment extends Fragment {
      * Handles updates for the image list, loading state, and toast messages.
      */
     private void setupObservers() {
+        /**
+         * Observes list of images, updates adapter when changed
+         * @param list contains list of images
+         */
         viewModel.getImages().observe(getViewLifecycleOwner(), list -> {
             adapter.setImages(list);
         });
-
+        /**
+         * Observes loading boolean, shows progress conditionally based on loading
+         * @param loading boolean of whether loading or not
+         */
         viewModel.isLoading().observe(getViewLifecycleOwner(), loading -> {
             progress.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
-
+        /**
+         * Observes message, if updates and contains one, make a toast
+         * @param msg message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), msg -> {
             if (msg != null && !msg.isEmpty()) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
@@ -148,10 +165,20 @@ public class AdminImagesFragment extends Fragment {
                 .create();
 
         // 4. Handle Delete Button Click -> Show Confirmation Dialog
+        /**
+         * Opens a confirmation dialog when the delete button is clicked.
+         *
+         * @param v The view that was clicked.
+         */
         deleteButton.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Delete Image?")
                     .setMessage("Are you sure you want to permanently delete this image? This action cannot be undone.")
+                    /**
+                     * Deletes image
+                     * @param dialog triggers callback
+                     * @param which button identifier
+                     */
                     .setPositiveButton("Delete", (dialog, which) -> {
                         // Perform the actual delete
                         viewModel.deleteImage(item.getEventId());
@@ -159,6 +186,11 @@ public class AdminImagesFragment extends Fragment {
                         dialog.dismiss();
                         previewDialog.dismiss();
                     })
+                    /**
+                     * Cancels dialog
+                     * @param dialog triggers callback
+                     * @param which button identifier
+                     */
                     .setNegativeButton("Cancel", null)
                     .show();
         });

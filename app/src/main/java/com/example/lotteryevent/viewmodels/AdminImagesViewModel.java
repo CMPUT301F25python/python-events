@@ -74,12 +74,20 @@ public class AdminImagesViewModel extends ViewModel {
     public void fetchImages() {
         loading.postValue(true);
         repo.getAllImages(new IAdminImagesRepository.ImagesCallback() {
+            /**
+             * Posts fetched items
+             * @param list The list of {@link AdminImageItem} retrieved.
+             */
             @Override
             public void onSuccess(List<AdminImageItem> list) {
                 loading.postValue(false);
                 images.postValue(list);
             }
 
+            /**
+             * Poses exception
+             * @param e The exception describing the failure.
+             */
             @Override
             public void onFailure(Exception e) {
                 loading.postValue(false);
@@ -101,6 +109,9 @@ public class AdminImagesViewModel extends ViewModel {
         loading.postValue(true); // Show loading spinner
 
         repo.deleteImage(eventId, new IAdminImagesRepository.DeleteCallback() {
+            /**
+             * Posts successful deletion and fetches image
+             */
             @Override
             public void onSuccess() {
                 loading.postValue(false);
@@ -108,6 +119,10 @@ public class AdminImagesViewModel extends ViewModel {
                 fetchImages(); // Refresh the grid
             }
 
+            /**
+             * Posts exception to message
+             * @param e The exception describing the failure.
+             */
             @Override
             public void onFailure(Exception e) {
                 loading.postValue(false);

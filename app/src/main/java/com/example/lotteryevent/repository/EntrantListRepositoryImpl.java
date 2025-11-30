@@ -201,6 +201,9 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
     public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback) {
         if (eventId == null || userId == null || newStatus == null) {
             if (callback != null) {
+                /**
+                 * Raises exception on callback failure
+                 */
                 callback.onFailure(new IllegalArgumentException("Invalid arguments for status update"));
             }
             return;
@@ -211,12 +214,20 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                 .collection("entrants")
                 .document(userId)
                 .update("status", newStatus)
+                /**
+                 * Logs and calls callback's specific success behaviour
+                 * @param aVoid unusable data
+                 */
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Entrant " + userId + " status updated to " + newStatus);
                     if (callback != null) {
                         callback.onSuccess();
                     }
                 })
+                /**
+                 * Logs and calls callback's specific on failure behaviour
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to update entrant status", e);
                     _userMessage.postValue("Failed to update status.");

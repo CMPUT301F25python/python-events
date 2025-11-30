@@ -34,6 +34,13 @@ public class AdminImagesRepositoryImpl implements IAdminImagesRepository {
     public void getAllImages(ImagesCallback callback) {
         db.collection("events")
                 .get()
+                /**
+                 * Handles the successful retrieval of event documents from Firestore.
+                 * This listener iterates over the query results, extracts each event's
+                 * poster image and ID, and converts them into {@link AdminImageItem} objects.
+                 * Once processed, the resulting list is passed back through the callback.
+                 * @param querySnapshot snapshot containing all documents returned by the Firestore query
+                 */
                 .addOnSuccessListener(querySnapshot -> {
                     List<AdminImageItem> imageItems = new ArrayList<>();
 
@@ -48,6 +55,10 @@ public class AdminImagesRepositoryImpl implements IAdminImagesRepository {
                     }
                     callback.onSuccess(imageItems);
                 })
+                /**
+                 * Handles a Firestore query failure by passing the error back through
+                 * the provided callback's onFailure method.
+                 */
                 .addOnFailureListener(callback::onFailure);
     }
 
@@ -65,11 +76,23 @@ public class AdminImagesRepositoryImpl implements IAdminImagesRepository {
     public void deleteImage(String eventId, DeleteCallback callback) {
         db.collection("events").document(eventId)
                 .update("posterImageUrl", null)
+                /**
+                 * Handles the successful update of the event document in Firestore.
+                 * Once the "posterImageUrl" field is set to null, the success callback
+                 * is triggered (if provided) to notify the caller.
+                 * @param aVoid placeholder, no usable data
+                 */
                 .addOnSuccessListener(aVoid -> {
                     if (callback != null) {
                         callback.onSuccess();
                     }
                 })
+                /**
+                 * Handles a failure that occurs while attempting to update the event
+                 * document in Firestore. If a callback is provided, the error is passed
+                 * to the caller through the onFailure method.
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     if (callback != null) {
                         callback.onFailure(e);

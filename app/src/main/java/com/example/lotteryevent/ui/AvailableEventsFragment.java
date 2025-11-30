@@ -64,13 +64,21 @@ public class AvailableEventsFragment extends Fragment {
     @Nullable private ColorStateList availableTodayDefaultStrokeColor;
     private int availableTodayDefaultStrokeWidth;
 
+    /**
+     * Default constructor for production use by the Android Framework.
+     */
     public AvailableEventsFragment() { }
 
+    /**
+     * Constructor for testing. Allows us to inject a custom ViewModelFactory.
+     * @param viewModelFactory The factory to use for creating the ViewModel.
+     */
     public AvailableEventsFragment(ViewModelProvider.Factory viewModelFactory) {
         this.viewModelFactory = viewModelFactory;
     }
 
     /**
+     * Called by the system to have the fragment instantiate its user interface view.
      * @param inflater           The LayoutInflater object that can be used to inflate
      *                           any views in the fragment,
      * @param container          If non-null, this is the parent view that the fragment's
@@ -96,6 +104,9 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
      * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      *                           from a previous saved state as given here.
@@ -133,6 +144,10 @@ public class AvailableEventsFragment extends Fragment {
         adapter = new EventAdapter(R.layout.tile_event);
         recyclerView.setAdapter(adapter);
 
+        /**
+         * Makes toast if id of event is invalid, otherwise navigates to that event details fragment
+         * @param event event to navigate to
+         */
         adapter.setOnItemClickListener(event -> {
             String id = event.getEventId();
             if (id == null || id.trim().isEmpty() || "null".equals(id)) {
@@ -158,12 +173,20 @@ public class AvailableEventsFragment extends Fragment {
      * - Observes user-facing messages and shows them using a {@link Toast}
      */
     public void setupObservers() {
+        /**
+         * Observes events, updates adapter
+         * @param events list of events
+         */
         availableEventsViewModel.getFilteredEvents().observe(getViewLifecycleOwner(), events -> {
             // Keep the latest list from the ViewModel and apply the date filter locally.
             lastEventsFromViewModel = (events == null) ? new ArrayList<>() : events;
             applyLocalFiltersToAdapter();
         });
 
+        /**
+         * Observe message to show on update
+         * @param message message to show
+         */
         availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
@@ -187,13 +210,20 @@ public class AvailableEventsFragment extends Fragment {
         // Set initial style
         updateAvailableTodayButtonStyle(availableTodayButton);
 
-        // Toggle "available today" filter + update UI
+        /**
+         * Toggle "available today" filter + update UI
+         * @param v view clicked
+         */
         availableTodayButton.setOnClickListener(v -> {
             filterAvailableToday = !filterAvailableToday;
             updateAvailableTodayButtonStyle(availableTodayButton);
             applyFiltersAndUpdateList();
         });
 
+        /**
+         * Show a simple dialog to enter a keyword for interest-based filtering
+         * @param v view clicked
+         */
         filterButton.setOnClickListener(v -> showFilterDialog());
     }
 
