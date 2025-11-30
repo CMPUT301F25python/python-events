@@ -182,4 +182,32 @@ public class NotificationRepositoryImpl implements INotificationRepository {
                     _message.setValue("Unable to load event notifications");
                 });
     }
+
+    /**
+     * Fetches the display name of a user based on their User ID.
+     * <p>
+     * This is commonly used in Admin views to translate a recipient ID into a readable name.
+     * The result is returned asynchronously via the provided callback.
+     *
+     * @param userId   The unique ID of the user to look up.
+     * @param callback The callback interface to handle the result (name or error string).
+     */
+    @Override
+    public void getUserName(String userId, UserNameCallback callback) {
+        if (userId == null) {
+            callback.onCallback("Unknown ID");
+            return;
+        }
+
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String name = documentSnapshot.getString("name");
+                        callback.onCallback(name != null ? name : "Unknown User");
+                    } else {
+                        callback.onCallback("User not found");
+                    }
+                })
+                .addOnFailureListener(e -> callback.onCallback("Error fetching name"));
+    }
 }

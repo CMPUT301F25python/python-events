@@ -32,6 +32,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private final List<Notification> notificationsList = new ArrayList<>();
     private NotificationAdapter.OnItemClickListener listener;
     private final int rowLayoutResId;
+    private boolean isAdminView = false;
 
     /**
      * Sets the fragment used as the layout for each notif card
@@ -141,7 +142,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             // Set a click listener on the entire tile view.
             itemView.setOnClickListener(v -> {
                 int position = getBindingAdapterPosition();
-                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
+
+                if (!isAdminView) {
+                    notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
+                }
                 // Ensure the position is valid and a listener is registered before triggering the callback.
                 if (listener != null && position != RecyclerView.NO_POSITION) {
                     listener.onItemClick(notificationsList.get(position));
@@ -163,14 +167,21 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
             String timestamp = dateFormat.format(timestampRaw.toDate());
 
-            if (notification.getSeen() == true) {
-                notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
-            } else {
-                notifications_material_card.setCardBackgroundColor(Color.rgb(255, 251, 254));
-            }
-
             this.message.setText(message);
             this.timestamp.setText(timestamp);
+
+            if (isAdminView) {
+                // Admin: Always White (Static list, no interaction implied)
+                notifications_material_card.setCardBackgroundColor(Color.rgb(255, 251, 254));
+            }
+            else {
+                // User: Gray if seen, White if unseen
+                if (Boolean.TRUE.equals(notification.getSeen())) {
+                    notifications_material_card.setCardBackgroundColor(Color.rgb(230, 232, 230));
+                } else {
+                    notifications_material_card.setCardBackgroundColor(Color.rgb(255, 251, 254));
+                }
+            }
         }
     }
 
@@ -190,6 +201,27 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
 
         return message;
+    }
+
+    /**
+     * Toggles the adapter's display mode between User View and Admin View.
+     * <p>
+     * When set to {@code true} (Admin View):
+     * <ul>
+     *     <li>The recipient's User ID is displayed in the notification card.</li>
+     *     <li>Visual "seen/unseen" toggling is disabled.</li>
+     * </ul>
+     * When set to {@code false} (User View):
+     * <ul>
+     *     <li>Standard notification details are shown.</li>
+     *     <li>"Seen" status is visually represented by background color changes.</li>
+     * </ul>
+     *
+     * @param isAdminView {@code true} to enable Admin features, {@code false} for standard user behavior.
+     */
+    public void setAdminView(boolean isAdminView) {
+        this.isAdminView = isAdminView;
+        notifyDataSetChanged();
     }
 
 }

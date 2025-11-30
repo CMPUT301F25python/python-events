@@ -155,4 +155,24 @@ public class FakeNotificationRepository implements INotificationRepository {
     public void setMessage(String msg) {
         messageLiveData.postValue(msg);
     }
+
+    /**
+     * Simulates fetching a user name based on a user ID.
+     * <p>
+     * For testing purposes, this method returns a predictable name string formatted as
+     * "Fake Name for [userId]". If the userId is null, it returns "Unknown ID".
+     * This allows UI tests to verify that the name fetching logic is properly connected.
+     *
+     * @param userId   The ID of the user to look up.
+     * @param callback The callback to receive the simulated name.
+     */
+    @Override
+    public void getUserName(String userId, UserNameCallback callback) {
+        if (userId == null) {
+            callback.onCallback("Unknown ID");
+        } else {
+            // Return a predictable test string so UI tests can assert the text matches
+            callback.onCallback("Fake Name for " + userId);
+        }
+    }
 }
