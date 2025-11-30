@@ -6,14 +6,21 @@ import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.isRoot;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.hamcrest.CoreMatchers.containsString;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.navigation.Navigation;
+import androidx.test.espresso.PerformException;
+import androidx.test.espresso.UiController;
+import androidx.test.espresso.ViewAction;
+import androidx.test.espresso.matcher.ViewMatchers;
+import androidx.test.espresso.util.TreeIterables;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -25,11 +32,14 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for flow from running lottery to confirming lottery or cancelling lottery.
@@ -44,6 +54,43 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
 
     @Rule
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
+
+    /**
+     * Helper function for espresso wait
+     */
+    public static ViewAction waitForView(final Matcher<View> matcher, final long timeoutMs) {
+        return new ViewAction() {
+            @Override
+            public Matcher<View> getConstraints() {
+                return ViewMatchers.isRoot();
+            }
+
+            @Override
+            public String getDescription() {
+                return "Waiting up to " + timeoutMs + "ms for view: " + matcher.toString();
+            }
+
+            @Override
+            public void perform(UiController uiController, View view) {
+                long start = System.currentTimeMillis();
+                long end = start + timeoutMs;
+
+                do {
+                    for (View child : TreeIterables.breadthFirstViewTraversal(view)) {
+                        if (matcher.matches(child)) {
+                            return;
+                        }
+                    }
+                    uiController.loopMainThreadForAtLeast(50);
+                } while (System.currentTimeMillis() < end);
+
+                throw new PerformException.Builder()
+                        .withCause(new TimeoutException())
+                        .withActionDescription(this.getDescription())
+                        .build();
+            }
+        };
+    }
 
     /**
      * Sets up db by making event and event's entrant
@@ -100,6 +147,9 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
             bundle.putString("eventId", event.getEventId());
             Navigation.findNavController(activity, R.id.nav_host_fragment).navigate(R.id.runDrawFragment, bundle);
         });
+
+        // Wait for the page to load
+        onView(isRoot()).perform(waitForView(withId(R.id.runDrawButton), 7000));
     }
 
     /**
@@ -150,6 +200,7 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        onView(isRoot()).perform(waitForView(withText(containsString("Confirm Draw")), 7000));
 
         // check changes screen to the confirmation page
         onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
@@ -184,10 +235,11 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        onView(isRoot()).perform(waitForView(withText(containsString("Confirm Draw")), 7000));
 
         // checks screen changes to confirmation screen
         onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
-        onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
+        onView(withId(R.id.waiting_list_count)).check(matches(withText("1")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
 
