@@ -78,6 +78,7 @@ dependencies {
     androidTestImplementation(libs.fragment.testing)
     debugImplementation(libs.fragment.testing.manifest)
     androidTestImplementation(libs.androidx.navigation.testing)
+    androidTestImplementation ("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation("androidx.test.espresso:espresso-contrib:3.7.0") {
         exclude(group = "com.google.protobuf", module = "protobuf-lite")
     }

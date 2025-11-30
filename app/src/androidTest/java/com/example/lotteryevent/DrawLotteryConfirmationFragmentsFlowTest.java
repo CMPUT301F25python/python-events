@@ -11,10 +11,12 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.allOf;
 
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 import androidx.navigation.Navigation;
 import androidx.test.espresso.PerformException;
 import androidx.test.espresso.UiController;
@@ -39,6 +41,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -55,6 +59,8 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
     @Rule
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
 
+    @Rule
+    public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
     /**
      * Helper function for espresso wait
      */
@@ -96,22 +102,25 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
      * Sets up db by making event and event's entrant
      */
     @Before
-    public void setUpTests() {
+    public void setUpTests() throws InterruptedException {
         getInstrumentation().getUiAutomation().executeShellCommand("pm grant com.example.lotteryevent android.permission.POST_NOTIFICATIONS");
 
         db = FirebaseFirestore.getInstance();
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
         user = FirebaseAuth.getInstance().getCurrentUser();
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        // Wait for event and entrant creation
+        final CountDownLatch latch = new CountDownLatch(2);
 
         event = new Event(
                 "Snowball fight",
@@ -136,8 +145,10 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
                     });
         });
 
+        latch.await(10, TimeUnit.SECONDS);
+
         try {
-            Thread.sleep(3000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -149,21 +160,26 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         });
 
         // Wait for the page to load
-        onView(isRoot()).perform(waitForView(withId(R.id.runDrawButton), 7000));
+        onView(isRoot()).perform(waitForView(withId(R.id.runDrawButton), 10000));
+        onView(withId(R.id.runDrawButton)).check(matches(isDisplayed()));
     }
 
     /**
      * Removes data used for testing
      */
     @After
-    public void tearDownTests() {
+    public void tearDownTests() throws InterruptedException {
+        // Wait for 4 operations
+        final CountDownLatch latch = new CountDownLatch(4);
+
         db.collection("events").document(event.getEventId()).collection("entrants").document(entrant.getUserId()).delete();
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        db.collection("events").document(event.getEventId()).delete();
+        db.collection("events").document(event.getEventId()).delete().addOnCompleteListener(task ->
+                latch.countDown());
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -175,9 +191,14 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
             .whereEqualTo("type", "lottery_win")      // from your screenshot
             .get().addOnSuccessListener(notifs -> {
                 for (DocumentSnapshot notif : notifs) {
-                    notif.getReference().delete();
+                    notif.getReference().delete().addOnCompleteListener(task ->
+                            latch.countDown());
+                }
+                if (notifs.isEmpty()) {
+                    latch.countDown();
                 }
             });
+        latch.await(10, TimeUnit.SECONDS);
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -195,26 +216,21 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         onView(withId(R.id.numSelectedEntrants)).perform(click(), typeText("1"), closeSoftKeyboard());
         onView(withId(R.id.runDrawButton)).perform(click());
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        // Wait for confirmation page text to appear
         onView(isRoot()).perform(waitForView(withText(containsString("Confirm Draw")), 7000));
+
 
         // check changes screen to the confirmation page
         onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
+        onView(isRoot()).perform(waitForView(allOf(withId(R.id.waiting_list_count), withText("0")), 7000));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
 
         onView(withId(R.id.confirm_and_notify_button)).perform(click());
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        // Wait for final event details screen to appear
+        onView(isRoot()).perform(waitForView(withText(containsString("Event Details")), 7000));
 
         // check changes screen to the event details page
         onView(withText(containsString("Event Details"))).check(matches(isDisplayed()));
@@ -235,21 +251,19 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        // Wait for confirmation page text
         onView(isRoot()).perform(waitForView(withText(containsString("Confirm Draw")), 7000));
 
         // checks screen changes to confirmation screen
         onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
-        onView(withId(R.id.waiting_list_count)).check(matches(withText("1")));
+        onView(isRoot()).perform(waitForView(withText("0"), 7000));
+        onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
 
         onView(withId(R.id.cancel_button)).perform(click());
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        onView(isRoot()).perform(waitForView(withText(containsString("Event Details")), 10000));
 
         // checks screen changes to event details screen (on cancel)
         onView(withText(containsString("Event Details"))).check(matches(isDisplayed()));
