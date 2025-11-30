@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,7 +38,7 @@ public class NotificationsFragment extends Fragment {
     // --- ViewModel ---
     private NotificationsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
-
+    private TextView noNotification;
     private NotificationCustomManager notificationCustomManager;
 
     /**
@@ -64,6 +65,14 @@ public class NotificationsFragment extends Fragment {
 
         notificationCustomManager = new NotificationCustomManager(requireContext());
 
+        noNotification = view.findViewById(R.id.text_no_notifications);
+
+        // Get eventId for for admin
+        String eventIdFilter = null;
+        if (getArguments() != null) {
+            eventIdFilter = getArguments().getString("eventId");
+        }
+
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
             // Production path: create dependencies manually.
@@ -76,7 +85,7 @@ public class NotificationsFragment extends Fragment {
 
         // --- UI Setup ---
         setupRecyclerView(view);
-        setupObservers(view);
+        setupObservers(view, eventIdFilter);
 
         // --- Initial Action ---
         // Pass the notificationId from arguments (if any) to the ViewModel to process.
@@ -105,13 +114,34 @@ public class NotificationsFragment extends Fragment {
     /**
      * Sets up observers on the ViewModel's LiveData to react to data and state changes.
      */
-    private void setupObservers(@NonNull View view) {
-        // Observe the list of notifications and submit it to the adapter when it changes.
-        viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
-            if (notifications != null) {
-                adapter.setNotifications(notifications);
-            }
-        });
+    private void setupObservers(@NonNull View view, String eventIdFilter) {
+        if(eventIdFilter != null) {
+            viewModel.loadNotificationsForEvent(eventIdFilter);
+
+            // Show notifications for Admin
+            viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
+                if (notifications != null && !notifications.isEmpty()) {
+                    adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
+                }
+            });
+        } else {
+            // Observe the list of notifications and submit it to the adapter when it changes.
+            viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
+                if (notifications != null && !notifications.isEmpty()) {
+                    adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
+                }
+            });
+        }
 
         // Observe for user-facing messages (errors, etc.) and show them in a Toast.
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {

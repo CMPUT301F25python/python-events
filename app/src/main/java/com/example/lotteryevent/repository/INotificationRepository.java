@@ -1,6 +1,7 @@
 package com.example.lotteryevent.repository;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Notification;
@@ -24,6 +25,11 @@ public interface INotificationRepository {
     LiveData<String> getMessage();
 
     /**
+     * Returns a LiveData list of notis under a specified event
+     */
+    LiveData<List<Notification>> getNotificationsForEvent();
+
+    /**
      * Marks a specific notification as 'seen' in the database.
      * @param notificationId The ID of the notification to update.
      * @param notificationCustomManager notification custom manager used to remove notif banners
@@ -35,4 +41,9 @@ public interface INotificationRepository {
      * This must be called when the data is no longer needed.
      */
     void detachListener();
+
+    /**
+     * Gets the notifications that fall under the organizer for a specified event
+     */
+    void fetchNotificationsForEvent(String eventId, MutableLiveData<List<Notification>> targetLiveData);
 }

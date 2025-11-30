@@ -1,5 +1,6 @@
 package com.example.lotteryevent.repository;
 
+
 import android.content.Context;
 import android.util.Log;
 
@@ -23,10 +24,11 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private final MutableLiveData<List<Notification>> _notifications = new MutableLiveData<>();
+    private final MutableLiveData<List<Notification>> _notificationsForEvent = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
 
-    private ListenerRegistration listenerRegistration; // To manage the real-time listener
+    private ListenerRegistration listenerRegistration;
 
 
     public NotificationRepositoryImpl(Context context) {
@@ -37,6 +39,9 @@ public class NotificationRepositoryImpl implements INotificationRepository {
     public LiveData<List<Notification>> getNotifications() {
         return _notifications;
     }
+
+    @Override
+    public LiveData<List<Notification>> getNotificationsForEvent() { return _notificationsForEvent; }
 
     @Override
     public LiveData<Boolean> isLoading() {
@@ -134,5 +139,47 @@ public class NotificationRepositoryImpl implements INotificationRepository {
             listenerRegistration.remove();
             listenerRegistration = null;
         }
+    }
+
+    /**
+     * This method fetches the notifications associated with a specific event
+     * ordering notis by timestamp in descending order (Newest notifications appear first)
+     * @param eventId
+     * Identifier for the event notifications are retrieved for
+     */
+    @Override
+    public void fetchNotificationsForEvent(String eventId, MutableLiveData<List<Notification>> targetLiveData) {
+
+        Log.d(TAG, "Fetching notifications for eventId: " + eventId);
+        _isLoading.postValue(true);
+
+        db.collection("notifications")
+                .whereEqualTo("eventId", eventId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    Log.d(TAG, "Event notiifcation snapshot size: " + snapshot.size());
+                    List<Notification> result = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snapshot) {
+                        Log.d(TAG, "Doc ID: " + doc.getId() + "=> " + doc.getData());
+
+                        Notification eventNoti = doc.toObject(Notification.class);
+
+                        if (eventNoti != null) {
+                            result.add(eventNoti);
+                        }
+                    }
+                    targetLiveData.setValue(result);
+                    _isLoading.setValue(false);
+                    _notificationsForEvent.postValue(result);
+                    _isLoading.postValue(false);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching notifications for eventId=" + eventId, e);
+                    targetLiveData.setValue(new ArrayList<>());
+                    _isLoading.setValue(false);
+                    _message.setValue("Unable to load event notifications");
+                });
     }
 }
