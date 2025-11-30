@@ -149,7 +149,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         for (String entrant : newChosenEntrants) {
             String eventName = Objects.requireNonNull(event.getValue()).getName();
             String organizerId = event.getValue().getOrganizerId();
-            String organizerName = event.getValue().getOrganizerName();
+            String organizerName = repository.getOrganizerName().getValue();
             String title = "Congratulations!";
             String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
             String type = "lottery_win";

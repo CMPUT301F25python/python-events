@@ -2,7 +2,7 @@ package com.example.lotteryevent.data;
 
 import com.google.firebase.Timestamp;
 import org.junit.Test;
-import java.util.Date;
+
 import static org.junit.Assert.*;
 
 /**
@@ -43,11 +43,11 @@ public class NotificationTest {
         String type = "lottery_win";
         String eventId = "event123";
         String eventName = "Gala";
-        String organizerId = "org123";
-        String organizerName = "Organizer Name";
+        String senderId = "org123";
+        String senderName = "Organizer Name";
         Integer notifBannerId = 123;
 
-        Notification notification = new Notification(uid, title, message, type, eventId, eventName, organizerId, organizerName, notifBannerId);
+        Notification notification = new Notification(uid, title, message, type, eventId, eventName, senderId, senderName, notifBannerId);
 
         assertEquals("Recipient ID should match", uid, notification.getRecipientId());
         assertEquals("Title should match", title, notification.getTitle());
@@ -55,8 +55,8 @@ public class NotificationTest {
         assertEquals("Type should match", type, notification.getType());
         assertEquals("Event ID should match", eventId, notification.getEventId());
         assertEquals("Event Name should match", eventName, notification.getEventName());
-        assertEquals("Organizer ID should match", organizerId, notification.getOrganizerId());
-        assertEquals("Organizer Name should match", organizerName, notification.getOrganizerName());
+        assertEquals("Sender ID should match", senderId, notification.getSenderId());
+        assertEquals("Sender Name should match", senderName, notification.getSenderName());
         assertEquals("Notifications Banner ID should match", notifBannerId, notification.getNotifBannerId());
 
         // Verify defaults set in constructor
@@ -132,19 +132,19 @@ public class NotificationTest {
     }
 
     /**
-     * Verifies various organizer-related getters and setters.
+     * Verifies various sender-related getters and setters.
      */
     @Test
-    public void testOrganizerDetailsGettersAndSetters() {
+    public void testSenderDetailsGettersAndSetters() {
         Notification notification = new Notification();
         String orgId = "org_1";
         String orgName = "Committee";
 
-        notification.setOrganizerId(orgId);
-        notification.setOrganizerName(orgName);
+        notification.setSenderId(orgId);
+        notification.setSenderName(orgName);
 
-        assertEquals(orgId, notification.getOrganizerId());
-        assertEquals(orgName, notification.getOrganizerName());
+        assertEquals(orgId, notification.getSenderId());
+        assertEquals(orgName, notification.getSenderName());
     }
 
     /**

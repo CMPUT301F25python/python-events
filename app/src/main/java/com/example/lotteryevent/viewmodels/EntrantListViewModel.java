@@ -94,7 +94,7 @@ public class EntrantListViewModel extends ViewModel {
         entrantListRepo.updateEntrantStatus(this.eventId, userId, "waiting", new StatusUpdateCallback() {
             @Override
             public void onSuccess() {
-                entrantListRepo.setUserMessage("User returned to waitlist.");
+                entrantListRepo.setUserMessage("User returned to waitlist and notified.");
                 // Refresh the list
                 entrantListRepo.fetchEntrantsByStatus(eventId, status);
             }
@@ -102,6 +102,6 @@ public class EntrantListViewModel extends ViewModel {
             @Override
             public void onFailure(Exception e) {
             }
-        });
+        }, true);
     }
 }

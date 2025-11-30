@@ -42,6 +42,7 @@ public class EventRepositoryImpl implements IEventRepository {
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
     private final MutableLiveData<Integer> _waitingListCount = new MutableLiveData<>();
     private final MutableLiveData<Integer> _availableSpaceCount = new MutableLiveData<>();
+    private final MutableLiveData<String> _organizerName = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _userMessage = new MutableLiveData<>();
 
@@ -58,6 +59,9 @@ public class EventRepositoryImpl implements IEventRepository {
     public LiveData<Integer> getWaitingListCount() { return _waitingListCount; }
     @Override
     public LiveData<Integer> getAvailableSpaceCount() { return _availableSpaceCount; }
+    @Override
+    public LiveData<String> getOrganizerName() { return _organizerName; }
+
     @Override
     public LiveData<Boolean> isLoading() {
         return _isLoading;
@@ -105,24 +109,36 @@ public class EventRepositoryImpl implements IEventRepository {
     @Override
     public void fetchEventAndEntrantCounts(String eventId) {
         _isLoading.postValue(true);
-        db.collection("events").document(eventId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot != null && documentSnapshot.exists()) {
-                        Event event = documentSnapshot.toObject(Event.class);
-                        _event.postValue(event);
 
-                        fetchEntrantsCountsTask(eventId);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        db.collection("users").document(currentUser.getUid()).get()
+            .addOnSuccessListener(doc -> {
+                _organizerName.postValue(doc.getString("name"));
+                db.collection("events").document(eventId).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot != null && documentSnapshot.exists()) {
+                            Event event = documentSnapshot.toObject(Event.class);
+                            _event.postValue(event);
+
+                            fetchEntrantsCountsTask(eventId);
+                            _isLoading.postValue(false);
+                        } else {
+                            _isLoading.postValue(false);
+                            _userMessage.postValue("Error: Event not found.");
+                        }
+                    })
+                    .addOnFailureListener(e -> {
                         _isLoading.postValue(false);
-                    } else {
-                        _isLoading.postValue(false);
-                        _userMessage.postValue("Error: Event not found.");
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    _isLoading.postValue(false);
-                    _userMessage.postValue("Error: Failed to load event.");
-                    Log.e(TAG, "fetchEvent failed", e);
-                });
+                        _userMessage.postValue("Error: Failed to load event.");
+                        Log.e(TAG, "fetchEvent failed", e);
+                    });
+            })
+            .addOnFailureListener(e -> {
+                _isLoading.postValue(false);
+                _userMessage.postValue("Error: Failed to get logged in user.");
+                Log.e(TAG, "fetchEvent failed", e);
+            });
     }
 
     private void fetchEntrantsCountsTask(String eventId) {

@@ -2,6 +2,7 @@ package com.example.lotteryevent;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -204,11 +205,11 @@ public class EntrantListViewModelTest {
         // Capture the callback passed to the repository
         ArgumentCaptor<StatusUpdateCallback> callbackCaptor = ArgumentCaptor.forClass(StatusUpdateCallback.class);
 
-        verify(repository).updateEntrantStatus(eq(TEST_EVENT_ID), eq(targetUserId), eq("waiting"), callbackCaptor.capture());
+        verify(repository).updateEntrantStatus(eq(TEST_EVENT_ID), eq(targetUserId), eq("waiting"), callbackCaptor.capture(), eq(true));
         callbackCaptor.getValue().onSuccess();
 
         // Verify the ViewModel reacts correctly to success:
-        verify(repository).setUserMessage("User returned to waitlist.");
+        verify(repository).setUserMessage("User returned to waitlist and notified.");
         verify(repository, times(2)).fetchEntrantsByStatus(TEST_EVENT_ID, TEST_STATUS);
     }
 
@@ -221,7 +222,7 @@ public class EntrantListViewModelTest {
         viewModel.cancelInvite(null);
 
         // Verify repo is never called
-        verify(repository, never()).updateEntrantStatus(anyString(), anyString(), anyString(), any());
+        verify(repository, never()).updateEntrantStatus(anyString(), anyString(), anyString(), any(), anyBoolean());
     }
 
     /**
@@ -234,7 +235,7 @@ public class EntrantListViewModelTest {
         viewModel.cancelInvite(targetUserId);
 
         ArgumentCaptor<StatusUpdateCallback> callbackCaptor = ArgumentCaptor.forClass(StatusUpdateCallback.class);
-        verify(repository).updateEntrantStatus(eq(TEST_EVENT_ID), eq(targetUserId), eq("waiting"), callbackCaptor.capture());
+        verify(repository).updateEntrantStatus(eq(TEST_EVENT_ID), eq(targetUserId), eq("waiting"), callbackCaptor.capture(), eq(true));
 
         // Simulate Failure
         callbackCaptor.getValue().onFailure(new Exception("Firestore error"));
@@ -242,7 +243,7 @@ public class EntrantListViewModelTest {
         // Verify that we DO NOT trigger a refresh or success message
         // (fetchEntrantsByStatus was called 1 time in constructor, shouldn't be called again)
         verify(repository, times(1)).fetchEntrantsByStatus(anyString(), anyString());
-        verify(repository, never()).setUserMessage("User returned to waitlist.");
+        verify(repository, never()).setUserMessage("User returned to waitlist and notified.");
     }
 
     /**

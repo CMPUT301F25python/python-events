@@ -64,6 +64,12 @@ public interface IEventRepository {
     LiveData<Integer> getAvailableSpaceCount();
 
     /**
+     * Returns LiveData of the organizer's name as its name is static in the event
+     * @return organizer's name
+     */
+    LiveData<String> getOrganizerName();
+
+    /**
      * Fetches an specified event and its entrants.
      * @param eventId The unique identifier of the event to load.
      */

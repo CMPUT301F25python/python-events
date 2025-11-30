@@ -139,7 +139,7 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
      * @param callback  Callback to notify ViewModel of success/failure
      */
     @Override
-    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback) {
+    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback, boolean sendNotif) {
         if (shouldReturnError) {
             if (callback != null) {
                 callback.onFailure(new Exception("Simulated database failure"));
