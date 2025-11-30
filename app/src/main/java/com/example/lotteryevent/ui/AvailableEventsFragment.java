@@ -4,7 +4,16 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextThemeWrapper;
 import android.widget.Toast;
+import android.app.DatePickerDialog;
+import android.util.TypedValue;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,8 +29,16 @@ import com.example.lotteryevent.repository.AvailableEventsRepositoryImpl;
 import com.example.lotteryevent.repository.IAvailableEventsRepository;
 import com.example.lotteryevent.viewmodels.AvailableEventsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,6 +55,14 @@ public class AvailableEventsFragment extends Fragment {
     // UI-level filter state (the actual filtering is done in the ViewModel)
     private String currentKeyword = "";
     private boolean filterAvailableToday = false;
+
+    @Nullable private Long filterStartDateMs = null;
+    @Nullable private Long filterEndDateMs = null;
+    @NonNull private List<Event> lastEventsFromViewModel = new ArrayList<>();
+    @Nullable private ColorStateList availableTodayDefaultBgTint;
+    @Nullable private ColorStateList availableTodayDefaultTextColors;
+    @Nullable private ColorStateList availableTodayDefaultStrokeColor;
+    private int availableTodayDefaultStrokeWidth;
 
     public AvailableEventsFragment() { }
 
@@ -103,9 +128,9 @@ public class AvailableEventsFragment extends Fragment {
      */
     public void setupRecyclerView(View view) {
         recyclerView = view.findViewById(R.id.events_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        adapter = new EventAdapter(R.layout.item_event);
+        // use tile layout
+        adapter = new EventAdapter(R.layout.tile_event);
         recyclerView.setAdapter(adapter);
 
         adapter.setOnItemClickListener(event -> {
@@ -134,15 +159,9 @@ public class AvailableEventsFragment extends Fragment {
      */
     public void setupObservers() {
         availableEventsViewModel.getFilteredEvents().observe(getViewLifecycleOwner(), events -> {
-            if (adapter == null) {
-                return;
-            }
-
-            if (events == null) {
-                adapter.setEvents(new ArrayList<>());
-            } else {
-                adapter.setEvents(events);
-            }
+            // Keep the latest list from the ViewModel and apply the date filter locally.
+            lastEventsFromViewModel = (events == null) ? new ArrayList<>() : events;
+            applyLocalFiltersToAdapter();
         });
 
         availableEventsViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
@@ -162,17 +181,20 @@ public class AvailableEventsFragment extends Fragment {
      * @param view the root view of this fragment used to locate the buttons
      */
     public void setupButtons(View view) {
-        View availableTodayButton = view.findViewById(R.id.available_today_button);
+        MaterialButton availableTodayButton = view.findViewById(R.id.available_today_button);
         View filterButton = view.findViewById(R.id.filter_button);
 
-        // Toggle "available today" filter
+        // Set initial style
+        updateAvailableTodayButtonStyle(availableTodayButton);
+
+        // Toggle "available today" filter + update UI
         availableTodayButton.setOnClickListener(v -> {
             filterAvailableToday = !filterAvailableToday;
+            updateAvailableTodayButtonStyle(availableTodayButton);
             applyFiltersAndUpdateList();
         });
 
-        // Show a simple dialog to enter a keyword for interest-based filtering
-        filterButton.setOnClickListener(v -> showKeywordDialog());
+        filterButton.setOnClickListener(v -> showFilterDialog());
     }
 
     /**
@@ -187,26 +209,310 @@ public class AvailableEventsFragment extends Fragment {
     }
 
     /**
-     * Shows a dialog allowing the user to enter a keyword used to filter events
-     * by name or description.
+     * Applies the currently selected date range filter to {@link #lastEventsFromViewModel}
+     * and pushes the result into the adapter.
      */
-    private void showKeywordDialog() {
-        android.widget.EditText input = new android.widget.EditText(requireContext());
-        input.setHint("Enter a keyword");
-        input.setText(currentKeyword);
-
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Filter by keyword")
-                .setView(input)
-                .setPositiveButton("Apply", (dialog, which) -> {
-                    currentKeyword = input.getText().toString();
-                    applyFiltersAndUpdateList();
-                })
-                .setNegativeButton("Clear", (dialog, which) -> {
-                    currentKeyword = "";
-                    applyFiltersAndUpdateList();
-                })
-                .setNeutralButton("Cancel", null)
-                .show();
+    private void applyLocalFiltersToAdapter() {
+        if (adapter == null) return;
+        adapter.setEvents(applyDateRangeFilter(lastEventsFromViewModel));
     }
+
+    /**
+     * Filters events by {@link Event#getEventStartDateTime()} using the inclusive day range
+     * [filterStartDateMs, filterEndDateMs]. If either bound is null, it is treated as "unbounded".
+     */
+    @NonNull
+    private List<Event> applyDateRangeFilter(@NonNull List<Event> input) {
+        if (filterStartDateMs == null && filterEndDateMs == null) return input;
+
+        List<Event> out = new ArrayList<>();
+        for (Event e : input) {
+            if (e == null || e.getEventStartDateTime() == null) continue;
+
+            long t = e.getEventStartDateTime().toDate().getTime();
+            if (filterStartDateMs != null && t < filterStartDateMs) continue;
+            if (filterEndDateMs != null && t > filterEndDateMs) continue;
+
+            out.add(e);
+        }
+        return out;
+    }
+
+    /**
+     * Callback interface for selecting a date range.
+     */
+    private interface DaySelectionCallback {
+        void onDaySelected(long startOfDayMs, long endOfDayMs);
+    }
+
+    /**
+     * Opens a dialog that lets the user select a date.
+     */
+    private void showDayPickerDialog(
+            @Nullable Long existingMs,
+            @Nullable Long minDateMs,
+            @Nullable Long maxDateMs,
+            @NonNull DaySelectionCallback cb
+    ) {
+        final Calendar cal = Calendar.getInstance();
+        if (existingMs != null) cal.setTimeInMillis(existingMs);
+
+        int year = cal.get(Calendar.YEAR);
+        int month = cal.get(Calendar.MONTH);
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog dlg = new DatePickerDialog(requireContext(), (view, y, m, d) -> {
+            cb.onDaySelected(startOfDayMillis(y, m, d), endOfDayMillis(y, m, d));
+        }, year, month, day);
+
+        if (minDateMs != null) dlg.getDatePicker().setMinDate(minDateMs);
+        if (maxDateMs != null) dlg.getDatePicker().setMaxDate(maxDateMs);
+
+        dlg.show();
+    }
+
+    /**
+     * Converts a date to the start of the day in milliseconds.
+     * @param year
+     * @param monthZeroBased
+     * @param dayOfMonth
+     * @return The start of the day in milliseconds for the given date.
+     */
+    private long startOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
+        Calendar c = Calendar.getInstance();
+        c.set(year, monthZeroBased, dayOfMonth, 0, 0, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
+    }
+
+    /**
+     * Converts a date to the end of the day in milliseconds.
+     * @param year
+     * @param monthZeroBased
+     * @param dayOfMonth
+     * @return The end of the day in milliseconds for the given date.
+     */
+    private long endOfDayMillis(int year, int monthZeroBased, int dayOfMonth) {
+        Calendar c = Calendar.getInstance();
+        c.set(year, monthZeroBased, dayOfMonth, 23, 59, 59);
+        c.set(Calendar.MILLISECOND, 999);
+        return c.getTimeInMillis();
+    }
+
+    /**
+     * Formats a date as a string.
+     * @param ms
+     * @return The formatted date string.
+     */
+    private String formatDay(@Nullable Long ms) {
+        if (ms == null) return "";   // important: let the hint show
+        DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
+        return df.format(new Date(ms));
+    }
+
+    /**
+     * Converts a dp value to a pixel value.
+     * @param v
+     * @return The pixel value.
+     */
+    private int dp(int v) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()
+        );
+    }
+
+    /**
+     * Opens a dialog that lets the user enter a keyword to filter events by name or description.
+     */
+    private void showFilterDialog() {
+        // Use a Material themed context so TextInputLayout renders correctly
+        ContextThemeWrapper themed = new ContextThemeWrapper(
+                requireContext(),
+                com.google.android.material.R.style.ThemeOverlay_MaterialComponents_MaterialAlertDialog
+        );
+
+        LinearLayout root = new LinearLayout(themed);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(24), dp(16), dp(24), dp(8));
+
+        TextInputLayout keywordLayout = new TextInputLayout(themed);
+        keywordLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        keywordLayout.setHint("Keyword");
+        keywordLayout.setStartIconDrawable(android.R.drawable.ic_menu_search); // swap if you have your own search icon
+        keywordLayout.setStartIconVisible(true);
+
+        TextInputEditText keywordInput = new TextInputEditText(themed);
+        keywordInput.setSingleLine(true);
+        keywordInput.setText(currentKeyword);
+        keywordLayout.addView(keywordInput);
+
+        root.addView(keywordLayout, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        // Date Range label
+        TextView label = new TextView(themed);
+        label.setText("Event Start Range (inclusive)");
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        label.setPadding(0, dp(14), 0, 10);
+
+        int onSurfaceVariant = MaterialColors.getColor(root, com.google.android.material.R.attr.colorOnSurfaceVariant);
+        label.setTextColor(onSurfaceVariant);
+
+        root.addView(label);
+
+        // Date range
+        LinearLayout col = new LinearLayout(themed);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(0, 0, 0, 0);
+
+        LinearLayout.LayoutParams fullWidthLp =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        LinearLayout.LayoutParams leftLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        leftLp.setMarginEnd(dp(12));
+        LinearLayout.LayoutParams rightLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+
+        TextInputLayout startLayout = new TextInputLayout(themed);
+        startLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+
+        startLayout.setHint("Earliest Start Date");
+        startLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        startLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
+
+        TextInputEditText startInput = new TextInputEditText(themed);
+        startInput.setFocusable(false);
+        startInput.setClickable(true);
+        startInput.setCursorVisible(false);
+        startLayout.addView(startInput);
+
+        TextInputLayout endLayout = new TextInputLayout(themed);
+        endLayout.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        endLayout.setHint("Latest Start Date");
+        endLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        endLayout.setEndIconDrawable(R.drawable.calendar_today_24px);
+
+        TextInputEditText endInput = new TextInputEditText(themed);
+        endInput.setFocusable(false);
+        endInput.setClickable(true);
+        endInput.setCursorVisible(false);
+        endLayout.addView(endInput);
+
+        LinearLayout.LayoutParams fullWidth =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        root.addView(startLayout, fullWidth);
+
+        View spacer = new View(themed);
+        root.addView(spacer, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0
+        ));
+
+        root.addView(endLayout, fullWidth);
+
+        // Keep existing temp values + initial text
+        final Long[] tempStart = new Long[]{filterStartDateMs};
+        final Long[] tempEnd = new Long[]{filterEndDateMs};
+
+        startInput.setText(formatDay(tempStart[0]));
+        endInput.setText(formatDay(tempEnd[0]));
+
+        Runnable openStart = () -> showDayPickerDialog(
+                tempStart[0], null, null,
+                (s, e) -> {
+                    if (tempEnd[0] != null && s > tempEnd[0]) {
+                        Toast.makeText(requireContext(), "Start date can’t be after the end date.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    tempStart[0] = s;
+                    startInput.setText(formatDay(s));
+                }
+        );
+
+        Runnable openEnd = () -> showDayPickerDialog(
+                tempEnd[0], tempStart[0], null,
+                (s, e) -> {
+                    tempEnd[0] = e; // inclusive end-of-day
+                    endInput.setText(formatDay(e));
+                }
+        );
+
+        startInput.setOnClickListener(v -> openStart.run());
+        startLayout.setEndIconOnClickListener(v -> openStart.run());
+
+        endInput.setOnClickListener(v -> openEnd.run());
+        endLayout.setEndIconOnClickListener(v -> openEnd.run());
+
+        // Title
+        TextView titleView = new TextView(themed);
+        titleView.setText("Filter Events");
+        titleView.setTypeface(Typeface.DEFAULT_BOLD);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        titleView.setPadding(dp(24), dp(18), dp(24), 0);
+
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(themed)
+                .setCustomTitle(titleView)
+                .setView(root)
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Clear", (d, which) -> {
+                    currentKeyword = "";
+                    filterStartDateMs = null;
+                    filterEndDateMs = null;
+                    applyFiltersAndUpdateList();
+                    applyLocalFiltersToAdapter();
+                })
+                .setPositiveButton("Apply", null)
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                currentKeyword = (keywordInput.getText() == null) ? "" : keywordInput.getText().toString();
+
+                Long start = tempStart[0];
+                Long end = tempEnd[0];
+
+                if (start != null && end != null && end < start) {
+                    endLayout.setError("End date must be on or after the start date.");
+                    return;
+                }
+                endLayout.setError(null);
+
+                filterStartDateMs = start;
+                filterEndDateMs = end;
+
+                applyFiltersAndUpdateList();
+                applyLocalFiltersToAdapter();
+                dialog.dismiss();
+            });
+        });
+        dialog.show();
+    }
+
+    /**
+     * Updates the style of the "Available Today" button.
+     * @param button
+     */
+    private void updateAvailableTodayButtonStyle(@NonNull MaterialButton button) {
+
+        if (availableTodayDefaultTextColors == null) {
+            availableTodayDefaultBgTint = button.getBackgroundTintList();
+            availableTodayDefaultTextColors = button.getTextColors();
+            availableTodayDefaultStrokeColor = button.getStrokeColor();
+            availableTodayDefaultStrokeWidth = button.getStrokeWidth();
+        }
+
+        if (filterAvailableToday) {
+            int pink = Color.parseColor("#F981A5"); // changes button colour to primary pink
+            button.setBackgroundTintList(ColorStateList.valueOf(pink));
+            button.setTextColor(Color.WHITE);
+            button.setStrokeWidth(0);
+        } else {
+            button.setBackgroundTintList(availableTodayDefaultBgTint);
+            if (availableTodayDefaultTextColors != null) button.setTextColor(availableTodayDefaultTextColors);
+
+            button.setStrokeWidth(availableTodayDefaultStrokeWidth);
+            button.setStrokeColor(availableTodayDefaultStrokeColor);
+        }
+    }
+
 }
