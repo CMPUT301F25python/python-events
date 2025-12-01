@@ -175,29 +175,14 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             _bottomUiState.setValue(BottomUiState.infoText("Error: Notifications not set up."));
             return;
         }
-        String eventId = Objects.requireNonNull(event.getValue()).getEventId();
         ArrayList<Task<DocumentReference>> tasks = new ArrayList<>();
 
         for (String entrant : newChosenEntrants) {
-            String eventName = Objects.requireNonNull(event.getValue()).getName();
-            String organizerId = event.getValue().getOrganizerId();
-            String organizerName = repository.getOrganizerName().getValue();
-            String title = "Congratulations!";
-            String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
-            String type = "lottery_win";
-            Task<DocumentReference> task = notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
-            tasks.add(task);
+            tasks.add(sendWinNotification(entrant));
         }
 
         for (String entrant : newUnchosenEntrants) {
-            String eventName = Objects.requireNonNull(event.getValue()).getName();
-            String organizerId = event.getValue().getOrganizerId();
-            String organizerName = event.getValue().getOrganizerName();
-            String title = "Thank you for joining!";
-            String message = "You weren't selected for " + eventName + " in this draw, but you're still on the waiting list and may be chosen in a future redraw.";
-            String type = "lottery_loss";
-            Task<DocumentReference> task = notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
-            tasks.add(task);
+            tasks.add(sendLossNotification(entrant));
         }
 
         Tasks.whenAllComplete(tasks)
@@ -208,6 +193,38 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
             .addOnCompleteListener(allTask -> {
                 _navigateBack.postValue(true);
             });
+    }
+
+    /**
+     * Notifies chosen entrants of lottery win
+     * @param entrant ID of chosen entrant
+     * @return task of sending notif
+     */
+    public Task<DocumentReference> sendWinNotification(String entrant) {
+        String eventId = Objects.requireNonNull(event.getValue()).getEventId();
+        String eventName = Objects.requireNonNull(event.getValue()).getName();
+        String organizerId = event.getValue().getOrganizerId();
+        String organizerName = repository.getOrganizerName().getValue();
+        String title = "Congratulations!";
+        String message = "You've been selected for " + eventName + "! Tap to accept or decline.";
+        String type = "lottery_win";
+        return notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
+    }
+
+    /**
+     * Notifies unchosen entrants of lottery loss
+     * @param entrant ID of unchosen entrant
+     * @return task of sending notif
+     */
+    public Task<DocumentReference> sendLossNotification(String entrant) {
+        String eventId = Objects.requireNonNull(event.getValue()).getEventId();
+        String eventName = Objects.requireNonNull(event.getValue()).getName();
+        String organizerId = event.getValue().getOrganizerId();
+        String organizerName = event.getValue().getOrganizerName();
+        String title = "Thank you for joining!";
+        String message = "You weren't selected for " + eventName + " in this draw, but you're still on the waiting list and may be chosen in a future redraw.";
+        String type = "lottery_loss";
+        return notifManager.sendNotification(entrant, title, message, type, eventId, eventName, organizerId, organizerName);
     }
 
     /**

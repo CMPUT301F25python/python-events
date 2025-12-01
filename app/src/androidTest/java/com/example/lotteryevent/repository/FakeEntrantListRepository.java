@@ -8,6 +8,7 @@ import com.example.lotteryevent.data.Notification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A fake implementation of {@link IEntrantListRepository}.
@@ -172,6 +173,15 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
         for (Entrant e : inMemoryEntrants) {
             if (e.getUserId() != null && e.getUserId().equals(userId)) {
                 e.setStatus(newStatus);
+
+                if (sendNotif && Objects.equals(newStatus, "waiting")) {
+                    Notification notification = new Notification();
+                    notification.setRecipientId(e.getUserId());
+                    notification.setEventId(eventId);
+                    notification.setTitle("Invitation Update");
+                    notification.setMessage("Your invitation to the event something has been withdrawn.");
+                    notificationCalls.add(notification);
+                }
                 found = true;
                 break;
             }

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.data.Notification;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
@@ -29,6 +30,12 @@ public class FakeEventRepository implements IEventRepository {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> _message = new MutableLiveData<>();
     private final MutableLiveData<String> _organizerName = new MutableLiveData<>();
+
+    /**
+     * In-memory list of notifications recorded during tests.
+     * Uses the shared {@link Notification} POJO instead of a custom helper class.
+     */
+    private final List<Notification> notificationCalls = new ArrayList<>();
 
     // --- In-memory "database" ---
     // These lists hold the state of our fake repository.
