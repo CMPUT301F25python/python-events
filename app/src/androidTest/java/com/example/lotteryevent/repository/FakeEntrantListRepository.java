@@ -8,6 +8,7 @@ import com.example.lotteryevent.data.Notification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A fake implementation of {@link IEntrantListRepository}.
@@ -83,6 +84,24 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
     }
 
     /**
+     * In this case, identical to {@link #fetchEntrantsByStatus(String, String)}
+     * @param eventId the unique identifier of the event for which entrants are
+     *                being fetched
+     * @return a LiveData object containing the in-memory entrant list or null on error
+     */
+    @Override
+    public LiveData<List<Entrant>> fetchAllEntrants(String eventId) {
+        if (shouldReturnError) {
+            _entrants.postValue(null);
+            _userMessage.postValue("Failed to load entrants.");
+        } else {
+            _entrants.postValue(inMemoryEntrants);
+        }
+        return _entrants;
+    }
+
+
+    /**
      * Records a simulated notification call for later inspection. No actual
      * notification is sent. Tests can retrieve the recorded calls via
      * {@link #getNotificationCalls()}.
@@ -154,6 +173,15 @@ public class FakeEntrantListRepository implements IEntrantListRepository {
         for (Entrant e : inMemoryEntrants) {
             if (e.getUserId() != null && e.getUserId().equals(userId)) {
                 e.setStatus(newStatus);
+
+                if (sendNotif && Objects.equals(newStatus, "waiting")) {
+                    Notification notification = new Notification();
+                    notification.setRecipientId(e.getUserId());
+                    notification.setEventId(eventId);
+                    notification.setTitle("Invitation Update");
+                    notification.setMessage("Your invitation to the event something has been withdrawn.");
+                    notificationCalls.add(notification);
+                }
                 found = true;
                 break;
             }
