@@ -35,6 +35,7 @@ import com.example.lotteryevent.repository.IOrganizerEventRepository;
 import com.example.lotteryevent.repository.OrganizerEventRepositoryImpl;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
 import com.example.lotteryevent.viewmodels.OrganizerEventViewModel;
+import com.google.firebase.Timestamp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -62,6 +63,7 @@ public class OrganizerEventFragment extends Fragment {
 
     // UI Components
     private TextView eventNameLabel;
+    private TextView upcomingText;
     private ImageView posterImage;
     private Button uploadPosterButton;
     private Button qrCodeRequest;
@@ -203,6 +205,9 @@ public class OrganizerEventFragment extends Fragment {
             switch (state) {
                 case UPCOMING:
                     buttonContainer.setVisibility(View.GONE);
+                    upcomingText.setVisibility(View.VISIBLE);
+                    String upcomingTextField = "Event is not yet open for registration";
+                    upcomingText.setText(upcomingTextField);
                     break;
                 case FINALIZED:
                     btnRunDraw.setVisibility(View.GONE);
@@ -274,6 +279,7 @@ public class OrganizerEventFragment extends Fragment {
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
         btnExportEntrantCSV = view.findViewById(R.id.btnExportCSV);
+        upcomingText = view.findViewById(R.id.upcoming_text);
     }
 
     /**
