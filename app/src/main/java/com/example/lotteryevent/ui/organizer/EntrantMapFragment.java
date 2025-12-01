@@ -34,6 +34,9 @@ import com.google.firebase.firestore.GeoPoint;
 
 import java.util.List;
 
+/**
+ * Fragment to display a map with entrant locations for a specific event
+ */
 public class EntrantMapFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String TAG = "EntrantMapFragment";

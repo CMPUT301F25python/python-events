@@ -4,6 +4,7 @@ package com.example.lotteryevent;
  * A helper class to represent possible states of the screen, depending on how fetching data performs.
  */
 public class BottomUiState {
+    /** E   num representing the different types of UI states */
     public enum StateType { LOADING, SHOW_INFO_TEXT, SHOW_ONE_BUTTON, SHOW_TWO_BUTTONS }
     public final BottomUiState.StateType type;
     public final String infoText;
