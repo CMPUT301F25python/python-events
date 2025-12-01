@@ -162,6 +162,10 @@ public class UserRepositoryImpl implements IUserRepository {
                 if (optOutNotifications != null) {
                     user.setOptOutNotifications(optOutNotifications);
                 }
+                Boolean adminStatus = doc.getBoolean("admin");
+                if (adminStatus != null) {
+                    user.setAdmin(adminStatus);
+                }
 
                 db.collection("users").document(firebaseUser.getUid()).set(user)
                     /**
