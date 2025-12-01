@@ -201,7 +201,7 @@ public class ConfirmDrawAndNotifyViewModelTest {
         fakeRepository.fetchEventAndEntrantCounts("fake-event-id");
 
         assertEquals("0", viewModel.waitingListCount.getValue());
-        assertEquals("No Limit", viewModel.availableSpaceCount.getValue());
+        assertEquals(null, viewModel.availableSpaceCount.getValue());
         assertEquals(BottomUiState.StateType.SHOW_TWO_BUTTONS, Objects.requireNonNull(viewModel.bottomUiState.getValue()).type);
     }
 

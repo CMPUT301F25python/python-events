@@ -2,9 +2,11 @@ package com.example.lotteryevent.viewmodels;
 
 import android.content.Context;
 
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
 import com.example.lotteryevent.BottomUiState;
@@ -36,10 +38,12 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
     private final MediatorLiveData<String> _waitingListCount = new MediatorLiveData<>();
     private final MediatorLiveData<String> _availableSpaceCount = new MediatorLiveData<>();
     private final MutableLiveData<Boolean> _navigateBack = new MutableLiveData<>();
+    private final SingleLiveEvent<String> _toastMessage = new SingleLiveEvent<>();
 
     public LiveData<Boolean> navigateBack = _navigateBack;
     public LiveData<String> waitingListCount = _waitingListCount;
     public LiveData<String> availableSpaceCount = _availableSpaceCount;
+    public LiveData<String> toastMessage = _toastMessage;
 
     /**
      * Gets whether loading status is active
@@ -139,15 +143,15 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
         }
 
         if (waitingListCount != null) {
-            _waitingListCount.postValue(String.valueOf(waitingListCount));
+            _waitingListCount.setValue(String.valueOf(waitingListCount));
         }
 
-        if (availableSpaceCount == null) {
-            _availableSpaceCount.postValue("No Limit");
-        } else if (availableSpaceCount > 0) {
-            _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
-        } else {
-            _availableSpaceCount.postValue(String.valueOf(0));
+        if (availableSpaceCount != null) {
+            if (availableSpaceCount > 0) {
+                _availableSpaceCount.postValue(String.valueOf(availableSpaceCount));
+            } else {
+                _availableSpaceCount.postValue("0");
+            }
         }
     }
 
@@ -191,6 +195,7 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
              * @param allTask contains all tasks
              */
             .addOnCompleteListener(allTask -> {
+                _toastMessage.postValue("Entrants notified successfully");
                 _navigateBack.postValue(true);
             });
     }
@@ -242,7 +247,29 @@ public class ConfirmDrawAndNotifyViewModel extends ViewModel {
              * @param allTask contains all tasks
              */
             .addOnCompleteListener(allTask -> {
+                _toastMessage.postValue("Cancelled Draw. Entrants returned to waitlist");
                 _navigateBack.postValue(true);
             });
     }
+
+    public class SingleLiveEvent<T> extends MutableLiveData<T> {
+        private boolean handled = false;
+
+        @Override
+        public void observe(LifecycleOwner owner, Observer<? super T> observer) {
+            super.observe(owner, value -> {
+                if (!handled && value != null) {
+                    handled = true;
+                    observer.onChanged(value);
+                }
+            });
+        }
+
+        @Override
+        public void setValue(T value) {
+            handled = false;
+            super.setValue(value);
+        }
+    }
+
 }

@@ -203,7 +203,7 @@ public class ConfirmDrawAndNotifyFragment extends Fragment {
          */
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
