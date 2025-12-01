@@ -462,6 +462,64 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/edit_text_waiting_list_limit" />
 
+        <!-- POSTER IMAGE SECTION -->
+        <TextView
+            android:id="@+id/event_poster_heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/event_poster"
+            android:textColor="@color/primary_green"
+            android:textSize="16sp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/checkbox_geolocation" />
+
+        <Button
+            android:id="@+id/button_upload_poster"
+            style="@style/PinkButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/upload_poster"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/event_poster_heading"/>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_view_poster_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_upload_poster" >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Image Preview (Same style as EventDetailsFragment) -->
+                <ImageView
+                    android:id="@+id/image_view_poster_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:scaleType="fitCenter"
+                    android:background="#F0F0F0"
+                    android:contentDescription="@string/selected_event_poster" />
+
+                <Button
+                    android:id="@+id/button_remove_poster"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/remove_image"
+                    android:textColor="@android:color/holo_red_dark"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- ==== SAVE BUTTON ==== -->
         <Button
             android:id="@+id/button_save"
@@ -475,7 +533,7 @@
             app:cornerRadius="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/checkbox_geolocation"
+            app:layout_constraintTop_toBottomOf="@id/card_view_poster_section"
             app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

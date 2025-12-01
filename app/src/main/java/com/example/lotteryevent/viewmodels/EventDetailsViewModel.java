@@ -9,6 +9,8 @@ import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.data.User;
+import com.example.lotteryevent.repository.IAdminUserProfileRepository;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,6 +33,11 @@ public class EventDetailsViewModel extends ViewModel {
     public LiveData<String> message;
     public LiveData<Integer> waitingListCount;
 
+    private final IAdminUserProfileRepository userRepo;
+    private final MutableLiveData<User> userProfile = new MutableLiveData<>();
+    private final MutableLiveData<String> errorState = new MutableLiveData<>();
+
+
     // Signal to the Fragment that we need location permission
     private final MutableLiveData<Boolean> _requestLocationPermission = new MutableLiveData<>();
     public LiveData<Boolean> requestLocationPermission = _requestLocationPermission;
@@ -40,23 +47,50 @@ public class EventDetailsViewModel extends ViewModel {
     private final MediatorLiveData<BottomUiState> _bottomUiState = new MediatorLiveData<>();
     public LiveData<BottomUiState> bottomUiState = _bottomUiState;
 
-    public EventDetailsViewModel(IEventDetailsRepository repository) {
+    /**
+     * Sets repositories and adds sources to live data for updates when instance is created
+     * @param repository event details repository
+     * @param userRepo admin user profile repository
+     */
+    public EventDetailsViewModel(IEventDetailsRepository repository, IAdminUserProfileRepository userRepo) {
         this.repository = repository;
+        this.userRepo = userRepo;
         // Pass through the simple LiveData objects from the repository.
         this.eventDetails = repository.getEventDetails();
         this.message = repository.getMessage();
         this.waitingListCount = repository.getWaitingListCount();
 
         // Add the sources that the UI state depends on.
+        /**
+         * Recalculates bottom UI state whenever getting event details change
+         * @param event event changed
+         */
         _bottomUiState.addSource(repository.getEventDetails(), event -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever entrant status changes
+         * @param event entrant whose status changed
+         */
         _bottomUiState.addSource(repository.getEntrantStatus(), entrant -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever loading is updated
+         * @param isLoading boolean for loading
+         */
         _bottomUiState.addSource(repository.isLoading(), isLoading -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever attendee count changes
+         * @param count count update
+         */
         _bottomUiState.addSource(repository.getAttendeeCount(), count -> calculateUiState());
+        /**
+         * Recalculates bottom UI state whenever waiting list count changes
+         * @param count count update
+         */
         _bottomUiState.addSource(repository.getWaitingListCount(), count -> calculateUiState());
     }
 
     /**
      * The entry point for the Fragment to start loading data.
+     * @param eventId event's ID to load for
      */
     public void loadEventDetails(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
@@ -144,6 +178,10 @@ public class EventDetailsViewModel extends ViewModel {
 
     // --- User Actions ---
 
+    /**
+     * Join waiting list/accept invite/leave waiting list
+     * Request for location if joining waitlist
+     */
     public void onPositiveButtonClicked() {
         BottomUiState currentState = _bottomUiState.getValue();
         if (currentState == null || currentState.positiveButtonText == null) return;
@@ -167,6 +205,9 @@ public class EventDetailsViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Declines invitation if action is that
+     */
     public void onNegativeButtonClicked() {
         BottomUiState currentState = _bottomUiState.getValue();
         if (currentState == null || currentState.negativeButtonText == null) return;
@@ -242,6 +283,8 @@ public class EventDetailsViewModel extends ViewModel {
     // --- Location Methods ---
     /**
      * Called by the Fragment after it successfully retrieves the location.
+     * @param latitude latitude coord
+     * @param longitude longitude coord
      */
     public void onLocationRetrieved(double latitude, double longitude) {
         _requestLocationPermission.setValue(false);
@@ -283,5 +326,59 @@ public class EventDetailsViewModel extends ViewModel {
      */
     public LiveData<Integer> getWaitingListCount(){
         return repository.getWaitingListCount();
+    }
+
+    /**
+     * Exposes the user profile data as an observable LiveData object.
+     * <p>
+     * The UI should observe this field to receive updates when a user's profile is successfully loaded.
+     *
+     * @return A {@link LiveData} object containing the {@link User} profile.
+     */
+    public LiveData<User> getUserProfile() {
+        return userProfile;
+    }
+
+
+    /**
+     * Exposes error messages related to user profile operations.
+     * <p>
+     * The UI should observe this field to display error notifications (e.g., Toasts) if data loading fails.
+     *
+     * @return A {@link LiveData} object containing the error message string.
+     */
+    public LiveData<String> getErrorState() {
+        return errorState;
+    }
+
+    /**
+     * Initiates an asynchronous request to fetch detailed profile information for a specific user.
+     * <p>
+     * This method delegates the data fetching to the {@link IAdminUserProfileRepository}.
+     * Upon success, the {@link #getUserProfile()} LiveData is updated.
+     * Upon failure, the {@link #getErrorState()} LiveData is updated with the exception message.
+     *
+     * @param userId The unique identifier of the user to load.
+     */
+    public void loadUserProfile(String userId) {
+        userRepo.getUserProfile(userId, new IAdminUserProfileRepository.UserProfileCallback() {
+            /**
+             * Sets the user for the user profile.
+             * @param user The {@link User} object containing the fetched profile details.
+             */
+            @Override
+            public void onSuccess(User user) {
+                userProfile.setValue(user);
+            }
+
+            /**
+             * Sets error state with the exception's message
+             * @param e The exception detailing the cause of the failure (e.g., network error, user not found).
+             */
+            @Override
+            public void onFailure(Exception e) {
+                errorState.setValue(e.getMessage());
+            }
+        });
     }
 }

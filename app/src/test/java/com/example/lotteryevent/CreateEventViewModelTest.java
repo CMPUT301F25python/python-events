@@ -110,7 +110,7 @@ public class CreateEventViewModelTest {
 
         return viewModel.attemptToCreateEvent(
                 name, "Desc", "Loc", "10.0",
-                capacity, waitList,  false,
+                capacity, waitList,  false, "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3nCj8AAAAASUVORK5CYII=",
                 eventStart, eventEnd, regStart, regEnd,
                 sDateText, sTimeText, eDateText, eTimeText,
                 rsDateText, rsTimeText, reDateText, reTimeText

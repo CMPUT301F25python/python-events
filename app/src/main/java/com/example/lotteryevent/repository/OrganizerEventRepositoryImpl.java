@@ -18,6 +18,11 @@ import com.google.firebase.firestore.Query;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Implements IOrganizerEventRepository
+ * Allows for the fetching of event details and their entrants. It allows for event poster upload
+ * and finalizing an event
+ */
 public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     private static final String TAG = "OrganizerEventRepo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -49,6 +54,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
     public void fetchEventAndCapacityStatus(String eventId) {
         _isLoading.postValue(true);
         db.collection("events").document(eventId).get()
+                /**
+                 * Extracts event and checks its capacity
+                 * @param documentSnapshot contains event
+                 */
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot != null && documentSnapshot.exists()) {
                         Event event = documentSnapshot.toObject(Event.class);
@@ -61,6 +70,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                         _userMessage.postValue("Error: Event not found.");
                     }
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     _isLoading.postValue(false);
                     _userMessage.postValue("Error: Failed to load event details.");
@@ -79,6 +92,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
 
         db.collection("events").document(eventId).collection("entrants")
                 .get()
+                /**
+                 * Extracts entrants list of event and posts value to mutable live data
+                 * @param queryDocumentSnapshots contains entrants of event
+                 */
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (queryDocumentSnapshots != null) {
                         // Automatically maps documents to Entrant objects using getters/setters
@@ -87,6 +104,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                     }
                     _isLoading.postValue(false);
                 })
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error fetching entrants list", e);
                     _userMessage.postValue("Error: Could not fetch entrants list.");
@@ -114,6 +135,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
         DocumentReference eventRef = db.collection("events").document(eventId);
 
         // 2. Fetch the event document first
+        /**
+         * Extract organizer ID from event and finalizes event
+         * @param documentSnapshot contains event
+         */
         eventRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 String organizerId = documentSnapshot.getString("organizerId");
@@ -123,6 +148,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
 
                     // 4. IDs match, proceed with the update
                     eventRef.update("status", "finalized")
+                            /**
+                             * Logs event finalized and posts update to mutable live data
+                             * @param aVoid unusable data
+                             */
                             .addOnSuccessListener(aVoid -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Event finalized successfully!");
@@ -134,6 +163,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                                 }
 
                             })
+                            /**
+                             * Logs exception thrown
+                             * @param e exception thrown
+                             */
                             .addOnFailureListener(e -> {
                                 _isLoading.setValue(false);
                                 _userMessage.setValue("Error: Could not finalize event.");
@@ -151,6 +184,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                 _isLoading.setValue(false);
                 _userMessage.setValue("Error: Event not found.");
             }
+        /**
+         * Logs exception thrown
+         * @param e exception thrown
+         */
         }).addOnFailureListener(e -> {
             // Network error or permission error reading the doc
             _isLoading.setValue(false);
@@ -176,6 +213,10 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
                 .whereIn("status", Arrays.asList("invited", "accepted"));
 
         AggregateQuery countQuery = query.count();
+        /**
+         * Gets capacity count and posts whether the current count is less than capacity to mutable live data
+         * @param task result of aggregate query getting capacity count
+         */
         countQuery.get(AggregateSource.SERVER).addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null) {
                 long currentCount = task.getResult().getCount();
@@ -189,6 +230,11 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
         });
     }
 
+    /**
+     * Updates the poster image (Base64) for the specified event.
+     * @param eventId The ID of the event to update.
+     * @param posterImageUrl The Base64-encoded poster image data.
+     */
     @Override
     public void updateEventPoster(String eventId, String posterImageUrl) {
         if (eventId == null || eventId.isEmpty()) {
@@ -199,8 +245,16 @@ public class OrganizerEventRepositoryImpl implements IOrganizerEventRepository {
         db.collection("events")
                 .document(eventId)
                 .update("posterImageUrl", posterImageUrl)
+                /**
+                 * Logs update success
+                 * @param aVoid unusable data
+                 */
                 .addOnSuccessListener(aVoid ->
                         Log.d("OrganizerEventRepo", "Poster updated successfully for event: " + eventId))
+                /**
+                 * Logs exception thrown
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e ->
                         Log.e("OrganizerEventRepo", "Failed to update poster for event: " + eventId, e));
     }

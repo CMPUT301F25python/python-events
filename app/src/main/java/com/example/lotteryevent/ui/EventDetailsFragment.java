@@ -35,7 +35,9 @@ import androidx.navigation.Navigation;
 import com.example.lotteryevent.BottomUiState;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Event;
+import com.example.lotteryevent.repository.AdminUserProfileRepositoryImpl;
 import com.example.lotteryevent.repository.EventDetailsRepositoryImpl;
+import com.example.lotteryevent.repository.FakeAdminUserProfileRepository;
 import com.example.lotteryevent.repository.IEventDetailsRepository;
 import com.example.lotteryevent.viewmodels.EventDetailsViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
@@ -75,6 +77,7 @@ public class EventDetailsFragment extends Fragment {
 
     // --- Location Services ---
     private FusedLocationProviderClient fusedLocationClient;
+    private AdminUserProfileRepositoryImpl userProfileRepository;
 
     /**
      * Handles the result of the system permission dialog.
@@ -114,11 +117,29 @@ public class EventDetailsFragment extends Fragment {
         this.viewModelFactory = factory;
     }
 
+    /**
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_event_details, container, false);
     }
 
+    /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -130,7 +151,7 @@ public class EventDetailsFragment extends Fragment {
         if (viewModelFactory == null) {
             IEventDetailsRepository repository = new EventDetailsRepositoryImpl();
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(repository));
+            factory.put(EventDetailsViewModel.class, () -> new EventDetailsViewModel(repository, userProfileRepository));
             viewModelFactory = factory;
         }
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EventDetailsViewModel.class);
@@ -152,6 +173,10 @@ public class EventDetailsFragment extends Fragment {
             }
         });
 
+        /**
+         * Shows deletion confirmation dialog on click
+         * @param v view clicked
+         */
         btnDeleteEvent.setOnClickListener(v -> {
             if (getArguments() != null) {
                 String eventId = getArguments().getString("eventId");
@@ -161,6 +186,10 @@ public class EventDetailsFragment extends Fragment {
             }
         });
 
+        /**
+         * Shows deletion dialog if organizer, otherwise shwo error toast
+         * @param v view clicked
+         */
         btnDeleteOrganizer.setOnClickListener(v -> {
             // Get the current event data from the ViewModel
             Event currentEvent = viewModel.eventDetails.getValue();
@@ -183,6 +212,10 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Initializes views in fragment
+     * @param v view to initialize
+     */
     private void initializeViews(View v) {
         detailsList = v.findViewById(R.id.details_list);
         buttonActionsContainer = v.findViewById(R.id.button_actions_container);
@@ -196,13 +229,30 @@ public class EventDetailsFragment extends Fragment {
         eventPosterImage = v.findViewById(R.id.event_poster_image);
     }
 
+    /**
+     * Sets up click listeners
+     */
     private void setupClickListeners() {
+        /**
+         * Adds oneself to the appropriate entrant list
+         * @param v view clicked
+         */
         btnActionPositive.setOnClickListener(v -> viewModel.onPositiveButtonClicked());
+        /**
+         * Unadds oneself
+         * @param v view clicked
+         */
         btnActionNegative.setOnClickListener(v -> viewModel.onNegativeButtonClicked());
     }
 
+    /**
+     * Sets up observers to update data
+     */
     private void setupObservers() {
-        // Observer for the main event data.
+        /**
+         * Observer for the main event data to show
+         * @param event event to show
+         */
         viewModel.eventDetails.observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
               Integer count = viewModel.waitingListCount.getValue();
@@ -211,41 +261,61 @@ public class EventDetailsFragment extends Fragment {
             }
         });
 
-        // Observer for any user-facing messages from the repository.
+        /**
+         * Observer for any user-facing messages from the repository to show in toast
+         * @param message message to show
+         */
         viewModel.message.observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
+        /**
+         * Observes event is deleted, navigates back one fragment
+         * @param isDeleted boolean for deleted
+         */
         viewModel.getIsDeleted().observe(getViewLifecycleOwner(), isDeleted -> {
             if (isDeleted) {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
+        /**
+         * Observes organizer is deleted, navigates back one fragment
+         * @param isDeleted boolean for deleted
+         */
         viewModel.getIsOrganizerDeleted().observe(getViewLifecycleOwner(), isOrganizerDeleted -> {
             if (isOrganizerDeleted) {
                 Navigation.findNavController(requireView()).navigateUp();
             }
         });
 
-        // The primary observer for the dynamic bottom bar.
-        // It receives a simple state object and renders the UI accordingly.
+        /**
+         * The primary observer for the dynamic bottom bar.
+         * It receives a simple state object and renders the UI accordingly.
+         * @param uiState state to show
+         */
         viewModel.bottomUiState.observe(getViewLifecycleOwner(), uiState -> {
             if (uiState != null) {
                 renderBottomUi(uiState);
             }
         });
 
-        // Listener for location permission requests
+        /**
+         * Listener for location permission requests
+         * @param shouldRequest boolean for request
+         */
         viewModel.requestLocationPermission.observe(getViewLifecycleOwner(), shouldRequest -> {
             if (shouldRequest != null && shouldRequest) {
                 checkPermissionAndAct();
             }
         });
 
-        // observer to display waitinglistCount
+        /**
+         * Observer to display waitinglistCount
+         * @param count count to show
+         */
         viewModel.waitingListCount.observe(getViewLifecycleOwner(), count -> {
             if (count != null && viewModel.eventDetails.getValue() != null) {
                 // Rebind details including the count
@@ -299,6 +369,11 @@ public class EventDetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Binds event detail into to show on screen
+     * @param event event to get details for
+     * @param waitingListCount count of entrants in waiting list
+     */
     private void bindEventDetails(Event event, @Nullable Integer waitingListCount) {
         dataList.clear();
         addAny("Name", event.getName());
@@ -318,23 +393,39 @@ public class EventDetailsFragment extends Fragment {
         listAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Hide all bottom buttons
+     */
     private void hideAllBottomActions() {
         buttonActionsContainer.setVisibility(View.GONE);
         textInfoMessage.setVisibility(View.GONE);
         bottomProgressBar.setVisibility(View.GONE);
     }
 
+    /**
+     * Show Info text
+     * @param message text to show
+     */
     private void showInfoText(String message) {
         textInfoMessage.setText(message);
         textInfoMessage.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show one button with text
+     * @param text text to show
+     */
     private void showOneButton(String text) {
         btnActionNegative.setVisibility(View.GONE);
         btnActionPositive.setText(text);
         buttonActionsContainer.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Show two buttons
+     * @param positiveText pos buttons text
+     * @param negativeText neg button text
+     */
     private void showTwoButtons(String positiveText, String negativeText) {
         btnActionPositive.setText(positiveText);
         btnActionNegative.setText(negativeText);
@@ -344,6 +435,14 @@ public class EventDetailsFragment extends Fragment {
 
     private final DateFormat DF = new SimpleDateFormat("EEE, MMM d yyyy • h:mm a", Locale.getDefault());
 
+    /**
+     * Adds a formatted label–value pair to {@code dataList} if the provided value is non-null and valid.
+     * Handles specific formatting for {@link Timestamp}, {@link Date}, and numeric "Price" values;
+     * otherwise uses the object's {@code toString()} representation.
+     *
+     * @param label the label to prefix the value with
+     * @param raw   the raw value to format and add; ignored if {@code null} or empty
+     */
     private void addAny(String label, @Nullable Object raw) {
         if (raw == null) return;
         String v;
@@ -363,6 +462,10 @@ public class EventDetailsFragment extends Fragment {
     }
 
     // --- Location Logic ---
+
+    /**
+     * Checks permission for location and requests if needed
+     */
     private void checkPermissionAndAct() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -372,9 +475,19 @@ public class EventDetailsFragment extends Fragment {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Location Required")
                     .setMessage("This event requires geolocation verification to join. Please grant location permission.")
+                    /**
+                     * Requests for location
+                     * @param dialog dialog that triggered callback
+                     * @param which button identifier
+                     */
                     .setPositiveButton("OK", (dialog, which) -> {
                         requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
                     })
+                    /**
+                     * Acts on location permission denied, cancels dialog
+                     * @param dialog dialog that triggered callback
+                     * @param which button identifier
+                     */
                     .setNegativeButton("Cancel", (dialog, which) -> {
                         viewModel.onLocationPermissionDenied();
                         dialog.dismiss();
@@ -395,17 +508,30 @@ public class EventDetailsFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Permission Denied")
                 .setMessage("You have permanently denied location permission. To join this event, you must enable it in the app settings.")
+                /**
+                 * Goes to settings for permission
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Go to Settings", (dialog, which) -> {
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                     Uri uri = Uri.fromParts("package", requireActivity().getPackageName(), null);
                     intent.setData(uri);
                     startActivity(intent);
                 })
+                /**
+                 * Closes dialog
+                 * @param dialog dialog that triggered callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create()
                 .show();
     }
 
+    /**
+     * Fetches user location and joins waitlist
+     */
     private void fetchLocationAndJoin() {
         // Double-check permission before calling location services (Linter requirement)
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -414,6 +540,10 @@ public class EventDetailsFragment extends Fragment {
         }
 
         fusedLocationClient.getLastLocation()
+                /**
+                 * Gets location or makes toast to get location first
+                 * @param location location of user
+                 */
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location != null) {
                         // Pass data back to ViewModel
@@ -424,6 +554,10 @@ public class EventDetailsFragment extends Fragment {
                         viewModel.onLocationPermissionDenied();
                     }
                 })
+                /**
+                 * Toasts of error getting location, acts on location permission denied
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Error getting location.", Toast.LENGTH_SHORT).show();
                     viewModel.onLocationPermissionDenied();
@@ -442,10 +576,20 @@ public class EventDetailsFragment extends Fragment {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Delete Event")
                 .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+                /**
+                 * Deletes event
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // User confirmed, proceed with deletion
                     viewModel.deleteEvent(eventId);
                 })
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     // User cancelled, do nothing
                     dialog.dismiss();
@@ -465,10 +609,20 @@ public class EventDetailsFragment extends Fragment {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Delete Organizer")
                 .setMessage("Are you sure you want to delete this organizer? This action cannot be undone. This action will also delete all events organized by this organizer.")
+                /**
+                 * Deletes organizer
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setPositiveButton("Delete", (dialog, which) -> {
                     // User confirmed, proceed with deletion
                     viewModel.deleteOrganizer(organizerId);
                 })
+                /**
+                 * Cancels dialog
+                 * @param dialog triggers callback
+                 * @param which button identifier
+                 */
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     // User cancelled, do nothing
                     dialog.dismiss();

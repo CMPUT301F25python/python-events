@@ -8,6 +8,8 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.lotteryevent.NotificationCustomManager;
 import com.example.lotteryevent.data.Entrant;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -191,40 +193,53 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
             return;
         }
 
-        db.collection("events").document(eventId).get()
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        db.collection("users").document(currentUser.getUid()).get()
+            .addOnSuccessListener(userDoc -> {
+                db.collection("events").document(eventId).get()
+                        /**
+                         * Callback triggered when Firestore successfully retrieves the event document
+                         * required for composing the entrant notification. Extracts the event name,
+                         * organizer ID, and organizer name, constructs a formatted notification, and
+                         * uses NotificationCustomManager to send it to the specified entrant.
+                         * @param document the Firestore DocumentSnapshot representing the event
+                         */
+                        .addOnSuccessListener(document -> {
+                            if (document != null && document.exists()) {
+                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                String eventName = document.getString("name");
+                                String organizerId = document.getString("organizerId");
+                                String organizerName = userDoc.getString("name");
+                                String title = "Message From Organizer";
+                                String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
+                                String type = "custom_message";
+                                notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
+                                Log.d(TAG, "Notification sent successfully to " + uid);
+                                _userMessage.postValue("Notification successfully sent.");
+                            } else {
+                                Log.e(TAG,"Event not found for notification.");
+                            }
+                        })
+                        /**
+                         * Callback triggered when Firestore fails to retrieve the event information
+                         * needed for sending the notification. Logs the exception so that developers
+                         * can diagnose the cause of failure.
+                         * @param e the exception thrown during the Firestore document fetch
+                         */
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Error sending notification", e);
+                            _userMessage.postValue("Failed to send notification.");
+                        });
+            })
                 /**
-                 * Callback triggered when Firestore successfully retrieves the event document
-                 * required for composing the entrant notification. Extracts the event name,
-                 * organizer ID, and organizer name, constructs a formatted notification, and
-                 * uses NotificationCustomManager to send it to the specified entrant.
-                 * @param document the Firestore DocumentSnapshot representing the event
+                 * Logs exception thrown
+                 * @param e exception thrown
                  */
-                .addOnSuccessListener(document -> {
-                    if (document != null && document.exists()) {
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                        String eventName = document.getString("name");
-                        String organizerId = document.getString("organizerId");
-                        String organizerName = document.getString("organizerName");
-                        String title = "Message From Organizer";
-                        String message = "Message from the organizer of " + eventName + ": " + organizerMessage;
-                        String type = "custom_message";
-                        notifManager.sendNotification(uid, title, message, type, eventId, eventName, organizerId, organizerName);
-                        Log.d(TAG, "Notification sent successfully to " + uid);
-                        _userMessage.postValue("Notification successfully sent.");
-                    } else {
-                        Log.e(TAG,"Event not found for notification.");
-                    }
-                })
-                /**
-                 * Callback triggered when Firestore fails to retrieve the event information
-                 * needed for sending the notification. Logs the exception so that developers
-                 * can diagnose the cause of failure.
-                 * @param e the exception thrown during the Firestore document fetch
-                 */
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error sending notification", e);
-                    _userMessage.postValue("Failed to send notification.");
-                });
+            .addOnFailureListener(e -> {
+                _userMessage.postValue("Error: Failed to get logged in user.");
+                Log.e(TAG, "notifyEntrant failed", e);
+            });
     }
 
     /**
@@ -234,33 +249,104 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
      * @param userId    The entrant's user ID.
      * @param newStatus The new status to set.
      * @param callback  A callback to handle success/failure in the ViewModel.
+     * @param sendNotif Boolean indicating whether to send notif to entrant on status update, currently only handles cancellation (new status being "waiting")
      */
     @Override
-    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback) {
+    public void updateEntrantStatus(String eventId, String userId, String newStatus, StatusUpdateCallback callback, boolean sendNotif) {
         if (eventId == null || userId == null || newStatus == null) {
             if (callback != null) {
+                /**
+                 * Raises exception on callback failure
+                 */
                 callback.onFailure(new IllegalArgumentException("Invalid arguments for status update"));
             }
             return;
         }
 
-        db.collection("events")
-                .document(eventId)
-                .collection("entrants")
-                .document(userId)
-                .update("status", newStatus)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Entrant " + userId + " status updated to " + newStatus);
-                    if (callback != null) {
-                        callback.onSuccess();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to update entrant status", e);
-                    _userMessage.postValue("Failed to update status.");
-                    if (callback != null) {
-                        callback.onFailure(e);
-                    }
-                });
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        db.collection("users").document(currentUser.getUid()).get()
+            .addOnSuccessListener(userDoc -> {
+                String organizerName = userDoc.getString("name");
+
+                db.collection("events")
+                        .document(eventId)
+                        .collection("entrants")
+                        .document(userId)
+                        .update("status", newStatus)
+                        /**
+                         * Logs and calls callback's specific success behaviour
+                         * @param aVoid unusable data
+                         */
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "Entrant " + userId + " status updated to " + newStatus);
+
+                            if (sendNotif && newStatus.equals("waiting")) {
+                                db.collection("events").document(eventId).get()
+                                    /**
+                                     * Callback triggered when Firestore successfully retrieves the event document
+                                     * required for composing the entrant cancellation notification. Extracts the event name,
+                                     * organizer ID, and organizer name, constructs a formatted notification, and
+                                     * uses NotificationCustomManager to send it to the specified entrant.
+                                     * @param document the Firestore DocumentSnapshot representing the event
+                                     */
+                                    .addOnSuccessListener(document -> {
+                                        if (document != null && document.exists()) {
+                                            Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                            String eventName = document.getString("name");
+                                            String organizerId = document.getString("organizerId");
+                                            String title = "Invitation Update";
+                                            String message = "Your invitation to the event " + eventName + " has been withdrawn.";
+                                            String type = "custom_message";
+                                            notifManager.sendNotification(userId, title, message, type, eventId, eventName, organizerId, organizerName);
+                                            Log.d(TAG, "Notification sent successfully to " + userId);
+                                            _userMessage.postValue("Notification successfully sent.");
+                                        } else {
+                                            Log.e(TAG,"Event not found for notification.");
+                                        }
+
+                                        if (callback != null) {
+                                            callback.onSuccess();
+                                        }
+                                    })
+                                    /**
+                                     * Callback triggered when Firestore fails to retrieve the event information
+                                     * needed for sending the notification. Logs the exception so that developers
+                                     * can diagnose the cause of failure.
+                                     * @param e the exception thrown during the Firestore document fetch
+                                     */
+                                    .addOnFailureListener(e -> {
+                                        Log.e(TAG, "Error sending notification", e);
+                                        _userMessage.postValue("Failed to send notification.");
+                                        if (callback != null) {
+                                            callback.onFailure(e);
+                                        }
+                                    });
+                            } else {
+                                if (callback != null) {
+                                    callback.onSuccess();
+                                }
+                            }
+                        })
+                        /**
+                         * Logs exception thrown
+                         * @param e exception thrown
+                         */
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Failed to update entrant status", e);
+                            _userMessage.postValue("Failed to update status.");
+                            if (callback != null) {
+                                callback.onFailure(e);
+                            }
+                        });
+                    })
+            /**
+             * Logs exception thrown
+             * @param e exception thrown
+             */
+            .addOnFailureListener(e -> {
+                _userMessage.postValue("Error: Failed to get logged in user.");
+                Log.e(TAG, "notifyEntrant failed", e);
+            });
     }
 }

@@ -25,7 +25,6 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.core.splashscreen.SplashScreen;
 
-import com.example.lotteryevent.data.Entrant;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
@@ -62,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
     // flag to check user is initialized (only then should rest of app be set up)
     private boolean userInitialized = false;
 
-    // flag to check whether profile icon should be visible
-    private boolean showProfileIcon = true;
+    // flag to check whether profile icon should be visible (starting invisible)
+    private boolean showProfileIcon = false;
 
     /**
      * Initializes the activity, sets up the main layout, performs anonymous login, and configures navigation.
@@ -138,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Inflates home menu so the profile icon appears across all fragments except where indicated.
+     * Inflates home menu so the profile icon only appears on the HomeFragment
      * @param menu The options menu in which you place your items.
      * @return true if initialized correctly
      */
@@ -146,16 +145,32 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.home_fragment_menu, menu); // this has profile_icon
 
-        // hiding profile icon where we don't want it
+        // visibility of home fragment derived from current destination
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        if(navHostFragment != null){
+            NavController navController = navHostFragment.getNavController();
+            if(navController.getCurrentDestination() != null){
+                showProfileIcon = (navController.getCurrentDestination().getId() == R.id.homeFragment);
+            }
+        }
+
+        // showing profile icon only on HomeFragment
         MenuItem profileItem = menu.findItem(R.id.profile_icon);
         if(profileItem != null){
             profileItem.setVisible(showProfileIcon);
+        }
+
+        // showing home icon everywhere except HomeFragment (i.e. no profile icon)
+        MenuItem homeItem = menu.findItem(R.id.home_icon);
+        if(homeItem != null){
+            homeItem.setVisible(!showProfileIcon);
         }
         return true;
     }
 
     /**
-     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly.
+     * This function ensures that clicking the profile icon takes one to the userProfileFragment directly
+     * and clicking the home icon takes on the HomeFragment
      * Stack is updated if user is not already on the fragment.
      * @param item The menu item that was selected.
      * @return boolean value indicating success of action
@@ -166,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
             NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
             if (navHostFragment != null) {
                 NavController navController = navHostFragment.getNavController();
-
                 // navigating only if not already on UserProfileFragment
                 if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.userProfileFragment){
                     navController.navigate(R.id.userProfileFragment);
@@ -175,7 +189,20 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        // default handling
+        // navigate to home when home icon is clicked
+        if (item.getItemId() == R.id.home_icon) {
+            NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            if (navHostFragment != null) {
+                NavController navController = navHostFragment.getNavController();
+                // navigating only if not already on UserProfileFragment
+                if (navController.getCurrentDestination() == null || navController.getCurrentDestination().getId() != R.id.homeFragment){
+                    navController.navigate(R.id.homeFragment);
+                }
+            }
+            return true;
+        }
+
+            // default handling
         return super.onOptionsItemSelected(item);
     }
 
@@ -240,6 +267,10 @@ public class MainActivity extends AppCompatActivity {
 
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             db.collection("users").document(uid).get()
+                    /**
+                     * Gets admin status of user, if true then shows admin buttons
+                     * @param documentSnapshot contains user to assess for
+                     */
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
                             Boolean isAdmin = documentSnapshot.getBoolean("admin");
@@ -259,23 +290,41 @@ public class MainActivity extends AppCompatActivity {
 
         navController.setGraph(R.navigation.nav_graph); // set up navgraph after uid has been set
 
-        // all fragments we want to hide profile icon from
-        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            boolean show =
-                    destination.getId() != R.id.userProfileFragment &&
-                            destination.getId() != R.id.registrationHistoryFragment;
-            if (show != showProfileIcon){
-                showProfileIcon = show;
-                supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
-            }
-        });
-
         appBarConfiguration = new AppBarConfiguration.Builder(R.id.homeFragment)
                 .setOpenableLayout(drawerLayout)
                 .build();
 
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+
+        /**
+         * Hide profile icon from all fragments that aren't home
+         * remove the back button in confirmDrawAndNotifyFragment
+         * @param controller nav controller
+         * @param destination target fragment
+         * @param arguments arguments sent to a fragment
+         */
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            boolean show = destination.getId() == R.id.homeFragment;
+            if (show != showProfileIcon){
+                showProfileIcon = show;
+                supportInvalidateOptionsMenu(); // triggers onCreateOptionsMenu() again
+            }
+
+            // remove the back button on confirmDrawAndNotifyFragment
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            if(destination.getId() == R.id.confirmDrawAndNotifyFragment){
+                // hide back button
+                if(getSupportActionBar() != null){
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                }
+
+                // hide drawer
+                if(toolbar != null){
+                    toolbar.setNavigationIcon(null);
+                }
+            }
+        });
     }
 
     /**
@@ -307,6 +356,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final ActivityResultLauncher<String> getPermission =
         registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+            /**
+             * Handles the result of the notification permission request.
+             * If granted, stores the user's notification preference in Firestore.
+             * @param isGranted True if the permission was granted; false otherwise.
+             */
             @Override
             public void onActivityResult(Boolean isGranted) {
                 if (isGranted) {
@@ -318,7 +372,15 @@ public class MainActivity extends AppCompatActivity {
                         userInfo.put("optOutNotifications", false);
                         db.collection("users").document(deviceId)
                                 .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                                /**
+                                 * Makes toast that notif permission granted
+                                 * @param aVoid unusable data
+                                 */
                                 .addOnSuccessListener(aVoid -> Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show())
+                                /**
+                                 * Makes toast of error storing notif preference
+                                 * @param e exception thrown
+                                 */
                                 .addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Error storing notification preference.", Toast.LENGTH_SHORT).show());
                     }
                 } else {
@@ -339,6 +401,11 @@ public class MainActivity extends AppCompatActivity {
     private void signInAnonymously() {
         mAuth.signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    /**
+                     * Handles completion of the anonymous sign-in request.
+                     * If successful, initializes user, otherwise logs and makes toast of authentication failure
+                     * @param task The authentication task indicating success or failure.
+                     */
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
@@ -377,7 +444,15 @@ public class MainActivity extends AppCompatActivity {
             Map<String, Object> userInfo = new HashMap<>();
             db.collection("users").document(deviceId)
                     .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                    /**
+                     * Logs of success
+                     * @param aVoid unusable data
+                     */
                     .addOnSuccessListener(aVoid -> Log.d(TAG, "User document ready"))
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> Log.w(TAG, "Error creating user document", e));
         }
     }
