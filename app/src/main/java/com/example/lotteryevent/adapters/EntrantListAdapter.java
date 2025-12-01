@@ -1,9 +1,9 @@
 package com.example.lotteryevent.adapters;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,119 +12,130 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.lotteryevent.R;
 import com.example.lotteryevent.data.Entrant;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An adapter for displaying a list of {@link Entrant} objects in a RecyclerView.
+ * RecyclerView Adapter for displaying a list of {@link Entrant} objects.
  * <p>
- * This class is responsible for creating the view for each item, binding the data
- * from an {@code Entrant} object to that view, and managing the overall list.
+ * This adapter manages the display of entrant details (specifically the name)
+ * within a list. It includes logic to dynamically show or hide a "Cancel" button
+ * based on the entrant's status. If an entrant has the status "invited", the
+ * button is visible, allowing the organizer to revoke the invitation.
+ * </p>
  */
-public class EntrantListAdapter extends RecyclerView.Adapter<EntrantListAdapter.EntrantViewHolder> {
+public class EntrantListAdapter extends RecyclerView.Adapter<EntrantListAdapter.ViewHolder> {
 
     /**
-     * The list of Entrant objects that the adapter will display.
+     * Interface definition for a callback to be invoked when an action is performed
+     * on an entrant item.
      */
-    private final List<Entrant> entrantList;
+    public interface OnEntrantActionListener {
+        /**
+         * Called when the "Cancel Invitation" button is clicked for a specific entrant.
+         *
+         * @param userId The unique identifier of the entrant whose invitation is being cancelled.
+         */
+        void onCancelInvite(String userId);
+    }
+
+    private List<Entrant> entrants;
+    private final OnEntrantActionListener actionListener;
 
     /**
-     * Constructs a new {@code EntrantListAdapter}.
+     * Constructs a new EntrantListAdapter.
      *
-     * @param entrantList The initial list of entrants to be displayed. This list will be
-     *                    managed by the adapter.
+     * @param entrants The initial list of entrants to display. If null, an empty list is created.
+     * @param listener The listener to handle actions (e.g., cancelling an invite).
      */
-    public EntrantListAdapter(List<Entrant> entrantList) {
-        this.entrantList = entrantList;
+    public EntrantListAdapter(List<Entrant> entrants, OnEntrantActionListener listener) {
+        this.entrants = entrants != null ? entrants : new ArrayList<>();
+        this.actionListener = listener;
     }
 
     /**
-     * Called when the RecyclerView needs a new {@link EntrantViewHolder} of the given type to represent
-     * an item. This new ViewHolder should be constructed with a new View that can represent the items
-     * of the given type.
+     * Updates the data set used by the adapter and refreshes the RecyclerView.
+     * Use this method when the underlying list of entrants changes (e.g., after a filter update).
      *
-     * @param parent   The ViewGroup into which the new View will be added after it is bound to
-     *                 an adapter position.
+     * @param newEntrants The new list of entrants to display.
+     */
+    public void updateEntrants(List<Entrant> newEntrants) {
+        this.entrants = newEntrants != null ? newEntrants : new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Called when the RecyclerView needs a new {@link ViewHolder} of the given type to represent an item.
+     *
+     * @param parent   The ViewGroup into which the new View will be added after it is bound to an adapter position.
      * @param viewType The view type of the new View.
-     * @return A new EntrantViewHolder that holds a View of the given view type.
+     * @return A new ViewHolder that holds a View of the given view type.
      */
     @NonNull
     @Override
-    public EntrantViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_entrant, parent, false);
-        return new EntrantViewHolder(view);
+        return new ViewHolder(view);
     }
 
     /**
-     * Called by RecyclerView to display the data at the specified position. This method
-     * updates the contents of the {@link EntrantViewHolder#itemView} to reflect the item at the
-     * given position.
+     * Called by the RecyclerView to display the data at the specified position.
+     * <p>
+     * This method handles the logic for the "Cancel" button:
+     * <ul>
+     *     <li>If the entrant's status is <b>"invited"</b>, the Cancel button is set to VISIBLE
+     *     and a click listener is attached to trigger {@link OnEntrantActionListener#onCancelInvite}.</li>
+     *     <li>For all other statuses, the Cancel button is set to GONE.</li>
+     * </ul>
+     * </p>
      *
-     * @param holder   The EntrantViewHolder which should be updated to represent the contents of the
-     *                 item at the given position in the data set.
+     * @param holder   The ViewHolder which should be updated to represent the contents of the item at the given position.
      * @param position The position of the item within the adapter's data set.
      */
     @Override
-    public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
-        Entrant entrant = entrantList.get(position);
-        holder.bind(entrant);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Entrant entrant = entrants.get(position);
+
+        // Set Name
+        String name = entrant.getUserName();
+        holder.nameText.setText((name != null && !name.isEmpty()) ? name : "Unknown User");
+
+        // LOGIC: Only show Cancel button if status is "invited"
+        if ("invited".equalsIgnoreCase(entrant.getStatus())) {
+            holder.cancelButton.setVisibility(View.VISIBLE);
+            holder.cancelButton.setOnClickListener(v -> {
+                if (actionListener != null) {
+                    actionListener.onCancelInvite(entrant.getUserId());
+                }
+            });
+        } else {
+            holder.cancelButton.setVisibility(View.GONE);
+            holder.cancelButton.setOnClickListener(null);
+        }
     }
 
     /**
      * Returns the total number of items in the data set held by the adapter.
      *
-     * @return The total number of items in this adapter.
+     * @return The total number of entrants.
      */
     @Override
     public int getItemCount() {
-        return entrantList.size();
-    }
-
-    /**
-     * Replaces the data in the adapter with a new list and refreshes the RecyclerView.
-     * This method clears the existing list and adds all items from the new list.
-     *
-     * @param newEntrants The new list of entrants to display.
-     */
-    public void updateEntrants(List<Entrant> newEntrants) {
-        this.entrantList.clear();
-        this.entrantList.addAll(newEntrants);
-        notifyDataSetChanged(); // Notifies the attached observers that the data set has changed.
+        return entrants.size();
     }
 
     /**
      * A ViewHolder describes an item view and metadata about its place within the RecyclerView.
-     * It holds the references to the UI components for a single list item, which improves
-     * performance by avoiding repeated {@code findViewById()} calls.
      */
-    static class EntrantViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView nameText;
+        TextView cancelButton;
 
-        private final TextView nameTextView;
-
-        /**
-         * Constructs a new {@code EntrantViewHolder}.
-         *
-         * @param itemView The view that represents a single item in the list.
-         */
-        public EntrantViewHolder(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            nameTextView = itemView.findViewById(R.id.entrant_name_text_view);
-        }
-
-        /**
-         * Binds an {@link Entrant} object to the ViewHolder's views. This method takes the
-         * data from the entrant and populates the UI components.
-         *
-         * @param entrant The entrant object containing the data to display.
-         */
-        public void bind(Entrant entrant) {
-            String userName = entrant.getUserName();
-            if (userName == null || userName.isEmpty()) {
-                String unnamed = "Unnamed User";
-                nameTextView.setText(unnamed);
-            } else {
-                nameTextView.setText(entrant.getUserName());
-            }
+            nameText = itemView.findViewById(R.id.entrant_name_text);
+            cancelButton = itemView.findViewById(R.id.cancel_invitation_button);
         }
     }
 }

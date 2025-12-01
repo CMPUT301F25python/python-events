@@ -23,6 +23,7 @@ import com.example.lotteryevent.adapters.EntrantListAdapter;
 import com.example.lotteryevent.repository.EntrantListRepositoryImpl;
 import com.example.lotteryevent.viewmodels.EntrantListViewModel;
 import com.example.lotteryevent.viewmodels.GenericViewModelFactory;
+import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
 
@@ -42,12 +43,12 @@ public class EntrantListFragment extends Fragment {
     private RecyclerView recyclerView;
     private EntrantListAdapter adapter;
     private ProgressBar progressBar;
-    private TextView titleTextView;
     private Button sendNotificationButton;
+    private ChipGroup statusChipGroup;
+    private TextView entrantsCountText;
 
     // --- Data ---
     private String eventId;
-    private String status;
 
     // --- ViewModel ---
     private EntrantListViewModel viewModel;
@@ -85,7 +86,6 @@ public class EntrantListFragment extends Fragment {
         if (getArguments() != null) {
             EntrantListFragmentArgs args = EntrantListFragmentArgs.fromBundle(getArguments());
             eventId = args.getEventId();
-            status = args.getStatus();
         }
     }
 
@@ -121,15 +121,15 @@ public class EntrantListFragment extends Fragment {
         if (viewModelFactory == null) {
             EntrantListRepositoryImpl entrantListRepo = new EntrantListRepositoryImpl(getContext());
             GenericViewModelFactory factory = new GenericViewModelFactory();
-            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId, status));
+            factory.put(EntrantListViewModel.class, () -> new EntrantListViewModel(entrantListRepo, eventId));
             viewModelFactory = factory;
         }
 
         // Get the ViewModel instance using the determined factory.
         viewModel = new ViewModelProvider(this, viewModelFactory).get(EntrantListViewModel.class);
-        titleTextView.setText(viewModel.getCapitalizedStatus());
 
         // --- The rest of the method is the same ---
+        setupFilterChips();
         setupObservers();
     }
 
@@ -139,20 +139,51 @@ public class EntrantListFragment extends Fragment {
      * @param view The root view of the fragment's layout.
      */
     private void initializeViews(View view) {
-        titleTextView = view.findViewById(R.id.entrant_list_title);
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress_bar);
         sendNotificationButton = view.findViewById(R.id.send_notification_button);
+        statusChipGroup = view.findViewById(R.id.status_chip_group);
+        entrantsCountText = view.findViewById(R.id.entrants_count_text);
     }
+
 
     /**
      * Configures the RecyclerView with a {@link LinearLayoutManager} and sets up the
      * {@link EntrantListAdapter}.
      */
     private void setupRecyclerView() {
-        adapter = new EntrantListAdapter(new ArrayList<>());
+        adapter = new EntrantListAdapter(new ArrayList<>(), userId -> {
+            viewModel.cancelInvite(userId);
+        });
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
+    }
+
+    /**
+     * Sets up the listener for the Status Filter Chips.
+     * When a chip is clicked, it updates the ViewModel.
+     */
+    private void setupFilterChips() {
+        statusChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) return;
+
+            // Get the first checked ID
+            int checkedId = checkedIds.get(0);
+            String newStatus = "waiting";
+
+            if (checkedId == R.id.chip_waiting) {
+                newStatus = "waiting";
+            } else if (checkedId == R.id.chip_invited) {
+                newStatus = "invited";
+            } else if (checkedId == R.id.chip_accepted) {
+                newStatus = "accepted";
+            } else if (checkedId == R.id.chip_cancelled) {
+                newStatus = "cancelled";
+            }
+
+            // Update ViewModel
+            viewModel.setFilterStatus(newStatus);
+        });
     }
 
     /**
@@ -160,7 +191,7 @@ public class EntrantListFragment extends Fragment {
      * This is the core of the reactive UI.
      */
     private void setupObservers() {
-        if (eventId == null || status == null) {
+        if (eventId == null) {
             Toast.makeText(getContext(), "Error: Event data not available.", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -174,10 +205,14 @@ public class EntrantListFragment extends Fragment {
          * dialog for notifying all entrants.
          * @param list the updated list of entrants retrieved from the ViewModel
          */
-        viewModel.getEntrants().observe(getViewLifecycleOwner(), list -> {
+        viewModel.getFilteredEntrants().observe(getViewLifecycleOwner(), list -> {
             progressBar.setVisibility(View.GONE);
             if (list != null) {
                 adapter.updateEntrants(list);
+                int count = list.size();
+                String text = count + (count == 1 ? " entrant" : " entrants");
+                entrantsCountText.setText(text);
+
                 /**
                  * If no entrants, shows toast of none to notify, otherwise shows dialog
                  * @param v view clicked
@@ -200,6 +235,38 @@ public class EntrantListFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+        viewModel.getStatus().observe(getViewLifecycleOwner(), status -> {
+            if (status != null) {
+                updateActiveChip(status);
+            }
+        });
+    }
+
+    /**
+     * Updates the highlighted chip based on the string status.
+     * Useful for setting the initial state.
+     */
+    private void updateActiveChip(String status) {
+        int chipId;
+        switch (status.toLowerCase()) {
+            case "invited":
+                chipId = R.id.chip_invited;
+                break;
+            case "accepted":
+                chipId = R.id.chip_accepted;
+                break;
+            case "cancelled":
+                chipId = R.id.chip_cancelled;
+                break;
+            case "waiting":
+            default:
+                chipId = R.id.chip_waiting;
+                break;
+        }
+
+        if (statusChipGroup.getCheckedChipId() != chipId) {
+            statusChipGroup.check(chipId);
+        }
     }
 
     /**
