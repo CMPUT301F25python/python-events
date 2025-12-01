@@ -74,9 +74,6 @@ public class AdminProfilesFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this, factory).get(AdminProfilesViewModel.class);
 
-        TextView title = view.findViewById(R.id.entrant_list_title);
-        title.setText("All Users");
-
         // Hide notification button
         Button notifyBtn = view.findViewById(R.id.send_notification_button);
         notifyBtn.setVisibility(view.GONE);

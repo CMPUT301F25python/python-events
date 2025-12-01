@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,22 +88,23 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
      */
     @Override
     public LiveData<List<Entrant>> fetchEntrantsByStatus(String eventId, String status) {
-        if (eventId == null || status == null) {
+        // We only return empty if eventId is missing.
+        if (eventId == null) {
             _entrants.postValue(new ArrayList<>());
             _userMessage.postValue("Error: Event data not available.");
             return _entrants;
         }
 
-        db.collection("events").document(eventId).collection("entrants")
-                .whereEqualTo("status", status)
-                .get()
-                /**
-                 * Callback triggered when Firestore successfully retrieves all entrant
-                 * documents matching the provided status filter. Iterates through the returned
-                 * documents, converts them to {@link Entrant} objects, and updates the LiveData
-                 * list. Any null conversions are safely ignored.
-                 * @param querySnapshot the Firestore QuerySnapshot containing entrant documents
-                 */
+        // 1. Create the base query
+        Query query = db.collection("events").document(eventId).collection("entrants");
+
+        // 2. Only apply the server-side filter if a status is explicitly provided.
+        // If status is null, we fetch everyone.
+        if (status != null) {
+            query = query.whereEqualTo("status", status);
+        }
+
+        query.get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Entrant> list = new ArrayList<>();
                     for (DocumentSnapshot document : querySnapshot.getDocuments()) {
@@ -112,19 +114,14 @@ public class EntrantListRepositoryImpl implements IEntrantListRepository{
                         }
                     }
                     _entrants.postValue(list);
-                    _userMessage.postValue(null); // clearing any previous messages/errors
+                    _userMessage.postValue(null);
                 })
-                /**
-                 * Callback triggered when a Firestore error occurs while attempting to fetch
-                 * entrants by status. Logs the exception and updates the LiveData with an empty
-                 * list so observers can handle the failure gracefully.
-                 * @param e the exception thrown during the Firestore fetch operation
-                 */
-                .addOnFailureListener(e ->{
+                .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to load entrants", e);
                     _entrants.postValue(new ArrayList<>());
                     _userMessage.postValue("Failed to load entrants.");
                 });
+
         return _entrants;
     }
 

@@ -77,29 +77,15 @@
             tools:visibility="visible">
 
             <Button
-                android:id="@+id/btnViewWaitingList"
+                android:id="@+id/btnViewEntrants"
                 style="@style/OrganizerButton"
-                android:text="@string/view_waiting_list" />
+                android:text="@string/view_entrants" />
 
             <Button
                 android:id="@+id/btnViewEntrantMap"
                 style="@style/OrganizerButton"
                 android:text="@string/view_entrant_map" />
 
-            <Button
-                android:id="@+id/btnAcceptedParticipants"
-                style="@style/OrganizerButton"
-                android:text="@string/accepted_participants" />
-
-            <Button
-                android:id="@+id/btnInvitedParticipants"
-                style="@style/OrganizerButton"
-                android:text="@string/invited_participants" />
-
-            <Button
-                android:id="@+id/btnCancelledParticipants"
-                style="@style/OrganizerButton"
-                android:text="@string/cancelled_participants" />
 
             <Button
                 android:id="@+id/btnRunDraw"

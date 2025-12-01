@@ -89,10 +89,10 @@ public class OrganizerEventFragmentTest {
 
         // Assert
         onView(withId(R.id.event_name_label)).check(matches(withText("Annual Fair")));
+        onView(withId(R.id.organizer_button_container)).check(matches(isDisplayed()));
+        onView(withId(R.id.btnRunDraw)).check(matches(isDisplayed()));
+        onView(withId(R.id.btnFinalize)).check(matches(isDisplayed()));
         onView(withId(R.id.organizer_button_container)).check(matches(withEffectiveVisibility(VISIBLE)));
-        onView(withId(R.id.btnRunDraw)).check(matches(withEffectiveVisibility(VISIBLE)));
-        onView(withId(R.id.btnFinalize)).check(matches(withEffectiveVisibility(VISIBLE)));
-        onView(withId(R.id.btnViewWaitingList)).check(matches(withEffectiveVisibility(VISIBLE)));
     }
 
     @Test
@@ -190,14 +190,13 @@ public class OrganizerEventFragmentTest {
         launchFragment();
 
         // Act
-        onView(withId(R.id.btnViewWaitingList)).perform(click());
+        onView(withId(R.id.btnViewEntrants)).perform(click());
 
         // Assert
         assertEquals(R.id.entrantListFragment, navController.getCurrentDestination().getId());
         Bundle args = navController.getBackStackEntry(R.id.entrantListFragment).getArguments();
         assertNotNull(args);
         assertEquals(TEST_EVENT_ID, args.getString("eventId"));
-        assertEquals("waiting", args.getString("status"));
     }
 
     @Test

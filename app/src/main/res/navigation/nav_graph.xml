@@ -31,9 +31,6 @@
         <action
             android:id="@+id/action_organizerEventPageFragment_to_entrantListFragment"
             app:destination="@id/entrantListFragment" />
-        <action
-            android:id="@+id/action_organizerEventPageFragment_to_manageSelectedFragment"
-            app:destination="@id/manageSelectedFragment" />
 
         <argument
             android:name="eventId"
@@ -106,6 +103,10 @@
         android:id="@+id/notificationsFragment"
         android:name="com.example.lotteryevent.ui.NotificationsFragment"
         android:label="Notifications" >
+        <argument
+            android:name="isAdminView"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment"/>
@@ -139,22 +140,8 @@
         tools:layout="@layout/fragment_entrant_list" >
 
         <argument
-            android:name="status"
-            app:argType="string" />
-        <argument
             android:name="eventId"
             app:argType="string" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/manageSelectedFragment"
-        android:name="com.example.lotteryevent.ui.organizer.ManageInvitedFragment"
-        android:label="Manage Invited Entrants"
-        tools:layout="@layout/fragment_manage_invited">
-
-        <argument
-            android:name="eventId"
-            app:argType="string"/>
     </fragment>
 
 
@@ -163,6 +150,27 @@
         android:id="@+id/adminSentNotificationsFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminSentNotificationsFragment"
         android:label="Sent Notifications" />
+
+        <action
+            android:id="@+id/action_adminSentNotificationsFragment_to_adminSelectEventFragment"
+            app:destination="@id/adminSelectEventFragment"
+            app:popUpTo="@id/adminSentNotificationsFragment"
+            app:popUpToInclusive="true"/>
+
+    <fragment
+        android:id="@+id/adminSelectEventFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminSelectEventFragment"
+        android:label="Select Event"
+        tools:layout="@layout/fragment_admin_event_select">
+
+        <action
+            android:id="@+id/action_adminSelectEventFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment">
+            <argument
+                android:name="isAdminView"
+                android:defaultValue="true" />
+        </action>
+    </fragment>
 
     <fragment
         android:id="@+id/adminImagesFragment"
@@ -185,6 +193,7 @@
             android:name="userId"
             app:argType="string" />
     </fragment>
+
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"
