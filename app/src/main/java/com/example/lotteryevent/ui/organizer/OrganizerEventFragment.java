@@ -66,8 +66,8 @@ public class OrganizerEventFragment extends Fragment {
     private Button uploadPosterButton;
     private Button qrCodeRequest;
     private LinearLayout buttonContainer;
-    private Button btnViewWaitingList, btnViewEntrantMap, btnAcceptedParticipants;
-    private Button btnInvitedParticipants, btnCancelledParticipants, btnRunDraw, btnFinalize;
+    private Button btnViewEntrants, btnViewEntrantMap;
+    private Button btnRunDraw, btnFinalize;
     private Button btnExportEntrantCSV;
 
     /**
@@ -160,31 +160,34 @@ public class OrganizerEventFragment extends Fragment {
          * @param event event to show poster
          */
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
-            if (event != null) {
-                eventNameLabel.setText(event.getName());
+                    if (event != null) {
+                        eventNameLabel.setText(event.getName());
+                        if (!event.getGeoLocationRequired()) {
+                            btnViewEntrantMap.setVisibility(View.GONE);
 
-                // Display poster image if Base64 data is available
-                String posterImageUrl = event.getPosterImageUrl();
-                if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
-                    try {
-                        byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                        posterImage.setImageBitmap(bitmap);
+                            // Display poster image if Base64 data is available
+                            String posterImageUrl = event.getPosterImageUrl();
+                            if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
+                                try {
+                                    byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+                                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                    posterImage.setImageBitmap(bitmap);
 
-                        // Poster exists -> show "Update Poster"
-                        uploadPosterButton.setText("Update Poster");
-                    } catch (IllegalArgumentException e) {
-                        Log.e(TAG, "Invalid poster Base64 data", e);
-                        // Invalid data: keep placeholder and default label
-                        uploadPosterButton.setText("Upload Poster");
+                                    // Poster exists -> show "Update Poster"
+                                    uploadPosterButton.setText("Update Poster");
+                                } catch (IllegalArgumentException e) {
+                                    Log.e(TAG, "Invalid poster Base64 data", e);
+                                    // Invalid data: keep placeholder and default label
+                                    uploadPosterButton.setText("Upload Poster");
+                                }
+                            } else {
+                                // No poster yet -> show default label and placeholder
+                                uploadPosterButton.setText("Upload Poster");
+                                posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
+                            }
+                        }
                     }
-                } else {
-                    // No poster yet -> show default label and placeholder
-                    uploadPosterButton.setText("Upload Poster");
-                    posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
-                }
-            }
-        });
+                });
 
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
@@ -264,11 +267,8 @@ public class OrganizerEventFragment extends Fragment {
         uploadPosterButton = view.findViewById(R.id.upload_poster_button);
         qrCodeRequest = view.findViewById(R.id.request_qr_code);
         buttonContainer = view.findViewById(R.id.organizer_button_container);
-        btnViewWaitingList = view.findViewById(R.id.btnViewWaitingList);
+        btnViewEntrants = view.findViewById(R.id.btnViewEntrants);
         btnViewEntrantMap = view.findViewById(R.id.btnViewEntrantMap);
-        btnAcceptedParticipants = view.findViewById(R.id.btnAcceptedParticipants);
-        btnInvitedParticipants = view.findViewById(R.id.btnInvitedParticipants);
-        btnCancelledParticipants = view.findViewById(R.id.btnCancelledParticipants);
         btnRunDraw = view.findViewById(R.id.btnRunDraw);
         btnFinalize = view.findViewById(R.id.btnFinalize);
         btnExportEntrantCSV = view.findViewById(R.id.btnExportCSV);
@@ -292,48 +292,23 @@ public class OrganizerEventFragment extends Fragment {
         });
 
         /**
-         * Navigates to the appropriate entrant list fragment
+         * Navigates to entrant list fragment
          * @param v view clicked
          */
-        View.OnClickListener entrantListNavListener = v -> {
-            String status;
-            int id = v.getId();
+        btnViewEntrants.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("eventId", eventId);
+            Navigation.findNavController(v)
+                    .navigate(R.id.action_organizerEventPageFragment_to_entrantListFragment, bundle);
+        });
 
-            if (id == R.id.btnViewWaitingList) {
-                status = "waiting";
-            } else if (id == R.id.btnAcceptedParticipants) {
-                status = "accepted";
-            } else if (id == R.id.btnInvitedParticipants) {
-                Navigation.findNavController(v).navigate(
-                        OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToManageSelectedFragment(eventId)
-                );
-                return;
-            } else if (id == R.id.btnCancelledParticipants) {
-                status = "cancelled";
-            } else {
-                return;
-            }
 
-            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantListFragment action =
-                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantListFragment(status, this.eventId);
-
+        btnViewEntrantMap.setOnClickListener(v -> {
+            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
+                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
             Navigation.findNavController(v).navigate(action);
-        };
+        });
 
-        btnViewWaitingList.setOnClickListener(entrantListNavListener);
-        btnAcceptedParticipants.setOnClickListener(entrantListNavListener);
-        btnInvitedParticipants.setOnClickListener(entrantListNavListener);
-        btnCancelledParticipants.setOnClickListener(entrantListNavListener);
-
-        /**
-         * Makes toast that the functionality hasn't been implemented yet
-         * @param view clicked
-         */
-        View.OnClickListener notImplementedListener = v -> {
-            Button b = (Button) v;
-            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
-        };
-        btnViewEntrantMap.setOnClickListener(notImplementedListener);
         btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
         btnExportEntrantCSV.setOnClickListener(v -> viewModel.generateEntrantCsv());
     }

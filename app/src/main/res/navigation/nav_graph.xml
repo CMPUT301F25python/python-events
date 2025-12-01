@@ -26,14 +26,14 @@
         android:label="Event Details"
         tools:layout="@layout/fragment_organizer_event_page">
         <action
+            android:id="@+id/action_organizerEventPageFragment_to_entrantMapFragment"
+            app:destination="@id/entrantMapFragment" />
+        <action
             android:id="@+id/action_organizerEventPageFragment_to_runDrawFragment"
             app:destination="@id/runDrawFragment"/>
         <action
             android:id="@+id/action_organizerEventPageFragment_to_entrantListFragment"
             app:destination="@id/entrantListFragment" />
-        <action
-            android:id="@+id/action_organizerEventPageFragment_to_manageSelectedFragment"
-            app:destination="@id/manageSelectedFragment" />
 
         <argument
             android:name="eventId"
@@ -143,22 +143,18 @@
         tools:layout="@layout/fragment_entrant_list" >
 
         <argument
-            android:name="status"
-            app:argType="string" />
-        <argument
             android:name="eventId"
             app:argType="string" />
     </fragment>
 
     <fragment
-        android:id="@+id/manageSelectedFragment"
-        android:name="com.example.lotteryevent.ui.organizer.ManageInvitedFragment"
-        android:label="Manage Invited Entrants"
-        tools:layout="@layout/fragment_manage_invited">
-
+        android:id="@+id/entrantMapFragment"
+        android:name="com.example.lotteryevent.ui.organizer.EntrantMapFragment"
+        android:label="Entrant Map"
+        tools:layout="@layout/fragment_entrant_map">
         <argument
             android:name="eventId"
-            app:argType="string"/>
+            app:argType="string" />
     </fragment>
 
 
@@ -210,6 +206,7 @@
             android:name="userId"
             app:argType="string" />
     </fragment>
+
     <fragment
         android:id="@+id/registrationHistoryFragment"
         android:name="com.example.lotteryevent.ui.RegistrationHistoryFragment"

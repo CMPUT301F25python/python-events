@@ -4,11 +4,20 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.example.lotteryevent.data.Entrant;
 import com.example.lotteryevent.data.Event;
 import com.example.lotteryevent.repository.FakeEventRepository;
 import com.example.lotteryevent.viewmodels.ConfirmDrawAndNotifyViewModel;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentReference;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,6 +51,7 @@ public class ConfirmDrawAndNotifyViewModelTest {
 
     private ConfirmDrawAndNotifyViewModel viewModel;
     private FakeEventRepository fakeRepository;
+    private NotificationCustomManager notificationCustomManager;
 
     /**
      * Sets up the test environment.
@@ -51,11 +61,14 @@ public class ConfirmDrawAndNotifyViewModelTest {
      */
     @Before
     public void setUp() {
-        // 1. Init Fake Repository
+        // 1. Init Fake Repository and notif manager
         fakeRepository = new FakeEventRepository();
+        notificationCustomManager = mock(NotificationCustomManager.class);
+        when(notificationCustomManager.sendNotification(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(Tasks.forResult(mock(DocumentReference.class)));
 
         // 2. Init ViewModel with Fake Repo
-        viewModel = new ConfirmDrawAndNotifyViewModel(fakeRepository, null);
+        viewModel = new ConfirmDrawAndNotifyViewModel(fakeRepository, notificationCustomManager);
     }
 
     /**
@@ -83,9 +96,38 @@ public class ConfirmDrawAndNotifyViewModelTest {
      */
     @Test
     public void testNotificationsNotSetUpOnPosBtnClick() {
-        viewModel.onPositiveButtonClicked(new ArrayList<>(), new ArrayList<>());
+        ConfirmDrawAndNotifyViewModel customViewModel = new ConfirmDrawAndNotifyViewModel(fakeRepository, null);
+        customViewModel.onPositiveButtonClicked(new ArrayList<>(), new ArrayList<>());
 
-        assertEquals("Error: Notifications not set up.", Objects.requireNonNull(viewModel.bottomUiState.getValue()).infoText);
+        assertEquals("Error: Notifications not set up.", Objects.requireNonNull(customViewModel.bottomUiState.getValue()).infoText);
+    }
+
+    /**
+     * Tests for valid send notif parameters for lottery win
+     */
+    @Test
+    public void sendWinNotification_callsNotifManagerWithCorrectParams() {
+        fakeRepository.fetchEventAndEntrantCounts("fake-event-id");
+
+        viewModel.sendWinNotification("user123");
+
+        verify(notificationCustomManager).sendNotification(eq("user123"), eq("Congratulations!"),
+                eq("You've been selected for Event 1! Tap to accept or decline."), eq("lottery_win"),
+                eq("fake-event-id"), eq("Event 1"), eq(null), any());
+    }
+
+    /**
+     * Tests for valid send notif parameters for lottery loss
+     */
+    @Test
+    public void sendLossNotification_callsNotifManagerWithCorrectParams() {
+        fakeRepository.fetchEventAndEntrantCounts("fake-event-id");
+
+        viewModel.sendLossNotification(("user123"));
+
+        verify(notificationCustomManager).sendNotification(eq("user123"), eq("Thank you for joining!"),
+                eq("You weren't selected for Event 1 in this draw, but you're still on the waiting list and may be chosen in a future redraw."),
+                eq("lottery_loss"), eq("fake-event-id"), eq("Event 1"), eq(null), any());
     }
 
     /**
