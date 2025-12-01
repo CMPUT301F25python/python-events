@@ -304,15 +304,6 @@ public class OrganizerEventFragment extends Fragment {
                     .navigate(R.id.action_organizerEventPageFragment_to_entrantListFragment, bundle);
         });
 
-        /**
-         * Makes toast that the functionality hasn't been implemented yet
-         * @param view clicked
-         */
-        View.OnClickListener notImplementedListener = v -> {
-            Button b = (Button) v;
-            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
-        };
-
         btnViewEntrantMap.setOnClickListener(v -> {
             OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
                     OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
