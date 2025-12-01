@@ -240,33 +240,31 @@ public class DrawLotteryConfirmationFragmentsFlowTest {
     /**
      * Tests screen change behaviour around cancelling confirm and notify
      */
+    /**
+     * Tests screen change behaviour around cancelling confirm and notify
+     */
     @Test
     public void testConfirmAndNotifyCancel() {
-        // runs draw
+        // Run the draw
         onView(withId(R.id.numSelectedEntrants)).perform(click(), typeText("1"), closeSoftKeyboard());
         onView(withId(R.id.runDrawButton)).perform(click());
 
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        // Wait for confirmation page text
+        // Wait for the confirmation page to appear and verify its contents
         onView(isRoot()).perform(waitForView(withText(containsString("Confirm Draw")), 7000));
-
-        // checks screen changes to confirmation screen
         onView(withText(containsString("Confirm Draw"))).check(matches(isDisplayed()));
-        onView(isRoot()).perform(waitForView(withText("0"), 7000));
         onView(withId(R.id.waiting_list_count)).check(matches(withText("0")));
         onView(withId(R.id.available_space_count)).check(matches(withText("2")));
         onView(withId(R.id.selected_users_count)).check(matches(withText("1")));
 
+        // Click cancel button
         onView(withId(R.id.cancel_button)).perform(click());
 
-        onView(isRoot()).perform(waitForView(withText(containsString("Event Details")), 10000));
+        // Wait until UI returns to the previous screen.
+        onView(isRoot()).perform(waitForView(withId(R.id.runDrawButton), 10000));
 
-        // checks screen changes to event details screen (on cancel)
+        // Check contents of event details
         onView(withText(containsString("Event Details"))).check(matches(isDisplayed()));
         onView(withText(containsString(event.getName()))).check(matches(isDisplayed()));
     }
+
 }
