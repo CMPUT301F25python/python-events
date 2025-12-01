@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.material.chip.ChipGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +34,7 @@ public class AdminProfilesFragment extends Fragment {
     private AdminProfilesViewModel viewModel;
     private RecyclerView recycler;
     private AdminProfilesAdapter adapter;
+    private TextView profileCount;
 
     /**
      * Default constructor for production use by the Android Framework.
@@ -78,6 +80,15 @@ public class AdminProfilesFragment extends Fragment {
         Button notifyBtn = view.findViewById(R.id.send_notification_button);
         notifyBtn.setVisibility(view.GONE);
 
+        // Hide chip stuff
+        ChipGroup chipGroup = view.findViewById(R.id.status_chip_group);
+        chipGroup.setVisibility(view.GONE);
+
+        // Set count text
+        profileCount = view.findViewById(R.id.entrants_count_text);
+        profileCount.setText("Loading profiles");
+
+
         recycler = view.findViewById(R.id.entrants_recycler_view);
         recycler.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -117,6 +128,9 @@ public class AdminProfilesFragment extends Fragment {
         viewModel.getProfiles().observe(getViewLifecycleOwner(), list -> {
             if (list != null) {
                 adapter.setProfiles(list);
+                int count = list.size();
+                String text = count + (count == 1 ? " profile" : " profiles");
+                profileCount.setText(text);
             }
         });
 
