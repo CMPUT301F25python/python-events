@@ -144,4 +144,5 @@
     <string name="cancel">Cancel</string>
     <string name="draw_successful">Draw Successful!</string>
     <string name="users_selected_label">Participants Selected</string>
+    <string name="no_notifications_to_view">No notifications to view</string>
 </resources>

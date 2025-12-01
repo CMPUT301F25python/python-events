@@ -178,7 +178,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 }
             } else {
                 // No poster set: hide ImageView
-                posterImageView.setImageResource(R.drawable.outline_add_photo_alternate_24);
+                posterImageView.setImageResource(R.drawable.photo_library_24px);
                 posterImageView.setImageTintList(null);
             }
         }
