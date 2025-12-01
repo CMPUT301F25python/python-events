@@ -28,7 +28,14 @@ import java.util.List;
  */
 public class InvitedEntrantsAdapter extends RecyclerView.Adapter<InvitedEntrantsAdapter.ViewHolder> {
 
+    /**
+     * Interface definition for a callback to be invoked when an invited entrant is cancelled.
+     */
     public interface OnCancelClickListener {
+        /**
+         * Called when an entrant is cancelled
+         * @param userId ID of the cancelled entrant
+         */
         void onCancelClicked(String userId);
     }
 
@@ -93,7 +100,11 @@ public class InvitedEntrantsAdapter extends RecyclerView.Adapter<InvitedEntrants
 
         holder.userNameText.setText(displayName);
 
-        // Handle Cancel Button Click
+        /**
+         * Executes some behaviour (returns entrant to waiting list) when the cancel
+         * button of an invited entrant is clicked
+         * @param v view clicked
+         */
         holder.cancelButton.setOnClickListener(v -> {
             if (cancelListener != null && userId != null) {
                 cancelListener.onCancelClicked(userId);
@@ -101,6 +112,10 @@ public class InvitedEntrantsAdapter extends RecyclerView.Adapter<InvitedEntrants
         });
     }
 
+    /**
+     * Returns size of entrants list
+     * @return size of entrants list
+     */
     @Override
     public int getItemCount() {
         return this.entrants.size();
@@ -113,6 +128,10 @@ public class InvitedEntrantsAdapter extends RecyclerView.Adapter<InvitedEntrants
         TextView userNameText;
         Button cancelButton;
 
+        /**
+         * Sets up view holder, setting the holder's username and cancel button
+         * @param itemView item to show in the holder
+         */
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             userNameText = itemView.findViewById(R.id.userNameText);

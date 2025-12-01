@@ -106,6 +106,10 @@
         android:id="@+id/notificationsFragment"
         android:name="com.example.lotteryevent.ui.NotificationsFragment"
         android:label="Notifications" >
+        <argument
+            android:name="isAdminView"
+            app:argType="boolean"
+            android:defaultValue="false" />
         <action
             android:id="@+id/action_notificationsFragment_to_eventDetailsFragment"
             app:destination="@id/eventDetailsFragment"/>
@@ -163,6 +167,27 @@
         android:id="@+id/adminSentNotificationsFragment"
         android:name="com.example.lotteryevent.ui.admin.AdminSentNotificationsFragment"
         android:label="Sent Notifications" />
+
+        <action
+            android:id="@+id/action_adminSentNotificationsFragment_to_adminSelectEventFragment"
+            app:destination="@id/adminSelectEventFragment"
+            app:popUpTo="@id/adminSentNotificationsFragment"
+            app:popUpToInclusive="true"/>
+
+    <fragment
+        android:id="@+id/adminSelectEventFragment"
+        android:name="com.example.lotteryevent.ui.admin.AdminSelectEventFragment"
+        android:label="Select Event"
+        tools:layout="@layout/fragment_admin_event_select">
+
+        <action
+            android:id="@+id/action_adminSelectEventFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment">
+            <argument
+                android:name="isAdminView"
+                android:defaultValue="true" />
+        </action>
+    </fragment>
 
     <fragment
         android:id="@+id/adminImagesFragment"

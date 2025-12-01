@@ -12,6 +12,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.function.Consumer;
 
+/**
+ * Utility class for handling Firestore operations related to lottery events.
+ * Provides helper methods to load entrant metrics and cancel lotteries using callbacks
+ * for MVVM-friendly, non-UI Firestore interactions.
+ */
 public class FireStoreUtilities {
         private static final String TAG = "FireStoreUtilities";
 
@@ -47,11 +52,19 @@ public class FireStoreUtilities {
                     .collection("entrants")
                     .whereEqualTo("status", "waiting")
                     .get()
+                    /**
+                     * Gets waiting list size
+                     * @param waitQuery waiting list entrants query
+                     */
                     .addOnSuccessListener(waitQuery -> {
                         if (waitingListCallback != null) {
                             waitingListCallback.accept(waitQuery.size());
                         }
                     })
+                    /**
+                     * Logs exception thrown and calls error callback
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         Log.w(TAG, "Error loading waiting list", e);
                         if (errorCallback != null) errorCallback.accept("Error loading waiting list");
@@ -62,6 +75,10 @@ public class FireStoreUtilities {
                     .collection("entrants")
                     .whereEqualTo("status", "invited")
                     .get()
+                    /**
+                     * Gets invited count and available space count
+                     * @param waitQuery invited entrants query
+                     */
                     .addOnSuccessListener(selectedQuery -> {
 
                         int selectedCount = selectedQuery.size();
@@ -73,6 +90,10 @@ public class FireStoreUtilities {
                         // Get event capacity
                         db.collection("events").document(eventId)
                                 .get()
+                                /**
+                                 * Gets available spaces
+                                 * @param document contains event to get space count from
+                                 */
                                 .addOnSuccessListener(document -> {
 
                                     Long capacityLong = document.getLong("capacity");
@@ -92,12 +113,20 @@ public class FireStoreUtilities {
                                         }
                                     }
                                 })
+                                /**
+                                 * Logs exception, calls error callback
+                                 * @param e exception thrown
+                                 */
                                 .addOnFailureListener(e -> {
                                     Log.w(TAG, "Error loading capacity", e);
                                     if (errorCallback != null) errorCallback.accept("Error loading event capacity");
                                 });
 
                     })
+                    /**
+                     * Logs exception, calls error callback
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> {
                         Log.w(TAG, "Error loading selected count", e);
                         if (errorCallback != null) errorCallback.accept("Error loading selected count");
@@ -122,6 +151,10 @@ public class FireStoreUtilities {
                 .collection("entrants")
                 .whereEqualTo("status", "invited")
                 .get()
+                /**
+                 * Moves entrants back to waiting list
+                 * @param query invited entrants
+                 */
                 .addOnSuccessListener(query -> {
                     if (!query.isEmpty()) {
                         for (DocumentSnapshot entrantDoc : query.getDocuments()) {
@@ -135,6 +168,10 @@ public class FireStoreUtilities {
 
                     }
                 })
+                /**
+                 * Calls error callback
+                 * @param e exception thrown
+                 */
                 .addOnFailureListener(e -> {
                        if (onError != null) onError.accept( "Error cancelling lottery");
                 });

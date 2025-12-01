@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,7 +38,7 @@ public class NotificationsFragment extends Fragment {
     // --- ViewModel ---
     private NotificationsViewModel viewModel;
     private ViewModelProvider.Factory viewModelFactory;
-
+    private TextView noNotification;
     private NotificationCustomManager notificationCustomManager;
 
     /**
@@ -53,16 +54,55 @@ public class NotificationsFragment extends Fragment {
         this.viewModelFactory = factory;
     }
 
+    /**
+     * Called by the system to have the fragment instantiate its user interface view.
+     * @param inflater           The LayoutInflater object that can be used to inflate
+     *                           any views in the fragment,
+     * @param container          If non-null, this is the parent view that the fragment's
+     *                           UI should be attached to. The fragment should not add the view itself,
+     *                           but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_notifications, container, false);
     }
 
+    /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)} has returned,
+     * but before any saved state has been restored in to the view.
+     * Sets up view and its components.
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     *                           from a previous saved state as given here.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        Button markAsSeenBtn = view.findViewById(R.id.mark_as_seen_btn);
+
+        boolean isAdminView = false;
+        if (getArguments() != null) {
+            isAdminView = getArguments().getBoolean("isAdminView", false);
+        }
+
+        if (isAdminView) {
+            markAsSeenBtn.setVisibility(View.GONE);
+        } else {
+            markAsSeenBtn.setVisibility(View.VISIBLE);
+        }
+
         notificationCustomManager = new NotificationCustomManager(requireContext());
+
+        noNotification = view.findViewById(R.id.text_no_notifications);
+
+        // Get eventId for for admin
+        String eventIdFilter = null;
+        if (getArguments() != null) {
+            eventIdFilter = getArguments().getString("eventId");
+        }
 
         // --- ViewModel Initialization ---
         if (viewModelFactory == null) {
@@ -75,52 +115,108 @@ public class NotificationsFragment extends Fragment {
         viewModel = new ViewModelProvider(this, viewModelFactory).get(NotificationsViewModel.class);
 
         // --- UI Setup ---
-        setupRecyclerView(view);
-        setupObservers(view);
+        setupRecyclerView(view, isAdminView);
+        setupObservers(view, eventIdFilter);
 
         // --- Initial Action ---
         // Pass the notificationId from arguments (if any) to the ViewModel to process.
         String notificationId = (getArguments() != null) ? getArguments().getString("notificationId") : null;
-        viewModel.processInitialNotification(notificationId, notificationCustomManager);
+
+        if (!isAdminView) {
+            viewModel.processInitialNotification(notificationId, notificationCustomManager);
+        }
     }
 
     /**
      * Initializes the RecyclerView and its Adapter. The item click listener now
      * delegates the event directly to the ViewModel.
      */
-    private void setupRecyclerView(@NonNull View view) {
+    private void setupRecyclerView(@NonNull View view, boolean isAdminView) {
         markSeenBtn = view.findViewById(R.id.mark_as_seen_btn);
         recyclerView = view.findViewById(R.id.notifications_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new NotificationAdapter(R.layout.item_notification);
+        adapter.setAdminView(isAdminView);
         recyclerView.setAdapter(adapter);
 
+        /**
+         * Marks all messages as seen and clears notification banners
+         * @param v view clicked
+         */
         markSeenBtn.setOnClickListener(v -> {
             viewModel.onMarkAllSeenClicked(notificationCustomManager);
             notificationCustomManager.clearNotifications();
         });
-        adapter.setOnItemClickListener(notification -> viewModel.onNotificationClicked(notification, notificationCustomManager));
+        /**
+         * On notif click, marks it as seen and if lottery win, navigates to event
+         * @param notification notif clicked
+         */
+        adapter.setOnItemClickListener(notification -> {
+            if (isAdminView) {
+                // 1. Admin Mode: Fetch the name using the ViewModel/Repository
+                String userId = notification.getRecipientId();
+
+                viewModel.fetchUserName(userId, name -> {
+                    // 2. Show the Toast with the retrieved name
+                    Toast.makeText(getContext(), "Sent to: " + name, Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                // User Mode: Proceed with normal logic
+                viewModel.onNotificationClicked(notification, notificationCustomManager);
+            }
+        });
     }
 
     /**
      * Sets up observers on the ViewModel's LiveData to react to data and state changes.
      */
-    private void setupObservers(@NonNull View view) {
-        // Observe the list of notifications and submit it to the adapter when it changes.
-        viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
-            if (notifications != null) {
-                adapter.setNotifications(notifications);
-            }
-        });
+    private void setupObservers(@NonNull View view, String eventIdFilter) {
+        /**
+         * Observe the list of notifications and submit it to the adapter when it changes.
+         * @param notifications list of notifs
+         */
+        if(eventIdFilter != null) {
+            viewModel.loadNotificationsForEvent(eventIdFilter);
+            viewModel.getNotificationsForEvent().observe(getViewLifecycleOwner(), notifications -> {
 
-        // Observe for user-facing messages (errors, etc.) and show them in a Toast.
+                if (notifications != null && !notifications.isEmpty()) {
+                    adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
+                }
+            });
+        } else {
+            viewModel.getNotifications().observe(getViewLifecycleOwner(), notifications -> {
+                if (notifications != null && !notifications.isEmpty()) {
+                    adapter.setNotifications(notifications);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    noNotification.setVisibility(View.GONE);
+                    markSeenBtn.setVisibility(View.VISIBLE);
+                } else {
+                    recyclerView.setVisibility(View.GONE);
+                    noNotification.setVisibility(View.VISIBLE);
+                    markSeenBtn.setVisibility(View.GONE);
+                }
+            });
+        }
+
+        /**
+         * Observe for user-facing messages (errors, etc.) and show them in a Toast.
+         * @param message message to show
+         */
         viewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Observe the navigation event.
+        /**
+         * Observe the navigation event for navigation
+         * @param eventId event to go to
+         */
         viewModel.getNavigateToEventDetails().observe(getViewLifecycleOwner(), eventId -> {
             if (eventId != null) {
                 // An eventId was posted, so we need to navigate.

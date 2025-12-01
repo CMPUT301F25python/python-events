@@ -40,10 +40,18 @@ public class EntrantListViewModel extends ViewModel {
         this.entrants = entrantListRepo.fetchEntrantsByStatus(eventId, status);
     }
 
+    /**
+     * Get a list of entrants for an event
+     * @return list of entrants
+     */
     public LiveData<List<Entrant>> getEntrants() {
         return entrants;
     }
 
+    /**
+     * Get status of an entrant with the first letter capitalized
+     * @return status
+     */
     public String getCapitalizedStatus() {
         if (status == null || status.isEmpty()) return "";
         return status.substring(0, 1).toUpperCase() + status.substring(1);
@@ -92,16 +100,23 @@ public class EntrantListViewModel extends ViewModel {
         if (userId == null) return;
 
         entrantListRepo.updateEntrantStatus(this.eventId, userId, "waiting", new StatusUpdateCallback() {
+            /**
+             * Message that entrant sent to waitlist and update list
+             */
             @Override
             public void onSuccess() {
-                entrantListRepo.setUserMessage("User returned to waitlist.");
+                entrantListRepo.setUserMessage("User returned to waitlist and notified.");
                 // Refresh the list
                 entrantListRepo.fetchEntrantsByStatus(eventId, status);
             }
 
+            /**
+             * On exception do nothing for now
+             * @param e exception thrown
+             */
             @Override
             public void onFailure(Exception e) {
             }
-        });
+        }, true);
     }
 }

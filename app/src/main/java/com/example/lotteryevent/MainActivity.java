@@ -267,6 +267,10 @@ public class MainActivity extends AppCompatActivity {
 
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             db.collection("users").document(uid).get()
+                    /**
+                     * Gets admin status of user, if true then shows admin buttons
+                     * @param documentSnapshot contains user to assess for
+                     */
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
                             Boolean isAdmin = documentSnapshot.getBoolean("admin");
@@ -293,7 +297,13 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
 
-        // all fragments we want to hide profile icon from
+        /**
+         * Hide profile icon from all fragments that aren't home
+         * remove the back button in confirmDrawAndNotifyFragment
+         * @param controller nav controller
+         * @param destination target fragment
+         * @param arguments arguments sent to a fragment
+         */
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             boolean show = destination.getId() == R.id.homeFragment;
             if (show != showProfileIcon){
@@ -346,6 +356,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final ActivityResultLauncher<String> getPermission =
         registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+            /**
+             * Handles the result of the notification permission request.
+             * If granted, stores the user's notification preference in Firestore.
+             * @param isGranted True if the permission was granted; false otherwise.
+             */
             @Override
             public void onActivityResult(Boolean isGranted) {
                 if (isGranted) {
@@ -357,7 +372,15 @@ public class MainActivity extends AppCompatActivity {
                         userInfo.put("optOutNotifications", false);
                         db.collection("users").document(deviceId)
                                 .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                                /**
+                                 * Makes toast that notif permission granted
+                                 * @param aVoid unusable data
+                                 */
                                 .addOnSuccessListener(aVoid -> Toast.makeText(getApplicationContext(), "Notification permission granted.", Toast.LENGTH_SHORT).show())
+                                /**
+                                 * Makes toast of error storing notif preference
+                                 * @param e exception thrown
+                                 */
                                 .addOnFailureListener(e -> Toast.makeText(getApplicationContext(), "Error storing notification preference.", Toast.LENGTH_SHORT).show());
                     }
                 } else {
@@ -378,6 +401,11 @@ public class MainActivity extends AppCompatActivity {
     private void signInAnonymously() {
         mAuth.signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    /**
+                     * Handles completion of the anonymous sign-in request.
+                     * If successful, initializes user, otherwise logs and makes toast of authentication failure
+                     * @param task The authentication task indicating success or failure.
+                     */
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
@@ -416,7 +444,15 @@ public class MainActivity extends AppCompatActivity {
             Map<String, Object> userInfo = new HashMap<>();
             db.collection("users").document(deviceId)
                     .set(userInfo, SetOptions.merge()) // merge to avoid overwriting if document already exists
+                    /**
+                     * Logs of success
+                     * @param aVoid unusable data
+                     */
                     .addOnSuccessListener(aVoid -> Log.d(TAG, "User document ready"))
+                    /**
+                     * Logs exception thrown
+                     * @param e exception thrown
+                     */
                     .addOnFailureListener(e -> Log.w(TAG, "Error creating user document", e));
         }
     }

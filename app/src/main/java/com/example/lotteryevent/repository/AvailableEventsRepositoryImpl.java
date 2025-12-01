@@ -16,6 +16,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class implements IAvailableEventsRepository.
+ * This class gets all available events in the db.
+ */
 public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository {
     private static final String TAG = "AvailableEventRepository";
 
@@ -77,6 +81,12 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
 
         registration = db.collection("events")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
+                /**
+                 * Observes updates to the events collection, Maps the received QuerySnapshot into
+                 * a list of Event objects and updating the LiveData with the new list
+                 * @param querySnapshot contains events documents
+                 * @param e exception thrown
+                 */
                 .addSnapshotListener((querySnapshot, e) -> {
                     _isLoading.setValue(false);
 
@@ -88,6 +98,7 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
                     }
 
                     if (querySnapshot != null) {
+                        Log.d(TAG, "Success: Events fetched: " + querySnapshot.size());
                         List<Event> userEvents = new ArrayList<>();
                         for (QueryDocumentSnapshot document : querySnapshot) {
                             Event event = document.toObject(Event.class);
@@ -99,7 +110,6 @@ public class AvailableEventsRepositoryImpl implements IAvailableEventsRepository
                         _events.setValue(new ArrayList<>());
                     }
                 });
-
     }
 
     /**
