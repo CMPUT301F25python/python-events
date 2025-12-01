@@ -6,6 +6,9 @@ import com.example.lotteryevent.data.Event;
 
 import java.util.List;
 
+/**
+ * Repository interface for fetching available events
+ */
 public interface IAvailableEventsRepository {
 
     /**

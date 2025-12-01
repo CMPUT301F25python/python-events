@@ -8,6 +8,9 @@ import com.example.lotteryevent.repository.IEntrantListRepository;
 
 import java.util.List;
 
+/**
+ * ViewModel for managing entrant data for the map view
+ */
 public class EntrantMapViewModel extends ViewModel {
 
     private final LiveData<List<Entrant>> entrants;

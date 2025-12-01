@@ -4,6 +4,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+/**
+ * ViewModel for handling QR code scanning logic
+ */
 public class QrScannerViewModel extends ViewModel {
 
     private final MutableLiveData<String> scannedEventId = new MutableLiveData<>();

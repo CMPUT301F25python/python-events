@@ -11,6 +11,9 @@ import java.util.List;
 public interface IAdminProfilesRepository {
     void getAllProfiles(ProfilesCallback callback);
 
+    /**
+     * Callback interface for profile fetching results
+     */
     interface ProfilesCallback {
         void onSuccess(List<User> users);
         void onFailure(Exception e);
