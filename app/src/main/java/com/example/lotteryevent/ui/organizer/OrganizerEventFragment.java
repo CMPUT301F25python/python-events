@@ -160,31 +160,34 @@ public class OrganizerEventFragment extends Fragment {
          * @param event event to show poster
          */
         viewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
-            if (event != null) {
-                eventNameLabel.setText(event.getName());
+                    if (event != null) {
+                        eventNameLabel.setText(event.getName());
+                        if (!event.getGeoLocationRequired()) {
+                            btnViewEntrantMap.setVisibility(View.GONE);
 
-                // Display poster image if Base64 data is available
-                String posterImageUrl = event.getPosterImageUrl();
-                if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
-                    try {
-                        byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                        posterImage.setImageBitmap(bitmap);
+                            // Display poster image if Base64 data is available
+                            String posterImageUrl = event.getPosterImageUrl();
+                            if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
+                                try {
+                                    byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+                                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                    posterImage.setImageBitmap(bitmap);
 
-                        // Poster exists -> show "Update Poster"
-                        uploadPosterButton.setText("Update Poster");
-                    } catch (IllegalArgumentException e) {
-                        Log.e(TAG, "Invalid poster Base64 data", e);
-                        // Invalid data: keep placeholder and default label
-                        uploadPosterButton.setText("Upload Poster");
+                                    // Poster exists -> show "Update Poster"
+                                    uploadPosterButton.setText("Update Poster");
+                                } catch (IllegalArgumentException e) {
+                                    Log.e(TAG, "Invalid poster Base64 data", e);
+                                    // Invalid data: keep placeholder and default label
+                                    uploadPosterButton.setText("Upload Poster");
+                                }
+                            } else {
+                                // No poster yet -> show default label and placeholder
+                                uploadPosterButton.setText("Upload Poster");
+                                posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
+                            }
+                        }
                     }
-                } else {
-                    // No poster yet -> show default label and placeholder
-                    uploadPosterButton.setText("Upload Poster");
-                    posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
-                }
-            }
-        });
+                });
 
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
@@ -300,15 +303,12 @@ public class OrganizerEventFragment extends Fragment {
         });
 
 
-        /**
-         * Makes toast that the functionality hasn't been implemented yet
-         * @param view clicked
-         */
-        View.OnClickListener notImplementedListener = v -> {
-            Button b = (Button) v;
-            Toast.makeText(getContext(), b.getText().toString() + " not implemented yet.", Toast.LENGTH_SHORT).show();
-        };
-        btnViewEntrantMap.setOnClickListener(notImplementedListener);
+        btnViewEntrantMap.setOnClickListener(v -> {
+            OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
+                    OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
+            Navigation.findNavController(v).navigate(action);
+        });
+
         btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
         btnExportEntrantCSV.setOnClickListener(v -> viewModel.generateEntrantCsv());
     }
