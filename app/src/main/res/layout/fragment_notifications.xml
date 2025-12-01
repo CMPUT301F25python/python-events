@@ -15,6 +15,7 @@
         android:text="@string/mark_all_notifs_as_seen"
         android:textColor="@color/white"
         android:textSize="13sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/notifications_recycler_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.95"
