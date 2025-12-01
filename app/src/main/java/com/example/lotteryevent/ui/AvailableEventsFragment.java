@@ -243,7 +243,9 @@ public class AvailableEventsFragment extends Fragment {
      * and pushes the result into the adapter.
      */
     private void applyLocalFiltersToAdapter() {
-        if (adapter == null) return;
+        if (adapter == null) {
+            return;
+        }
         adapter.setEvents(applyDateRangeFilter(lastEventsFromViewModel));
     }
 
@@ -253,15 +255,21 @@ public class AvailableEventsFragment extends Fragment {
      */
     @NonNull
     private List<Event> applyDateRangeFilter(@NonNull List<Event> input) {
-        if (filterStartDateMs == null && filterEndDateMs == null) return input;
+        if (filterStartDateMs == null && filterEndDateMs == null) {
+            return input;
+        }
 
         List<Event> out = new ArrayList<>();
         for (Event e : input) {
             if (e == null || e.getEventStartDateTime() == null) continue;
 
             long t = e.getEventStartDateTime().toDate().getTime();
-            if (filterStartDateMs != null && t < filterStartDateMs) continue;
-            if (filterEndDateMs != null && t > filterEndDateMs) continue;
+            if (filterStartDateMs != null && t < filterStartDateMs) {
+                continue;
+            }
+            if (filterEndDateMs != null && t > filterEndDateMs) {
+                continue;
+            }
 
             out.add(e);
         }
@@ -285,7 +293,9 @@ public class AvailableEventsFragment extends Fragment {
             @NonNull DaySelectionCallback cb
     ) {
         final Calendar cal = Calendar.getInstance();
-        if (existingMs != null) cal.setTimeInMillis(existingMs);
+        if (existingMs != null) {
+            cal.setTimeInMillis(existingMs);
+        }
 
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH);
@@ -295,8 +305,12 @@ public class AvailableEventsFragment extends Fragment {
             cb.onDaySelected(startOfDayMillis(y, m, d), endOfDayMillis(y, m, d));
         }, year, month, day);
 
-        if (minDateMs != null) dlg.getDatePicker().setMinDate(minDateMs);
-        if (maxDateMs != null) dlg.getDatePicker().setMaxDate(maxDateMs);
+        if (minDateMs != null) {
+            dlg.getDatePicker().setMinDate(minDateMs);
+        }
+        if (maxDateMs != null) {
+            dlg.getDatePicker().setMaxDate(maxDateMs);
+        }
 
         dlg.show();
     }
@@ -335,7 +349,9 @@ public class AvailableEventsFragment extends Fragment {
      * @return The formatted date string.
      */
     private String formatDay(@Nullable Long ms) {
-        if (ms == null) return "";   // important: let the hint show
+        if (ms == null) {
+            return "";   // important: let the hint show
+        }
         DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
         return df.format(new Date(ms));
     }

@@ -191,7 +191,9 @@ public class OrganizerEventFragment extends Fragment {
 
         // Observer for the overall UI state (determines which buttons are visible)
         viewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
-            if (state == null) return;
+            if (state == null) {
+                return;
+            }
             // Reset visibility before applying the new state
             buttonContainer.setVisibility(View.VISIBLE);
             btnRunDraw.setVisibility(View.VISIBLE);
@@ -302,13 +304,11 @@ public class OrganizerEventFragment extends Fragment {
                     .navigate(R.id.action_organizerEventPageFragment_to_entrantListFragment, bundle);
         });
 
-
         btnViewEntrantMap.setOnClickListener(v -> {
             OrganizerEventFragmentDirections.ActionOrganizerEventPageFragmentToEntrantMapFragment action =
                     OrganizerEventFragmentDirections.actionOrganizerEventPageFragmentToEntrantMapFragment(eventId);
             Navigation.findNavController(v).navigate(action);
         });
-
         btnFinalize.setOnClickListener(v -> showFinalizeConfirmationDialog());
         btnExportEntrantCSV.setOnClickListener(v -> viewModel.generateEntrantCsv());
     }
@@ -332,11 +332,7 @@ public class OrganizerEventFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_POSTER_IMAGE
-                && resultCode == Activity.RESULT_OK
-                && data != null
-                && data.getData() != null) {
-
+        if (requestCode == REQUEST_POSTER_IMAGE && resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
             Uri imageUri = data.getData();
             try {
                 Bitmap bitmap = decodeScaledBitmapFromUri(imageUri, POSTER_MAX_DIM_PX);
@@ -384,13 +380,17 @@ public class OrganizerEventFragment extends Fragment {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         try (InputStream is = resolver.openInputStream(imageUri)) {
-            if (is == null) throw new IOException("Unable to open image stream for bounds.");
+            if (is == null) {
+                throw new IOException("Unable to open image stream for bounds.");
+            }
             BitmapFactory.decodeStream(is, null, bounds);
         }
 
         int srcW = bounds.outWidth;
         int srcH = bounds.outHeight;
-        if (srcW <= 0 || srcH <= 0) throw new IOException("Invalid image bounds.");
+        if (srcW <= 0 || srcH <= 0) {
+            throw new IOException("Invalid image bounds.");
+        }
 
         // 2) Decode with sampling (prevents loading full-res bitmap)
         BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -399,18 +399,26 @@ public class OrganizerEventFragment extends Fragment {
 
         Bitmap decoded;
         try (InputStream is = resolver.openInputStream(imageUri)) {
-            if (is == null) throw new IOException("Unable to open image stream for decode.");
+            if (is == null) {
+                throw new IOException("Unable to open image stream for decode.");
+            }
             decoded = BitmapFactory.decodeStream(is, null, opts);
         }
-        if (decoded == null) throw new IOException("Bitmap decode returned null.");
+        if (decoded == null) {
+            throw new IOException("Bitmap decode returned null.");
+        }
 
         // 3) Fix rotation (common for camera photos)
         Bitmap rotated = rotateBitmapIfRequired(imageUri, decoded);
-        if (rotated != decoded) decoded.recycle();
+        if (rotated != decoded) {
+            decoded.recycle();
+        }
 
         // 4) Final exact scale-down (in case sampling didn’t land under maxDim)
         Bitmap finalBmp = scaleDownToMaxDim(rotated, maxDimPx);
-        if (finalBmp != rotated) rotated.recycle();
+        if (finalBmp != rotated) {
+            rotated.recycle();
+        }
 
         return finalBmp;
     }
@@ -441,7 +449,9 @@ public class OrganizerEventFragment extends Fragment {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
         int max = Math.max(w, h);
-        if (max <= maxDimPx) return bitmap;
+        if (max <= maxDimPx) {
+            return bitmap;
+        }
 
         float scale = maxDimPx / (float) max;
         int newW = Math.max(1, Math.round(w * scale));
@@ -457,7 +467,9 @@ public class OrganizerEventFragment extends Fragment {
      */
     private Bitmap rotateBitmapIfRequired(@NonNull Uri imageUri, @NonNull Bitmap bitmap) {
         try (InputStream is = requireContext().getContentResolver().openInputStream(imageUri)) {
-            if (is == null) return bitmap;
+            if (is == null) {
+                return bitmap;
+            }
 
             ExifInterface exif = new ExifInterface(is);
             int orientation = exif.getAttributeInt(
@@ -466,11 +478,19 @@ public class OrganizerEventFragment extends Fragment {
             );
 
             int rotationDegrees = 0;
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotationDegrees = 90;
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotationDegrees = 180;
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotationDegrees = 270;
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                rotationDegrees = 90;
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                rotationDegrees = 180;
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                rotationDegrees = 270;
+            }
 
-            if (rotationDegrees == 0) return bitmap;
+            if (rotationDegrees == 0) {
+                return bitmap;
+            }
 
             Matrix matrix = new Matrix();
             matrix.postRotate(rotationDegrees);
@@ -552,6 +572,7 @@ public class OrganizerEventFragment extends Fragment {
                 .setPositiveButton("Finalize", (dialog, which) -> {
                     viewModel.finalizeEvent(eventId);
                 })
+
                 /**
                  * Dismisses dialog
                  * @param dialog dialog that triggered callback
