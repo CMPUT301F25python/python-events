@@ -10,11 +10,13 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.contrib.DrawerActions.open;
 import static androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -210,7 +212,10 @@ public class AdminFlowsTest {
         try { Thread.sleep(3000); } catch (InterruptedException e) {}
 
         // 6. Verify we are back on the list
-        onView(withText("All Users")).check(matches(isDisplayed()));
+        onView(allOf(
+                withText("Profiles"),
+                isDescendantOfA(withId(R.id.toolbar))
+        )).check(matches(isDisplayed()));
 
         // 7. Verify User is GONE
         onView(withText(uniqueName)).check(doesNotExist());

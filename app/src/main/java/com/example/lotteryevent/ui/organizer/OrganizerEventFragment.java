@@ -164,27 +164,27 @@ public class OrganizerEventFragment extends Fragment {
                         eventNameLabel.setText(event.getName());
                         if (!event.getGeoLocationRequired()) {
                             btnViewEntrantMap.setVisibility(View.GONE);
+                        }
 
-                            // Display poster image if Base64 data is available
-                            String posterImageUrl = event.getPosterImageUrl();
-                            if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
-                                try {
-                                    byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
-                                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                                    posterImage.setImageBitmap(bitmap);
+                        // Display poster image if Base64 data is available
+                        String posterImageUrl = event.getPosterImageUrl();
+                        if (posterImageUrl != null && !posterImageUrl.isEmpty()) {
+                            try {
+                                byte[] bytes = Base64.decode(posterImageUrl, Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                                posterImage.setImageBitmap(bitmap);
 
-                                    // Poster exists -> show "Update Poster"
-                                    uploadPosterButton.setText("Update Poster");
-                                } catch (IllegalArgumentException e) {
-                                    Log.e(TAG, "Invalid poster Base64 data", e);
-                                    // Invalid data: keep placeholder and default label
-                                    uploadPosterButton.setText("Upload Poster");
-                                }
-                            } else {
-                                // No poster yet -> show default label and placeholder
+                                // Poster exists -> show "Update Poster"
+                                uploadPosterButton.setText("Update Poster");
+                            } catch (IllegalArgumentException e) {
+                                Log.e(TAG, "Invalid poster Base64 data", e);
+                                // Invalid data: keep placeholder and default label
                                 uploadPosterButton.setText("Upload Poster");
-                                posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
                             }
+                        } else {
+                            // No poster yet -> show default label and placeholder
+                            uploadPosterButton.setText("Upload Poster");
+                            posterImage.setImageResource(R.drawable.outline_add_photo_alternate_24);
                         }
                     }
                 });
