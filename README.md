@@ -18,8 +18,8 @@ By shifting event registration to a lottery‑based system, this app removes the
 The system supports fairness, accessibility, and transparency for entrants, while giving organizers efficient tools to manage events and communicate with participants. It helps make community programming more inclusive, predictable, and stress‑free for all involved.
 
 ## **🔗 Project Resources**
-- 📘 Wiki: https://github.com/CMPUT301F25python/python-events/wiki
-- ✅ Backlog: https://github.com/orgs/CMPUT301F25python/projects/1
+- 📘 Wiki: [https://github.com/CMPUT301F25python/python-events/wiki](https://github.com/CMPUT301F25python/python-events/wiki)
+- ✅ Backlog: [https://github.com/orgs/CMPUT301F25python/projects/1](https://github.com/orgs/CMPUT301F25python/projects/1/views/1)
 
 ## **🚀 Tech Stack**
 - Android (Java)
