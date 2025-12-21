@@ -1,4 +1,4 @@
-# **Team Python**
+# **Fair Chance**
 
 ## **🎟️ Event Lottery System (CMPUT 301)**
 A mobile Android application that enables fair, accessible event registration through a lottery‑based waiting list system. Entrants join events without racing to sign up, organizers manage events efficiently, and administrators maintain platform integrity.
